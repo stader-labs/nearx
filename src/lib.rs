@@ -2,8 +2,8 @@ use crate::account::Account;
 use crate::constants::{NEAR, ONE_E24};
 use crate::staking_pool::StakingPoolInfo;
 use crate::types::{
-    HumanReadableAccount, NearxPoolStateResponse, RewardFeeFraction, StakingPoolJSONInfo,
-    U128String,
+    HumanReadableAccount, NearxPoolStateResponse, RewardFeeFraction, StakePoolInfoResponse,
+    U128String, U64String,
 };
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
@@ -272,6 +272,7 @@ impl NearxPool {
     /// Returns human readable representation of the account for the given account ID.
     pub fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
         let account = self.internal_get_account(&account_id);
+        println!("account is {:?}", account);
         return HumanReadableAccount {
             account_id,
             unstaked_balance: U128String::from(0), // TODO - implement unstake
@@ -314,16 +315,33 @@ impl NearxPool {
     }
 
     // Staking pool query
-    pub fn get_sp_info(&self, inx: u16) -> StakingPoolJSONInfo {
+    pub fn get_stake_pool_info(&self, inx: u16) -> StakePoolInfoResponse {
         assert!((inx as usize) < self.staking_pools.len());
         let sp = &self.staking_pools[inx as usize];
 
-        return StakingPoolJSONInfo {
+        return StakePoolInfoResponse {
             inx,
             account_id: sp.account_id.clone(),
             staked: sp.staked.into(),
             last_asked_rewards_epoch_height: sp.last_asked_rewards_epoch_height.into(),
             lock: sp.lock,
         };
+    }
+
+    pub fn get_stake_pools(&self) -> Vec<StakePoolInfoResponse> {
+        let mut stake_pools_response = vec![];
+        for i in 0..self.staking_pools.len() {
+            stake_pools_response.push(StakePoolInfoResponse {
+                inx: i as u16,
+                account_id: self.staking_pools[i].account_id.clone(),
+                staked: U128String::from(self.staking_pools[i].staked),
+                last_asked_rewards_epoch_height: U64String::from(
+                    self.staking_pools[i].last_asked_rewards_epoch_height,
+                ),
+                lock: self.staking_pools[i].lock,
+            });
+        }
+
+        stake_pools_response
     }
 }

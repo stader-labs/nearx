@@ -104,8 +104,11 @@ impl NearxPool {
 
             // compute the reward fee
             let mut operator_account = self.internal_get_account(&self.operator_account_id.clone());
+            println!("operator_account is {:?}", self.operator_account_id.clone());
             let operator_fee = apply_multiplier(rewards, self.rewards_fee_pct);
+            println!("operator_fee is {:?}", operator_fee);
             let operator_fee_shares = self.stake_shares_from_amount(operator_fee);
+            println!("operator_shares is {:?}", operator_fee_shares);
             if operator_fee_shares > 0 {
                 operator_account.stake_shares += operator_fee_shares;
                 self.internal_update_account(&self.operator_account_id.clone(), &operator_account);

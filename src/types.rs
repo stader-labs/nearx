@@ -19,7 +19,7 @@ construct_uint! {
     pub struct U256(4);
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[serde(crate = "near_sdk::serde")]
 pub struct HumanReadableAccount {
     pub account_id: AccountId,
@@ -67,9 +67,9 @@ pub struct NearxPoolStateResponse {
     pub rewards_fee_pct: U128,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[serde(crate = "near_sdk::serde")]
-pub struct StakingPoolJSONInfo {
+pub struct StakePoolInfoResponse {
     pub inx: u16,
     pub account_id: String,
     pub staked: U128String,

@@ -32,7 +32,7 @@ impl NearxPool {
         let num_shares = self.stake_shares_from_amount(user_amount);
         assert!(num_shares > 0);
 
-        let (sp_inx, amount) = self.get_stake_pool_with_min_stake();
+        let sp_inx = self.get_stake_pool_with_min_stake();
         assert!(sp_inx.is_some(), "All pools busy");
 
         let sp_inx = sp_inx.unwrap();
@@ -174,7 +174,7 @@ impl NearxPool {
     }
 
     /// Get the stake pool with the minimum stake
-    pub(crate) fn get_stake_pool_with_min_stake(&self) -> (Option<usize>, u128) {
+    pub fn get_stake_pool_with_min_stake(&self) -> Option<usize> {
         let mut min_stake_amount: u128 = u128::MAX;
         let mut selected_sp_inx: Option<usize> = None;
 
@@ -189,7 +189,7 @@ impl NearxPool {
             }
         }
 
-        return (selected_sp_inx, min_stake_amount);
+        return selected_sp_inx;
     }
 
     pub fn internal_nearx_transfer(
