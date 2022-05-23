@@ -43,28 +43,28 @@ pub struct NearxPoolStateResponse {
     pub staking_paused: bool,
 
     // The amount of NEAR in the contract
-    pub contract_account_balance: U128,
+    pub contract_account_balance: u128,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
-    pub total_staked: U128,
+    pub total_staked: u128,
 
     /// how many "shares" were minted. Every time someone "stakes" he "buys pool shares" with the staked amount
     // the buy share price is computed so if she "sells" the shares on that moment she recovers the same near amount
     // staking produces rewards, rewards are added to total_for_staking so share_price will increase with rewards
     // share_price = total_for_staking/total_shares
     // when someone "unstakes" they "burns" X shares at current price to recoup Y near
-    pub total_stake_shares: U128, //total NearX minted
+    pub total_stake_shares: u128, //total NearX minted
 
     /// the staking pools will add rewards to the staked amount on each epoch
     /// here we store the accumulated amount only for stats purposes. This amount can only grow
-    pub accumulated_staked_rewards: U128,
+    pub accumulated_staked_rewards: u128,
 
     /// min amount accepted as deposit or stake
-    pub min_deposit_amount: U128,
+    pub min_deposit_amount: u128,
 
     pub operator_account_id: AccountId,
     /// pct of rewards which will go to the operator
-    pub rewards_fee_pct: U128,
+    pub rewards_fee_pct: u16,
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

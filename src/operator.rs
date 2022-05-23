@@ -33,7 +33,7 @@ impl NearxPool {
             sp.account_id
         );
 
-        self.contract_lock = true;
+        self.contract_busy = true;
         sp.lock = true;
 
         //query our current balance (includes staked+unstaked+staking rewards)
@@ -67,7 +67,7 @@ impl NearxPool {
         let sp = &mut self.staking_pools[sp_inx];
 
         sp.lock = false;
-        self.contract_lock = false;
+        self.contract_busy = false;
 
         sp.last_asked_rewards_epoch_height = env::epoch_height();
 

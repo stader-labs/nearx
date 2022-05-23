@@ -68,31 +68,38 @@ pub struct NearxPool {
     pub owner_account_id: AccountId,
 
     /// Avoid re-entry when async-calls are in-flight
-    pub contract_lock: bool,
+    pub contract_busy: bool,
 
     /// no auto-staking. true while changing staking pools
     pub staking_paused: bool,
 
-    /// The total NEAR in the contract
-    /// TODO - bchain - We might not need this, we can just use env::account_balance()
+    /// What should be the contract_account_balance according to our internal accounting (if there's extra, it is 30% tx-fees)
+    /// This amount increments with attachedNEAR calls (inflow) and decrements with deposit_and_stake calls (outflow)
+    /// increments with retrieve_from_staking_pool (inflow) and decrements with user withdrawals from the contract (outflow)
+    /// It should match env::balance()
     pub contract_account_balance: u128,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
+    // During distribute_staking(), If !staking_paused && total_for_staking<total_actually_staked, then the difference gets staked in the pools
+    // During distribute_unstaking(), If total_actually_staked>total_for_staking, then the difference gets unstaked from the pools
     // nearx_price = (total_staked) / (total_stake_shares)
     pub total_staked: u128,
 
-    /// how many "NearX" were minted.
+    /// how many "shares" were minted. Every time someone "stakes" he "buys pool shares" with the staked amount
+    // the buy share price is computed so if she "sells" the shares on that moment she recovers the same near amount
+    // staking produces rewards, rewards are added to total_for_staking so share_price will increase with rewards
+    // share_price = total_for_staking/total_shares
+    // when someone "unstakes" they "burns" X shares at current price to recoup Y near
     pub total_stake_shares: u128, //total NearX minted
 
     /// the staking pools will add rewards to the staked amount on each epoch
     /// here we store the accumulated amount only for stats purposes. This amount can only grow
     pub accumulated_staked_rewards: u128,
 
-    // User account map
+    //user's accounts
     pub accounts: UnorderedMap<AccountId, Account>,
 
-    // list of staking pools
-    // TODO - bchain use persistant vector
+    //list of pools to diversify in
     pub staking_pools: Vec<StakingPoolInfo>,
 
     /// min amount accepted as deposit or stake
@@ -111,7 +118,7 @@ impl NearxPool {
 
         return Self {
             owner_account_id,
-            contract_lock: false,
+            contract_busy: false,
             operator_account_id,
             contract_account_balance: 0,
             staking_paused: false,
@@ -145,7 +152,7 @@ impl NearxPool {
     }
 
     pub fn assert_not_busy(&self) {
-        assert!(!self.contract_lock, "Contract is busy. Try again later");
+        assert!(!self.contract_busy, "Contract is busy. Try again later");
     }
 
     pub fn assert_min_deposit_amount(&self, amount: u128) {
@@ -154,10 +161,6 @@ impl NearxPool {
             "minimum deposit amount is {}",
             self.min_deposit_amount
         );
-    }
-
-    pub fn assert_staking_not_paused(&self) {
-        assert!(!self.staking_paused, "Staking has been paused!");
     }
 
     /*
@@ -195,6 +198,7 @@ impl NearxPool {
     }
 
     /// add a new staking pool, checking that it is not already in the list
+    /// added with weight_basis_points = 0, to preserve sum(weights)=100%
     pub fn add_staking_pool(&mut self, account_id: AccountId) {
         self.assert_operator_or_owner();
         for sp_inx in 0..self.staking_pools.len() {
@@ -220,10 +224,11 @@ impl NearxPool {
     /// NOTE: This is computed from the amount of "stake" shares the given account has and the
     /// current amount of total staked balance and total stake shares on the account.
     pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128String {
+        //warning: self.get_account is public and gets HumanReadableAccount .- do not confuse with self.internal_get_account
         return self.get_account(account_id).staked_balance;
     }
 
-    /// Returns the total balance of the given account
+    /// Returns the total balance of the given account (including staked and unstaked balances).
     pub fn get_account_total_balance(&self, account_id: AccountId) -> U128String {
         let acc = self.internal_get_account(&account_id);
         self.amount_from_stake_shares(acc.stake_shares).into()
@@ -231,6 +236,7 @@ impl NearxPool {
 
     /// Returns `true` if the given account can withdraw tokens in the current epoch.
     pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
+        //warning: self.get_account is public and gets HumanReadableAccount .- do not confuse with self.internal_get_account
         return self.get_account(account_id).can_withdraw;
     }
 
@@ -270,6 +276,7 @@ impl NearxPool {
     /// to implement the Staking-pool interface, get_account returns the same as the staking-pool returns
     /// full account info can be obtained by calling: pub fn get_account_info(&self, account_id: AccountId) -> GetAccountInfoResult
     /// Returns human readable representation of the account for the given account ID.
+    //warning: self.get_account is public and gets HumanReadableAccount .- do not confuse with self.internal_get_account
     pub fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
         let account = self.internal_get_account(&account_id);
         println!("account is {:?}", account);
@@ -287,6 +294,7 @@ impl NearxPool {
     }
 
     /// Returns the list of accounts (staking-pool trait)
+    //warning: self.get_accounts is public and gets HumanReadableAccount .- do not confuse with self.internal_get_account
     pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<HumanReadableAccount> {
         let keys = self.accounts.keys_as_vector();
         return (from_index..std::cmp::min(from_index + limit, keys.len()))
@@ -298,15 +306,15 @@ impl NearxPool {
     pub fn get_near_pool_state(&self) -> NearxPoolStateResponse {
         return NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
-            contract_lock: self.contract_lock,
+            contract_lock: self.contract_busy,
             staking_paused: self.staking_paused,
-            contract_account_balance: U128String::from(self.contract_account_balance),
-            total_staked: U128String::from(self.total_staked),
-            total_stake_shares: U128String::from(self.total_stake_shares),
-            accumulated_staked_rewards: U128String::from(self.accumulated_staked_rewards),
-            min_deposit_amount: U128String::from(self.min_deposit_amount),
+            contract_account_balance: self.contract_account_balance,
+            total_staked: self.total_staked,
+            total_stake_shares: self.total_stake_shares,
+            accumulated_staked_rewards: self.accumulated_staked_rewards,
+            min_deposit_amount: self.min_deposit_amount,
             operator_account_id: self.operator_account_id.clone(),
-            rewards_fee_pct: U128String::from(self.rewards_fee_pct as u128),
+            rewards_fee_pct: self.rewards_fee_pct,
         };
     }
 

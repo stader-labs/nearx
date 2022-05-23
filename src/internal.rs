@@ -11,18 +11,18 @@ use near_sdk::{
 #[near_bindgen]
 impl NearxPool {
     pub(crate) fn native_transfer_to_predecessor(&mut self, amount: u128) -> Promise {
+        //transfer to user native near account
         self.contract_account_balance -= amount;
         return Promise::new(env::predecessor_account_id()).transfer(amount);
     }
 
+    //------------------------------
     /// mints NearX based on user's deposited amount and current NearX price
     pub(crate) fn internal_deposit_and_stake(&mut self, user_amount: Balance) {
         log!("User deposited amount is {}", user_amount);
         self.assert_not_busy();
 
         self.assert_min_deposit_amount(user_amount);
-
-        self.assert_staking_not_paused();
 
         let account_id = env::predecessor_account_id();
 
@@ -88,7 +88,7 @@ impl NearxPool {
             log!("Failed to stake {} into {}", amount, sp.account_id);
             transfer_funds = true;
             sp.lock = false;
-            self.contract_lock = false;
+            self.contract_busy = false;
         }
 
         return if transfer_funds {
@@ -131,7 +131,7 @@ impl NearxPool {
     ) {
         assert_callback_calling();
 
-        self.contract_lock = false;
+        self.contract_busy = false;
         let stake_pool = &mut self.staking_pools[sp_inx];
 
         log!("Actual staked amount is {}", amount_actually_staked);
