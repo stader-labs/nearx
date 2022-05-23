@@ -1,0 +1,1 @@
+./build.sh; rm -rf neardev; near dev-deploy --wasmFile res/nearX.wasm; source neardev/dev-account.env
