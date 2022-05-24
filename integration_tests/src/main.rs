@@ -99,7 +99,7 @@ async fn deposit(
     near_pool_contract: &Contract,
     user: &Account,
 ) -> anyhow::Result<()> {
-    user.call(&worker, near_pool_contract.id(), "deposit_and_stake")
+    user.call(worker, near_pool_contract.id(), "deposit_and_stake")
         .max_gas()
         .deposit(parse_near!("10 N"))
         .transact()
@@ -112,7 +112,8 @@ async fn restake_staking_pool(
     worker: &Worker<Sandbox>,
     stake_pool_contract: &Contract,
 ) -> anyhow::Result<()> {
-    stake_pool_contract.call(&worker, "ping")
+    stake_pool_contract
+        .call(worker, "ping")
         .max_gas()
         .transact()
         .await?;
@@ -124,7 +125,8 @@ async fn auto_compound_rewards(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
 ) -> anyhow::Result<()> {
-    near_pool_contract.call(&worker, "distribute_rewards")
+    near_pool_contract
+        .call(worker, "distribute_rewards")
         .max_gas()
         .args_json(json!({ "sp_inx": 0 }))?
         .transact()
@@ -141,7 +143,7 @@ async fn ft_transfer(
     amount: String,
 ) -> anyhow::Result<()> {
     sender
-        .call(&worker, near_pool_contract.id(), "ft_transfer")
+        .call(worker, near_pool_contract.id(), "ft_transfer")
         .deposit(parse_near!("0.000000000000000000000001 N"))
         .max_gas()
         .args_json(json!({ "receiver_id": receiver.id(), "amount": amount }))?
@@ -163,7 +165,7 @@ async fn get_user_deposit(
         .await?
         .json::<HumanReadableAccount>()?;
 
-    Ok(result.staked_balance.to_string())
+    Ok(result.staked_balance)
 }
 
 async fn get_stake_pool_info(
@@ -216,10 +218,10 @@ async fn get_total_staked_amount(
 async fn get_stake_pool_total_staked_amount(
     worker: &Worker<Sandbox>,
     stake_pool_contract: &Contract,
-    user: &AccountId
+    user: &AccountId,
 ) -> anyhow::Result<String> {
     stake_pool_contract
-        .call(&worker, "get_account_staked_balance")
+        .call(worker, "get_account_staked_balance")
         .args_json(json!({ "account_id": user }))?
         .view()
         .await?
@@ -263,7 +265,10 @@ async fn main() -> anyhow::Result<()> {
     println!("Successfully checked initial user deposits");
 
     let stake_pool_state = stake_pool_contract.view_account(&worker).await?;
-    println!("stake pool account details before deposits are {:?}", stake_pool_state);
+    println!(
+        "stake pool account details before deposits are {:?}",
+        stake_pool_state
+    );
 
     println!("**** Simulating user deposits ****");
     println!("User 1 depositing");
@@ -307,7 +312,9 @@ async fn main() -> anyhow::Result<()> {
     let total_staked_amount = get_total_staked_amount(&worker, &near_pool_contract).await?;
     assert_eq!(total_staked_amount, ntoy(30).to_string());
 
-    let stake_pool_staked_amount = get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, &near_pool_contract.id()).await?;
+    let stake_pool_staked_amount =
+        get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, near_pool_contract.id())
+            .await?;
     assert_eq!(stake_pool_staked_amount, ntoy(30).to_string());
 
     let total_tokens_minted = get_total_tokens_supply(&worker, &near_pool_contract).await?;
@@ -320,11 +327,32 @@ async fn main() -> anyhow::Result<()> {
     println!("Successfully checked initial user deposits");
 
     println!("User 1 transfers 5 tokens to User 2");
-    ft_transfer(&worker, &near_pool_contract, &user1, &user2, ntoy(5).to_string()).await?;
+    ft_transfer(
+        &worker,
+        &near_pool_contract,
+        &user1,
+        &user2,
+        ntoy(5).to_string(),
+    )
+    .await?;
     println!("User 2 transfers 3 tokens to User 3");
-    ft_transfer(&worker, &near_pool_contract, &user2, &user3, ntoy(3).to_string()).await?;
+    ft_transfer(
+        &worker,
+        &near_pool_contract,
+        &user2,
+        &user3,
+        ntoy(3).to_string(),
+    )
+    .await?;
     println!("User 3 transfers 1 token to User 1");
-    ft_transfer(&worker, &near_pool_contract, &user3, &user1, ntoy(1).to_string()).await?;
+    ft_transfer(
+        &worker,
+        &near_pool_contract,
+        &user3,
+        &user1,
+        ntoy(1).to_string(),
+    )
+    .await?;
 
     println!("Checking user deposits after users have deposited");
     let user1_staked_amount =
@@ -355,7 +383,9 @@ async fn main() -> anyhow::Result<()> {
     let total_staked_amount = get_total_staked_amount(&worker, &near_pool_contract).await?;
     assert_eq!(total_staked_amount, ntoy(30).to_string());
 
-    let stake_pool_staked_amount = get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, &near_pool_contract.id()).await?;
+    let stake_pool_staked_amount =
+        get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, near_pool_contract.id())
+            .await?;
     assert_eq!(stake_pool_staked_amount, ntoy(30).to_string());
 
     let total_tokens_minted = get_total_tokens_supply(&worker, &near_pool_contract).await?;
@@ -367,7 +397,9 @@ async fn main() -> anyhow::Result<()> {
     worker.fast_forward(50400).await?;
 
     println!("Auto compounding stake pool");
-    user1.transfer_near(&worker, &stake_pool_contract.id(), ntoy(10)).await?;
+    user1
+        .transfer_near(&worker, stake_pool_contract.id(), ntoy(10))
+        .await?;
 
     let stake_pool_state = stake_pool_contract.view_account(&worker).await?;
     println!("stake pool account details are {:?}", stake_pool_state);
@@ -411,8 +443,13 @@ async fn main() -> anyhow::Result<()> {
     let stake_pool = get_stake_pool_info(&worker, &near_pool_contract).await?;
     println!("stake pool is {:?}", stake_pool);
 
-    let stake_pool_staked_amount = get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, &near_pool_contract.id()).await?;
-    println!("Amount staked with stake pool is {:?}", stake_pool_staked_amount);
+    let stake_pool_staked_amount =
+        get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, near_pool_contract.id())
+            .await?;
+    println!(
+        "Amount staked with stake pool is {:?}",
+        stake_pool_staked_amount
+    );
 
     Ok(())
 }

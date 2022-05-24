@@ -3,7 +3,7 @@
 
 // pub type U128String = U128;
 // pub type U64String = U64;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use workspaces::AccountId;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]

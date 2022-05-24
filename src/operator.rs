@@ -3,7 +3,7 @@ use crate::errors::ERROR_VALIDATOR_IS_BUSY;
 use crate::utils::{apply_multiplier, assert_callback_calling};
 use crate::validator::*;
 use crate::*;
-use near_sdk::{log, near_bindgen, Promise, PromiseOrValue};
+use near_sdk::{log, near_bindgen};
 
 #[near_bindgen]
 impl NearxPool {
@@ -17,7 +17,7 @@ impl NearxPool {
         assert!(inx < self.validators.len());
 
         let val = &mut self.validators[inx];
-        assert!(!val.lock, ERROR_VALIDATOR_IS_BUSY);
+        assert!(!val.lock, "{}", ERROR_VALIDATOR_IS_BUSY);
 
         let epoch_height = env::epoch_height();
 
@@ -63,8 +63,6 @@ impl NearxPool {
     ) {
         assert_callback_calling();
 
-        //new_total_balance has the new staked amount for this pool
-        let new_total_balance: u128;
         let val = &mut self.validators[val_inx];
 
         val.lock = false;
@@ -72,7 +70,8 @@ impl NearxPool {
 
         val.last_asked_rewards_epoch_height = env::epoch_height();
 
-        new_total_balance = total_staked_balance.0;
+        //new_total_balance has the new staked amount for this pool
+        let new_total_balance = total_staked_balance.0;
         log!("total staked balance is {}", total_staked_balance.0);
 
         //compute rewards, as new balance minus old balance
@@ -96,8 +95,11 @@ impl NearxPool {
 
             // compute the reward fee
             let mut operator_account = self.internal_get_account(&self.operator_account_id.clone());
+            println!("operator_account is {:?}", self.operator_account_id.clone());
             let operator_fee = apply_multiplier(rewards, self.rewards_fee_pct);
+            println!("operator_fee is {:?}", operator_fee);
             let operator_fee_shares = self.stake_shares_from_amount(operator_fee);
+            println!("operator_shares is {:?}", operator_fee_shares);
             if operator_fee_shares > 0 {
                 operator_account.stake_shares += operator_fee_shares;
                 self.internal_update_account(&self.operator_account_id.clone(), &operator_account);

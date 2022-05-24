@@ -1,3 +1,5 @@
+#![allow(clippy::bool_comparison)]
+
 use crate::account::Account;
 use crate::constants::{NEAR, ONE_E24};
 use crate::errors::{
@@ -11,7 +13,7 @@ use crate::validator::ValidatorInfo;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
 use near_sdk::json_types::Base58PublicKey;
-use near_sdk::{env, AccountId, PanicOnDefault, Promise, PromiseOrValue};
+use near_sdk::{env, AccountId, PanicOnDefault};
 use near_sdk::{ext_contract, near_bindgen};
 
 pub mod account;
@@ -110,7 +112,7 @@ impl NearxPool {
     pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
         assert!(!env::state_exists(), "The contract is already initialized");
 
-        return Self {
+        Self {
             owner_account_id,
             contract_lock: false,
             operator_account_id,
@@ -119,11 +121,11 @@ impl NearxPool {
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(b"A".to_vec()),
-            min_deposit_amount: 1 * NEAR,
+            min_deposit_amount: NEAR,
             validators: Vec::new(),
             total_staked: 0,
             rewards_fee_pct: 0,
-        };
+        }
     }
 
     /*
@@ -140,22 +142,23 @@ impl NearxPool {
     }
     pub fn assert_operator_or_owner(&self) {
         assert!(
-            &env::predecessor_account_id() == &self.owner_account_id
-                || &env::predecessor_account_id() == &self.operator_account_id,
+            env::predecessor_account_id() == self.owner_account_id
+                || env::predecessor_account_id() == self.operator_account_id,
+            "{}",
             ERROR_UNAUTHORIZED
         );
     }
 
     pub fn assert_not_busy(&self) {
-        assert!(!self.contract_lock, ERROR_CONTRACT_BUSY);
+        assert!(!self.contract_lock, "{}", ERROR_CONTRACT_BUSY);
     }
 
     pub fn assert_min_deposit_amount(&self, amount: u128) {
-        assert!(amount >= self.min_deposit_amount, ERROR_MIN_DEPOSIT);
+        assert!(amount >= self.min_deposit_amount, "{}", ERROR_MIN_DEPOSIT);
     }
 
     pub fn assert_staking_not_paused(&self) {
-        assert!(!self.staking_paused, ERROR_STAKING_PAUSED);
+        assert!(!self.staking_paused, "{}", ERROR_STAKING_PAUSED);
     }
 
     /*
@@ -207,7 +210,7 @@ impl NearxPool {
     // View methods
 
     pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128String {
-        return self.get_account(account_id).staked_balance;
+        self.get_account(account_id).staked_balance
     }
 
     pub fn get_account_total_balance(&self, account_id: AccountId) -> U128String {
@@ -216,18 +219,18 @@ impl NearxPool {
     }
 
     pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
-        return self.get_account(account_id).can_withdraw;
+        self.get_account(account_id).can_withdraw
     }
 
     pub fn get_owner_id(&self) -> AccountId {
-        return self.owner_account_id.clone();
+        self.owner_account_id.clone()
     }
 
     pub fn get_reward_fee_fraction(&self) -> RewardFeeFraction {
-        return RewardFeeFraction {
+        RewardFeeFraction {
             numerator: self.rewards_fee_pct.into(),
             denominator: 100,
-        };
+        }
     }
 
     pub fn set_reward_fee(&mut self, reward_fee: u16) {
@@ -237,7 +240,7 @@ impl NearxPool {
     }
 
     pub fn get_total_staked(&self) -> U128String {
-        return U128String::from(self.total_staked);
+        U128String::from(self.total_staked)
     }
 
     pub fn get_staking_key(&self) -> Base58PublicKey {
@@ -245,33 +248,34 @@ impl NearxPool {
     }
 
     pub fn is_staking_paused(&self) -> bool {
-        return self.staking_paused;
+        self.staking_paused
     }
 
     pub fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
         let account = self.internal_get_account(&account_id);
-        return HumanReadableAccount {
+        println!("account is {:?}", account);
+        HumanReadableAccount {
             account_id,
             unstaked_balance: U128String::from(0), // TODO - implement unstake
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
             can_withdraw: false,
-        };
+        }
     }
 
     pub fn get_number_of_accounts(&self) -> u64 {
-        return self.accounts.len();
+        self.accounts.len()
     }
 
     pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<HumanReadableAccount> {
         let keys = self.accounts.keys_as_vector();
-        return (from_index..std::cmp::min(from_index + limit, keys.len()))
+        (from_index..std::cmp::min(from_index + limit, keys.len()))
             .map(|index| self.get_account(keys.get(index).unwrap()))
-            .collect();
+            .collect()
     }
 
     // Contract state query
     pub fn get_near_pool_state(&self) -> NearxPoolStateResponse {
-        return NearxPoolStateResponse {
+        NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
             staking_paused: self.staking_paused,
@@ -282,7 +286,7 @@ impl NearxPool {
             min_deposit_amount: U128String::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
             rewards_fee_pct: U128String::from(self.rewards_fee_pct as u128),
-        };
+        }
     }
 
     pub fn get_nearx_price(&self) -> U128String {
@@ -294,13 +298,13 @@ impl NearxPool {
         assert!((inx as usize) < self.validators.len());
         let sp = &self.validators[inx as usize];
 
-        return ValidatorInfoResponse {
+        ValidatorInfoResponse {
             inx,
             account_id: sp.account_id.clone(),
             staked: sp.staked.into(),
             last_asked_rewards_epoch_height: sp.last_asked_rewards_epoch_height.into(),
             lock: sp.lock,
-        };
+        }
     }
 
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {

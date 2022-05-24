@@ -1,9 +1,6 @@
 use crate::*;
 use near_sdk::EpochHeight;
 
-use crate::types::*;
-use crate::utils::*;
-
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::ext_contract;
 
@@ -23,16 +20,16 @@ pub struct ValidatorInfo {
 
 impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
-        return self.lock == false && self.staked == 0;
+        self.lock == false && self.staked == 0
     }
 
     pub fn new(account_id: AccountId) -> Self {
-        return Self {
+        Self {
             account_id,
             lock: false,
             staked: 0,
             last_asked_rewards_epoch_height: 0,
-        };
+        }
     }
     pub fn total_balance(&self) -> u128 {
         self.staked
