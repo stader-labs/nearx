@@ -8,7 +8,7 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::ext_contract;
 
 #[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct StakingPoolInfo {
+pub struct ValidatorInfo {
     pub account_id: AccountId,
 
     //if we've made an async call to this pool
@@ -21,7 +21,7 @@ pub struct StakingPoolInfo {
     pub last_asked_rewards_epoch_height: EpochHeight,
 }
 
-impl StakingPoolInfo {
+impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
         return self.lock == false && self.staked == 0;
     }

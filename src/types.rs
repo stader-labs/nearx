@@ -69,7 +69,7 @@ pub struct NearxPoolStateResponse {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[serde(crate = "near_sdk::serde")]
-pub struct StakePoolInfoResponse {
+pub struct ValidatorInfoResponse {
     pub inx: u16,
     pub account_id: String,
     pub staked: U128String,

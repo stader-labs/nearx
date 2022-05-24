@@ -1,14 +1,15 @@
 use crate::constants::MIN_BALANCE_FOR_STORAGE;
+use crate::errors::*;
 use crate::types::*;
 use near_sdk::json_types::U128;
 use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
-    assert!(amount > 0, "Amount should be positive");
+    assert!(amount > 0, ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO);
     assert!(
         env::account_balance() >= MIN_BALANCE_FOR_STORAGE
             && env::account_balance() - MIN_BALANCE_FOR_STORAGE > amount,
-        "The contract account balance can't go lower than MIN_BALANCE"
+        ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
     );
 }
 

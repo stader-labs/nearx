@@ -1,6 +1,6 @@
 use crate::constants::NO_DEPOSIT;
-use crate::staking_pool::*;
 use crate::utils::{amount_from_shares, assert_callback_calling, shares_from_amount};
+use crate::validator::*;
 use crate::*;
 use near_sdk::{
     is_promise_success,
@@ -36,7 +36,7 @@ impl NearxPool {
         assert!(sp_inx.is_some(), "All pools busy");
 
         let sp_inx = sp_inx.unwrap();
-        let selected_stake_pool = &mut self.staking_pools[sp_inx];
+        let selected_stake_pool = &mut self.validators[sp_inx];
 
         log!("Amount is {}", user_amount);
         //schedule async deposit_and_stake on that pool
@@ -67,7 +67,7 @@ impl NearxPool {
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
 
-        let sp = &mut self.staking_pools[sp_inx];
+        let sp = &mut self.validators[sp_inx];
         let stake_pool_account_id = sp.account_id.clone();
         let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
         let mut transfer_funds = false;
@@ -132,7 +132,7 @@ impl NearxPool {
         assert_callback_calling();
 
         self.contract_lock = false;
-        let stake_pool = &mut self.staking_pools[sp_inx];
+        let stake_pool = &mut self.validators[sp_inx];
 
         log!("Actual staked amount is {}", amount_actually_staked);
 
@@ -147,24 +147,18 @@ impl NearxPool {
         stake_pool.lock = false;
     }
 
-    /// Returns the number of NearX (stake shares) corresponding to the given near amount at current NearX price
-    /// if the amount & the shares are incorporated, price remains the same
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
         return shares_from_amount(amount, self.total_staked, self.total_stake_shares);
     }
 
-    /// Returns the amount corresponding to the given number of NearX (stake shares).
     pub(crate) fn amount_from_stake_shares(&self, num_shares: u128) -> u128 {
         return amount_from_shares(num_shares, self.total_staked, self.total_stake_shares);
     }
 
-    /// Inner method to get the given account or a new default value account.
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
     }
 
-    /// Inner method to save the given account for a given account ID.
-    /// If the account balances are 0, the account is deleted instead to release storage.
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
         if account.is_empty() {
             self.accounts.remove(account_id);
@@ -173,12 +167,11 @@ impl NearxPool {
         }
     }
 
-    /// Get the stake pool with the minimum stake
     pub fn get_stake_pool_with_min_stake(&self) -> Option<usize> {
         let mut min_stake_amount: u128 = u128::MAX;
         let mut selected_sp_inx: Option<usize> = None;
 
-        for (sp_inx, sp) in self.staking_pools.iter().enumerate() {
+        for (sp_inx, sp) in self.validators.iter().enumerate() {
             // if the pool is not busy, and this pool can stake
             if !sp.lock {
                 // this pool requires staking?

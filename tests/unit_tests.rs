@@ -1,6 +1,6 @@
 mod unit_tests {
     use near_liquid_token::types::{
-        HumanReadableAccount, StakePoolInfoResponse, U128String, U64String,
+        HumanReadableAccount, U128String, U64String, ValidatorInfoResponse,
     };
     use near_liquid_token::NearxPool;
     use near_sdk::json_types::{Base58PublicKey, U64};
@@ -112,7 +112,7 @@ mod unit_tests {
         */
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
+        contract.add_validator(stake_public_key_1.clone());
     }
 
     #[test]
@@ -123,7 +123,7 @@ mod unit_tests {
         /*
            Non operator removing stake pool
         */
-        contract.remove_staking_pool(0);
+        contract.remove_validator(0);
     }
 
     #[test]
@@ -133,7 +133,7 @@ mod unit_tests {
         /*
            initial staking pools should be empty
         */
-        let stake_pools = contract.get_stake_pools();
+        let stake_pools = contract.get_validators();
         assert!(
             stake_pools.is_empty(),
             "Stake pools should initially be empty!"
@@ -147,12 +147,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -166,20 +166,20 @@ mod unit_tests {
         */
         let stake_public_key_2 = AccountId::from("stake_public_key_2");
 
-        contract.add_staking_pool(stake_public_key_2.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_2.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 2);
         assert!(check_equal_vec(
             stake_pools,
             vec![
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 0,
                     account_id: stake_public_key_1.to_string(),
                     staked: U128String::from(0),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 1,
                     account_id: stake_public_key_2.to_string(),
                     staked: U128String::from(0),
@@ -204,31 +204,31 @@ mod unit_tests {
         context.predecessor_account_id = owner_account();
         testing_env!(context); // this updates the context
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        contract.add_staking_pool(stake_public_key_2.clone());
-        contract.add_staking_pool(stake_public_key_3.clone());
+        contract.add_validator(stake_public_key_1.clone());
+        contract.add_validator(stake_public_key_2.clone());
+        contract.add_validator(stake_public_key_3.clone());
 
-        let stake_pools = contract.get_stake_pools();
+        let stake_pools = contract.get_validators();
 
         assert_eq!(stake_pools.len(), 3);
         assert!(check_equal_vec(
             stake_pools,
             vec![
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 0,
                     account_id: stake_public_key_1.clone(),
                     staked: U128String::from(0),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 1,
                     account_id: stake_public_key_2.clone(),
                     staked: U128String::from(0),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 2,
                     account_id: stake_public_key_3.clone(),
                     staked: U128String::from(0),
@@ -241,21 +241,21 @@ mod unit_tests {
         /*
            Remove a stake pool
         */
-        contract.remove_staking_pool(0);
-        let stake_pools = contract.get_stake_pools();
+        contract.remove_validator(0);
+        let stake_pools = contract.get_validators();
 
         assert_eq!(stake_pools.len(), 2);
         assert!(check_equal_vec(
             stake_pools,
             vec![
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 0,
                     account_id: stake_public_key_2.clone(),
                     staked: U128String::from(0),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 1,
                     account_id: stake_public_key_3.clone(),
                     staked: U128String::from(0),
@@ -268,13 +268,13 @@ mod unit_tests {
         /*
             Remove another stake pool
         */
-        contract.remove_staking_pool(0);
-        let stake_pools = contract.get_stake_pools();
+        contract.remove_validator(0);
+        let stake_pools = contract.get_validators();
 
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_3.clone(),
                 staked: U128String::from(0),
@@ -286,8 +286,8 @@ mod unit_tests {
         /*
             Remove last stake pool
         */
-        contract.remove_staking_pool(0);
-        let stake_pools = contract.get_stake_pools();
+        contract.remove_validator(0);
+        let stake_pools = contract.get_validators();
 
         assert!(stake_pools.is_empty());
     }
@@ -312,36 +312,36 @@ mod unit_tests {
         context.predecessor_account_id = owner_account();
         testing_env!(context); // this updates the context
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        contract.add_staking_pool(stake_public_key_2.clone());
-        contract.add_staking_pool(stake_public_key_3.clone());
+        contract.add_validator(stake_public_key_1.clone());
+        contract.add_validator(stake_public_key_2.clone());
+        contract.add_validator(stake_public_key_3.clone());
 
         // Set the stake amount
-        contract.staking_pools[0].staked = 100;
-        contract.staking_pools[1].staked = 200;
-        contract.staking_pools[2].staked = 300;
+        contract.validators[0].staked = 100;
+        contract.validators[1].staked = 200;
+        contract.validators[2].staked = 300;
 
-        let stake_pools = contract.get_stake_pools();
+        let stake_pools = contract.get_validators();
 
         assert_eq!(stake_pools.len(), 3);
         assert!(check_equal_vec(
             stake_pools,
             vec![
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 0,
                     account_id: stake_public_key_1.clone(),
                     staked: U128String::from(100),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 1,
                     account_id: stake_public_key_2.clone(),
                     staked: U128String::from(200),
                     last_asked_rewards_epoch_height: U64String::from(0),
                     lock: false
                 },
-                StakePoolInfoResponse {
+                ValidatorInfoResponse {
                     inx: 2,
                     account_id: stake_public_key_3.clone(),
                     staked: U128String::from(300),
@@ -417,12 +417,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -448,12 +448,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -468,13 +468,13 @@ mod unit_tests {
         let user = AccountId::from("user1");
 
         testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
-        contract.staking_pools[0].lock = true;
+        contract.validators[0].lock = true;
         contract.contract_lock = true;
 
         let res = contract.on_stake_pool_deposit_and_stake(0, ntoy(100), ntoy(100), user.clone());
         assert!(matches!(res, PromiseOrValue::Promise(..)));
 
-        assert!(!contract.staking_pools[0].lock);
+        assert!(!contract.validators[0].lock);
         assert!(!contract.contract_lock);
     }
 
@@ -487,12 +487,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -514,7 +514,7 @@ mod unit_tests {
             context.clone(),
             PromiseResult::Successful(Vec::default()),
         );
-        contract.staking_pools[0].lock = true;
+        contract.validators[0].lock = true;
         contract.contract_lock = true;
 
         let res = contract.on_stake_pool_deposit_and_stake(0, ntoy(100), ntoy(100), user.clone());
@@ -535,7 +535,7 @@ mod unit_tests {
             }
         );
 
-        assert!(contract.staking_pools[0].lock);
+        assert!(contract.validators[0].lock);
         assert!(contract.contract_lock);
     }
 
@@ -548,12 +548,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -568,16 +568,16 @@ mod unit_tests {
         let user = AccountId::from("user1");
 
         testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
-        contract.staking_pools[0].lock = true;
+        contract.validators[0].lock = true;
         contract.contract_lock = true;
-        contract.staking_pools[0].staked = ntoy(299);
+        contract.validators[0].staked = ntoy(299);
         contract.total_staked = ntoy(498);
 
         let res =
             contract.on_get_sp_staked_balance_reconcile(0, ntoy(100), U128String::from(ntoy(298)));
-        assert_eq!(contract.staking_pools[0].staked, ntoy(298));
+        assert_eq!(contract.validators[0].staked, ntoy(298));
         assert_eq!(contract.total_staked, ntoy(497));
-        assert!(!contract.staking_pools[0].lock);
+        assert!(!contract.validators[0].lock);
         assert!(!contract.contract_lock);
     }
 
@@ -612,12 +612,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -626,7 +626,7 @@ mod unit_tests {
             }]
         ));
 
-        contract.staking_pools[0].lock = true;
+        contract.validators[0].lock = true;
         contract.distribute_rewards(0);
     }
 
@@ -642,12 +642,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -659,31 +659,31 @@ mod unit_tests {
         contract.distribute_rewards(0);
 
         assert!(!contract.contract_lock);
-        assert!(!contract.staking_pools[0].lock);
+        assert!(!contract.validators[0].lock);
 
         /*
            Redeeming rewards in the same epoch
         */
-        contract.staking_pools[0].last_asked_rewards_epoch_height = context.epoch_height;
-        contract.staking_pools[0].staked = ntoy(100);
+        contract.validators[0].last_asked_rewards_epoch_height = context.epoch_height;
+        contract.validators[0].staked = ntoy(100);
 
         contract.distribute_rewards(0);
 
         assert!(!contract.contract_lock);
-        assert!(!contract.staking_pools[0].lock);
+        assert!(!contract.validators[0].lock);
 
         /*
            Successful case
         */
         context.epoch_height = 100;
         testing_env!(context.clone());
-        contract.staking_pools[0].last_asked_rewards_epoch_height = context.epoch_height - 10;
-        contract.staking_pools[0].staked = ntoy(100);
+        contract.validators[0].last_asked_rewards_epoch_height = context.epoch_height - 10;
+        contract.validators[0].staked = ntoy(100);
 
         contract.distribute_rewards(0);
 
         assert!(contract.contract_lock);
-        assert!(contract.staking_pools[0].lock);
+        assert!(contract.validators[0].lock);
     }
 
     #[test]
@@ -695,12 +695,12 @@ mod unit_tests {
 
         let stake_public_key_1 = AccountId::from("stake_public_key_1");
 
-        contract.add_staking_pool(stake_public_key_1.clone());
-        let stake_pools = contract.get_stake_pools();
+        contract.add_validator(stake_public_key_1.clone());
+        let stake_pools = contract.get_validators();
         assert_eq!(stake_pools.len(), 1);
         assert!(check_equal_vec(
             stake_pools,
-            vec![StakePoolInfoResponse {
+            vec![ValidatorInfoResponse {
                 inx: 0,
                 account_id: stake_public_key_1.to_string(),
                 staked: U128String::from(0),
@@ -713,7 +713,7 @@ mod unit_tests {
         context.epoch_height = 100;
         testing_env!(context.clone());
 
-        contract.staking_pools[0].staked = ntoy(100);
+        contract.validators[0].staked = ntoy(100);
         contract.rewards_fee_pct = 10;
         contract.total_staked = ntoy(100);
         contract.total_stake_shares = ntoy(100);
@@ -721,10 +721,10 @@ mod unit_tests {
         contract.on_get_sp_staked_balance_for_rewards(0, U128String::from(ntoy(150)));
 
         assert!(!contract.contract_lock);
-        assert!(!contract.staking_pools[0].lock);
-        assert_eq!(contract.staking_pools[0].staked, ntoy(150));
+        assert!(!contract.validators[0].lock);
+        assert_eq!(contract.validators[0].staked, ntoy(150));
         assert_eq!(
-            contract.staking_pools[0].last_asked_rewards_epoch_height,
+            contract.validators[0].last_asked_rewards_epoch_height,
             context.epoch_height
         );
         assert_eq!(contract.total_staked, ntoy(150));
