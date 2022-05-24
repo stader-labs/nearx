@@ -9,8 +9,8 @@ use near_sdk::collections::{LazyOption, LookupMap};
 use near_sdk::ext_contract;
 use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{
-    assert_one_yocto, env, log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault,
-    PromiseOrValue, StorageUsage,
+    assert_one_yocto, env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue,
+    StorageUsage,
 };
 
 use crate::*;
@@ -54,9 +54,7 @@ fn ft_metadata_default() -> FungibleTokenMetadata {
     }
 }
 fn ft_metadata_init_lazy_container() -> LazyOption<FungibleTokenMetadata> {
-    let metadata: LazyOption<FungibleTokenMetadata>;
-    metadata = LazyOption::new(b"ftmd".to_vec(), None);
-    return metadata;
+    LazyOption::new(b"ftmd".to_vec(), None)
 }
 
 #[near_bindgen]
@@ -107,11 +105,7 @@ impl FungibleTokenCore for NearxPool {
         );
 
         let receiver_id: AccountId = receiver_id.into();
-        self.internal_nearx_transfer(
-            &env::predecessor_account_id(),
-            &receiver_id.clone(),
-            amount.0,
-        );
+        self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
 
         ext_ft_receiver::ft_on_transfer(
             env::predecessor_account_id(),
@@ -120,14 +114,11 @@ impl FungibleTokenCore for NearxPool {
             //promise params:
             &receiver_id, //contract
             NO_DEPOSIT,   //attached native NEAR amount
-            env::prepaid_gas()
-                - Gas::from(GAS_FOR_FT_TRANSFER_CALL)
-                - Gas::from(GAS_FOR_RESOLVE_TRANSFER)
-                - Gas::from(ONE_TGAS), // set almost all remaining gas for ft_on_transfer
+            env::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL - GAS_FOR_RESOLVE_TRANSFER - ONE_TGAS, // set almost all remaining gas for ft_on_transfer
         )
         .then(ext_self::ft_resolve_transfer(
             env::predecessor_account_id(),
-            receiver_id.into(),
+            receiver_id,
             amount,
             //promise params:
             &env::current_account_id(), //contract
@@ -143,8 +134,9 @@ impl FungibleTokenCore for NearxPool {
     }
 
     fn ft_balance_of(&self, account_id: ValidAccountId) -> U128 {
-        let acc = self.internal_get_account(&account_id.into());
-        return acc.stake_shares.into();
+        self.internal_get_account(&account_id.into())
+            .stake_shares
+            .into()
     }
 }
 
@@ -166,23 +158,23 @@ impl FungibleTokenResolver for NearxPool {
         if burned_amount > 0 {
             log!("{} tokens burned", burned_amount);
         }
-        return used_amount.into();
+        used_amount.into()
     }
 }
 
 #[near_bindgen]
 impl FungibleTokenMetadataProvider for NearxPool {
     fn ft_metadata(&self) -> FungibleTokenMetadata {
-        let metadata = ft_metadata_init_lazy_container();
         //load from storage or return default
-        return metadata.get().unwrap_or(ft_metadata_default());
+        ft_metadata_init_lazy_container()
+            .get()
+            .unwrap_or_else(ft_metadata_default)
     }
 }
 
 #[near_bindgen]
 impl NearxPool {
     pub fn ft_metadata_set(&self, data: FungibleTokenMetadata) {
-        let mut metadata = ft_metadata_init_lazy_container();
-        metadata.set(&data); //save into storage
+        ft_metadata_init_lazy_container().set(&data); //save into storage
     }
 }

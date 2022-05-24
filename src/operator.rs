@@ -2,7 +2,7 @@ use crate::constants::NO_DEPOSIT;
 use crate::staking_pool::*;
 use crate::utils::{apply_multiplier, assert_callback_calling};
 use crate::*;
-use near_sdk::{log, near_bindgen, Promise, PromiseOrValue};
+use near_sdk::{log, near_bindgen};
 
 #[near_bindgen]
 impl NearxPool {
@@ -62,8 +62,6 @@ impl NearxPool {
     ) {
         assert_callback_calling();
 
-        //new_total_balance has the new staked amount for this pool
-        let new_total_balance: u128;
         let sp = &mut self.staking_pools[sp_inx];
 
         sp.lock = false;
@@ -71,20 +69,20 @@ impl NearxPool {
 
         sp.last_asked_rewards_epoch_height = env::epoch_height();
 
-        new_total_balance = total_staked_balance.0;
+        //new_total_balance has the new staked amount for this pool
+        let new_total_balance = total_staked_balance.0;
         log!("total staked balance is {}", total_staked_balance.0);
 
-        let rewards: u128;
-        if new_total_balance < sp.total_balance() {
+        let rewards = if new_total_balance < sp.total_balance() {
             log!(
                 "INCONSISTENCY @{} says new_total_balance < our info sp.total_balance()",
                 sp.account_id
             );
-            rewards = 0;
+            0
         } else {
             //compute rewards, as new balance minus old balance
-            rewards = new_total_balance - sp.total_balance();
-        }
+            new_total_balance - sp.total_balance()
+        };
 
         log!(
             "sp:{} old_balance:{} new_balance:{} rewards:{}",
