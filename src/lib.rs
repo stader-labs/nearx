@@ -319,29 +319,28 @@ impl NearxPool {
         assert!((inx as usize) < self.staking_pools.len());
         let sp = &self.staking_pools[inx as usize];
 
-        return StakePoolInfoResponse {
+        StakePoolInfoResponse {
             inx,
             account_id: sp.account_id.clone(),
             staked: sp.staked.into(),
             last_asked_rewards_epoch_height: sp.last_asked_rewards_epoch_height.into(),
             lock: sp.lock,
-        };
+        }
     }
 
     pub fn get_stake_pools(&self) -> Vec<StakePoolInfoResponse> {
-        let mut stake_pools_response = vec![];
-        for i in 0..self.staking_pools.len() {
-            stake_pools_response.push(StakePoolInfoResponse {
+        self.staking_pools
+            .iter()
+            .enumerate()
+            .map(|(i, pool)| StakePoolInfoResponse {
                 inx: i as u16,
-                account_id: self.staking_pools[i].account_id.clone(),
-                staked: U128String::from(self.staking_pools[i].staked),
+                account_id: pool.account_id.clone(),
+                staked: U128String::from(pool.staked),
                 last_asked_rewards_epoch_height: U64String::from(
-                    self.staking_pools[i].last_asked_rewards_epoch_height,
+                    pool.last_asked_rewards_epoch_height,
                 ),
-                lock: self.staking_pools[i].lock,
-            });
-        }
-
-        stake_pools_response
+                lock: pool.lock,
+            })
+            .collect()
     }
 }

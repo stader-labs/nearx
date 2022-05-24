@@ -189,7 +189,7 @@ impl NearxPool {
             }
         }
 
-        return selected_sp_inx;
+        selected_sp_inx
     }
 
     pub fn internal_nearx_transfer(
