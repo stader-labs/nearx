@@ -1,9 +1,10 @@
-use crate::constants::NO_DEPOSIT;
-use crate::errors::ERROR_VALIDATOR_IS_BUSY;
-use crate::gas::{GET_ACCOUNT_TOTAL_BALANCE, ON_GET_SP_STAKED_BALANCE_TO_RECONCILE};
-use crate::utils::{apply_multiplier, assert_callback_calling};
-use crate::validator::*;
-use crate::*;
+use crate::{
+    constants::{gas, NO_DEPOSIT},
+    errors::ERROR_VALIDATOR_IS_BUSY,
+    utils::{apply_multiplier, assert_callback_calling},
+    validator::*,
+    *,
+};
 use near_sdk::{log, near_bindgen};
 
 #[near_bindgen]
@@ -42,17 +43,17 @@ impl NearxPool {
         ext_staking_pool::get_account_staked_balance(
             env::current_account_id(),
             //promise params
-            &val.account_id,
+            val.account_id.clone(),
             NO_DEPOSIT,
-            GET_ACCOUNT_TOTAL_BALANCE,
+            gas::GET_ACCOUNT_TOTAL_BALANCE,
         )
         .then(
             ext_staking_pool_callback::on_get_sp_staked_balance_for_rewards(
                 inx,
                 //promise params
-                &env::current_account_id(),
+                env::current_account_id(),
                 NO_DEPOSIT,
-                ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
             ),
         );
     }

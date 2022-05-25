@@ -1,6 +1,4 @@
-use crate::constants::MIN_BALANCE_FOR_STORAGE;
-use crate::errors::*;
-use crate::types::*;
+use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*, types::*};
 use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
@@ -50,12 +48,12 @@ pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
 
 pub fn shares_from_amount(amount: u128, total_amount: u128, total_shares: u128) -> u128 {
     if total_shares == 0 {
-        return amount;
+        amount
+    } else if amount == 0 || total_amount == 0 {
+        0
+    } else {
+        proportional(total_shares, amount, total_amount)
     }
-    if amount == 0 || total_amount == 0 {
-        return 0;
-    }
-    proportional(total_shares, amount, total_amount)
 }
 
 pub fn amount_from_shares(num_shares: u128, total_amount: u128, total_shares: u128) -> u128 {

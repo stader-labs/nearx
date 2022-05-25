@@ -1,12 +1,14 @@
-use near_sdk::json_types::{U128, U64};
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::AccountId;
+use near_sdk::{
+    json_types::{U128, U64},
+    serde::{Deserialize, Serialize},
+    AccountId,
+};
 
 pub type U128String = U128;
 pub type U64String = U64;
 
 /// Rewards fee fraction structure for the staking pool contract.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct RewardFeeFraction {
     pub numerator: u32,
@@ -22,7 +24,7 @@ mod uint_impl {
 }
 pub use uint_impl::U256;
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub struct AccountResponse {
     pub account_id: AccountId,
@@ -31,7 +33,7 @@ pub struct AccountResponse {
     pub can_withdraw: bool,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct NearxPoolStateResponse {
     pub owner_account_id: AccountId,
@@ -60,11 +62,11 @@ pub struct NearxPoolStateResponse {
     pub rewards_fee_pct: U128,
 }
 
-#[derive(Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfoResponse {
     pub inx: u16,
-    pub account_id: String,
+    pub account_id: AccountId,
     pub staked: U128String,
     pub last_asked_rewards_epoch_height: U64String,
     pub lock: bool,

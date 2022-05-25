@@ -1,14 +1,13 @@
 mod helpers;
-mod types;
 
 use serde_json::json;
 use workspaces::{Account, AccountId, Contract, Worker};
 
 use crate::helpers::ntoy;
-use crate::types::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_liquid_token::types::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_sdk::json_types::U128;
 use near_units::*;
-use workspaces::network::Sandbox;
-use workspaces::prelude::*;
+use workspaces::{network::Sandbox, prelude::*};
 
 const NEAR_LIQUID_TOKEN_WASM_FILEPATH: &str =
     "./../target/wasm32-unknown-unknown/release/near_liquid_token.wasm";
@@ -85,8 +84,8 @@ async fn setup_sandbox_workspace() -> anyhow::Result<(
         .args_json(json!({ "account_id": near_pool_contract.id() }))?
         .view()
         .await?
-        .json::<String>()?;
-    assert_eq!(stake_pool_initial_stake, 0.to_string());
+        .json::<U128>()?;
+    assert_eq!(stake_pool_initial_stake, U128(0));
     println!("Assertion successful!");
 
     Ok((
@@ -109,19 +108,6 @@ async fn deposit(
     user.call(worker, near_pool_contract.id(), "deposit_and_stake")
         .max_gas()
         .deposit(parse_near!("10 N"))
-        .transact()
-        .await?;
-
-    Ok(())
-}
-
-async fn restake_staking_pool(
-    worker: &Worker<Sandbox>,
-    stake_pool_contract: &Contract,
-) -> anyhow::Result<()> {
-    stake_pool_contract
-        .call(worker, "ping")
-        .max_gas()
         .transact()
         .await?;
 
@@ -164,7 +150,7 @@ async fn get_user_deposit(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
     user: AccountId,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     let result = near_pool_contract
         .call(worker, "get_account")
         .args_json(json!({ "account_id": user }))?
@@ -191,24 +177,24 @@ async fn get_user_token_balance(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
     user: AccountId,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     near_pool_contract
         .call(worker, "ft_balance_of")
         .args_json(json!({ "account_id": user }))?
         .view()
         .await?
-        .json::<String>()
+        .json::<U128>()
 }
 
 async fn get_nearx_price(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     near_pool_contract
         .call(worker, "get_nearx_price")
         .view()
         .await?
-        .json::<String>()
+        .json::<U128>()
 }
 
 async fn get_nearx_state(
@@ -225,43 +211,43 @@ async fn get_nearx_state(
 async fn get_total_staked_amount(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     near_pool_contract
         .call(worker, "get_total_staked")
         .view()
         .await?
-        .json::<String>()
+        .json::<U128>()
 }
 
 async fn get_stake_pool_total_staked_amount(
     worker: &Worker<Sandbox>,
     stake_pool_contract: &Contract,
     user: &AccountId,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     stake_pool_contract
         .call(worker, "get_account_staked_balance")
         .args_json(json!({ "account_id": user }))?
         .view()
         .await?
-        .json::<String>()
+        .json::<U128>()
 }
 
 async fn get_total_tokens_supply(
     worker: &Worker<Sandbox>,
     near_pool_contract: &Contract,
-) -> anyhow::Result<String> {
+) -> anyhow::Result<U128> {
     near_pool_contract
         .call(worker, "ft_total_supply")
         .view()
         .await?
-        .json::<String>()
+        .json::<U128>()
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");
-    let (worker, near_pool_contract, stake_pool_contract, user1, user2, user3, operator, owner) =
+    let (worker, near_pool_contract, stake_pool_contract, user1, user2, user3, operator, _owner) =
         setup_sandbox_workspace().await?;
 
     // First test
@@ -276,9 +262,9 @@ async fn main() -> anyhow::Result<()> {
         get_user_deposit(&worker, &near_pool_contract, user2.id().clone()).await?;
     let user3_staked_amount =
         get_user_deposit(&worker, &near_pool_contract, user3.id().clone()).await?;
-    assert_eq!(user1_staked_amount, 0.to_string());
-    assert_eq!(user2_staked_amount, 0.to_string());
-    assert_eq!(user3_staked_amount, 0.to_string());
+    assert_eq!(user1_staked_amount, U128(0));
+    assert_eq!(user2_staked_amount, U128(0));
+    assert_eq!(user3_staked_amount, U128(0));
 
     println!("Successfully checked initial user deposits");
 
@@ -309,9 +295,9 @@ async fn main() -> anyhow::Result<()> {
     let user3_staked_amount =
         get_user_deposit(&worker, &near_pool_contract, user3.id().clone()).await?;
 
-    assert_eq!(user1_staked_amount, ntoy(10).to_string());
-    assert_eq!(user2_staked_amount, ntoy(10).to_string());
-    assert_eq!(user3_staked_amount, ntoy(10).to_string());
+    assert_eq!(user1_staked_amount, U128(ntoy(10)));
+    assert_eq!(user2_staked_amount, U128(ntoy(10)));
+    assert_eq!(user3_staked_amount, U128(ntoy(10)));
 
     let user1_token_balance =
         get_user_token_balance(&worker, &near_pool_contract, user1.id().clone()).await?;
@@ -320,26 +306,29 @@ async fn main() -> anyhow::Result<()> {
     let user3_token_balance =
         get_user_token_balance(&worker, &near_pool_contract, user3.id().clone()).await?;
 
-    assert_eq!(user1_token_balance, ntoy(10).to_string());
-    assert_eq!(user2_token_balance, ntoy(10).to_string());
-    assert_eq!(user3_token_balance, ntoy(10).to_string());
+    assert_eq!(user1_token_balance, U128(ntoy(10)));
+    assert_eq!(user2_token_balance, U128(ntoy(10)));
+    assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let nearx_price = get_nearx_price(&worker, &near_pool_contract).await?;
-    assert_eq!(nearx_price, ntoy(1).to_string());
+    assert_eq!(nearx_price, U128(ntoy(1)));
 
     let total_staked_amount = get_total_staked_amount(&worker, &near_pool_contract).await?;
-    assert_eq!(total_staked_amount, ntoy(30).to_string());
+    assert_eq!(total_staked_amount, U128(ntoy(30)));
 
     let stake_pool_staked_amount =
         get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, near_pool_contract.id())
             .await?;
-    assert_eq!(stake_pool_staked_amount, ntoy(30).to_string());
+    assert_eq!(stake_pool_staked_amount, U128(ntoy(30)));
 
     let total_tokens_minted = get_total_tokens_supply(&worker, &near_pool_contract).await?;
-    assert_eq!(total_tokens_minted, ntoy(30).to_string());
+    assert_eq!(total_tokens_minted, U128(ntoy(30)));
 
     let stake_pool_state = stake_pool_contract.view_account(&worker).await?;
-    println!("stake pool account details after user deposits {:?}", stake_pool_state);
+    println!(
+        "stake pool account details after user deposits {:?}",
+        stake_pool_state
+    );
 
     // Second test
     // Test token transfers
@@ -355,7 +344,7 @@ async fn main() -> anyhow::Result<()> {
         &user2,
         ntoy(5).to_string(),
     )
-        .await?;
+    .await?;
     println!("User 2 transfers 3 tokens to User 3");
     ft_transfer(
         &worker,
@@ -364,7 +353,7 @@ async fn main() -> anyhow::Result<()> {
         &user3,
         ntoy(3).to_string(),
     )
-        .await?;
+    .await?;
     println!("User 3 transfers 1 token to User 1");
     ft_transfer(
         &worker,
@@ -373,7 +362,7 @@ async fn main() -> anyhow::Result<()> {
         &user1,
         ntoy(1).to_string(),
     )
-        .await?;
+    .await?;
 
     println!("Checking user deposits after users have deposited");
     let user1_staked_amount =
@@ -383,9 +372,9 @@ async fn main() -> anyhow::Result<()> {
     let user3_staked_amount =
         get_user_deposit(&worker, &near_pool_contract, user3.id().clone()).await?;
 
-    assert_eq!(user1_staked_amount, ntoy(6).to_string());
-    assert_eq!(user2_staked_amount, ntoy(12).to_string());
-    assert_eq!(user3_staked_amount, ntoy(12).to_string());
+    assert_eq!(user1_staked_amount, U128(ntoy(6)));
+    assert_eq!(user2_staked_amount, U128(ntoy(12)));
+    assert_eq!(user3_staked_amount, U128(ntoy(12)));
 
     let user1_token_balance =
         get_user_token_balance(&worker, &near_pool_contract, user1.id().clone()).await?;
@@ -394,23 +383,23 @@ async fn main() -> anyhow::Result<()> {
     let user3_token_balance =
         get_user_token_balance(&worker, &near_pool_contract, user3.id().clone()).await?;
 
-    assert_eq!(user1_token_balance, ntoy(6).to_string());
-    assert_eq!(user2_token_balance, ntoy(12).to_string());
-    assert_eq!(user3_token_balance, ntoy(12).to_string());
+    assert_eq!(user1_token_balance, U128(ntoy(6)));
+    assert_eq!(user2_token_balance, U128(ntoy(12)));
+    assert_eq!(user3_token_balance, U128(ntoy(12)));
 
     let nearx_price = get_nearx_price(&worker, &near_pool_contract).await?;
-    assert_eq!(nearx_price, ntoy(1).to_string());
+    assert_eq!(nearx_price, U128(ntoy(1)));
 
     let total_staked_amount = get_total_staked_amount(&worker, &near_pool_contract).await?;
-    assert_eq!(total_staked_amount, ntoy(30).to_string());
+    assert_eq!(total_staked_amount, U128(ntoy(30)));
 
     let stake_pool_staked_amount =
         get_stake_pool_total_staked_amount(&worker, &stake_pool_contract, near_pool_contract.id())
             .await?;
-    assert_eq!(stake_pool_staked_amount, ntoy(30).to_string());
+    assert_eq!(stake_pool_staked_amount, U128(ntoy(30)));
 
     let total_tokens_minted = get_total_tokens_supply(&worker, &near_pool_contract).await?;
-    assert_eq!(total_tokens_minted, ntoy(30).to_string());
+    assert_eq!(total_tokens_minted, U128(ntoy(30)));
 
     println!("**** Step 4: Auto compounding ****");
 
@@ -446,7 +435,7 @@ async fn main() -> anyhow::Result<()> {
     println!("total_staked amount is {:?}", total_staked_amount);
 
     let total_tokens_minted = get_total_tokens_supply(&worker, &near_pool_contract).await?;
-    assert_eq!(total_tokens_minted, ntoy(30).to_string());
+    assert_eq!(total_tokens_minted, U128(ntoy(30)));
 
     let user1_staked_amount =
         get_user_deposit(&worker, &near_pool_contract, user1.id().clone()).await?;
@@ -466,9 +455,9 @@ async fn main() -> anyhow::Result<()> {
     let user3_token_balance =
         get_user_token_balance(&worker, &near_pool_contract, user3.id().clone()).await?;
 
-    assert_eq!(user1_token_balance, ntoy(6).to_string());
-    assert_eq!(user2_token_balance, ntoy(12).to_string());
-    assert_eq!(user3_token_balance, ntoy(12).to_string());
+    assert_eq!(user1_token_balance, U128(ntoy(6)));
+    assert_eq!(user2_token_balance, U128(ntoy(12)));
+    assert_eq!(user3_token_balance, U128(ntoy(12)));
 
     let validator = get_validator_info(&worker, &near_pool_contract).await?;
     println!("validator is {:?}", validator);

@@ -1,35 +1,31 @@
 #![allow(clippy::bool_comparison)]
 
-use crate::account::Account;
-use crate::constants::{NEAR, ONE_E24};
-use crate::errors::{
-    ERROR_CONTRACT_BUSY, ERROR_MIN_DEPOSIT, ERROR_STAKING_PAUSED, ERROR_UNAUTHORIZED,
+use crate::{
+    account::Account,
+    constants::{NEAR, ONE_E24},
+    errors::{ERROR_CONTRACT_BUSY, ERROR_MIN_DEPOSIT, ERROR_STAKING_PAUSED, ERROR_UNAUTHORIZED},
+    types::{
+        AccountResponse, NearxPoolStateResponse, RewardFeeFraction, U128String, U64String,
+        ValidatorInfoResponse,
+    },
+    validator::ValidatorInfo,
 };
-use crate::types::{
-    AccountResponse, NearxPoolStateResponse, RewardFeeFraction, U128String, U64String,
-    ValidatorInfoResponse,
+use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::UnorderedMap,
+    PublicKey, {env, AccountId, PanicOnDefault, Promise, PromiseOrValue},
+    {ext_contract, near_bindgen},
 };
-use crate::validator::ValidatorInfo;
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::UnorderedMap;
-use near_sdk::json_types::Base58PublicKey;
-use near_sdk::{env, AccountId, PanicOnDefault, Promise, PromiseOrValue};
-use near_sdk::{ext_contract, near_bindgen};
 
 pub mod account;
 pub mod constants;
 pub mod errors;
-pub mod gas;
 pub mod internal;
 pub mod nearx_token;
 pub mod operator;
 pub mod types;
 pub mod utils;
 pub mod validator;
-
-// setup_alloc adds a #[cfg(target_arch = "wasm32")] to the global allocator, which prevents the allocator
-// from being used when the contract's main file is used in simulation testing.
-near_sdk::setup_alloc!();
 
 //self-callbacks
 #[ext_contract(ext_staking_pool_callback)]
@@ -238,7 +234,7 @@ impl NearxPool {
         U128String::from(self.total_staked)
     }
 
-    pub fn get_staking_key(&self) -> Base58PublicKey {
+    pub fn get_staking_key(&self) -> PublicKey {
         panic!("No staking key for the staking pool");
     }
 
@@ -302,19 +298,16 @@ impl NearxPool {
     }
 
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {
-        let mut stake_pools_response = vec![];
-        for i in 0..self.validators.len() {
-            stake_pools_response.push(ValidatorInfoResponse {
+        self.validators
+            .iter()
+            .enumerate()
+            .map(|(i, pool)| ValidatorInfoResponse {
                 inx: i as u16,
-                account_id: self.validators[i].account_id.clone(),
-                staked: U128String::from(self.validators[i].staked),
-                last_asked_rewards_epoch_height: U64String::from(
-                    self.validators[i].last_redeemed_rewards_epoch,
-                ),
-                lock: self.validators[i].lock,
-            });
-        }
-
-        stake_pools_response
+                account_id: pool.account_id.clone(),
+                staked: U128String::from(pool.staked),
+                last_asked_rewards_epoch_height: U64String::from(pool.last_redeemed_rewards_epoch),
+                lock: pool.lock,
+            })
+            .collect()
     }
 }

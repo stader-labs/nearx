@@ -1,10 +1,9 @@
-use crate::constants::NO_DEPOSIT;
-use crate::gas::{
-    DEPOSIT_AND_STAKE, ON_GET_SP_STAKED_BALANCE_TO_RECONCILE, ON_STAKING_POOL_DEPOSIT_AND_STAKE,
+use crate::{
+    constants::{gas, NO_DEPOSIT},
+    utils::{amount_from_shares, assert_callback_calling, shares_from_amount},
+    validator::*,
+    *,
 };
-use crate::utils::{amount_from_shares, assert_callback_calling, shares_from_amount};
-use crate::validator::*;
-use crate::*;
 use near_sdk::{is_promise_success, log, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
@@ -33,10 +32,10 @@ impl NearxPool {
         log!("Amount is {}", user_amount);
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::deposit_and_stake(
-            &selected_stake_pool.account_id,
+            selected_stake_pool.account_id.clone(),
             user_amount, //attached amount
             // promise parameters
-            DEPOSIT_AND_STAKE,
+            gas::DEPOSIT_AND_STAKE,
         )
         .then(ext_staking_pool_callback::on_stake_pool_deposit_and_stake(
             sp_inx,
@@ -44,9 +43,9 @@ impl NearxPool {
             num_shares,
             account_id,
             // promise parameters
-            &env::current_account_id(),
+            env::current_account_id(),
             NO_DEPOSIT,
-            ON_STAKING_POOL_DEPOSIT_AND_STAKE,
+            gas::ON_STAKING_POOL_DEPOSIT_AND_STAKE,
         ));
     }
 
@@ -80,7 +79,7 @@ impl NearxPool {
             self.contract_lock = false;
         }
 
-        return if transfer_funds {
+        if transfer_funds {
             log!(
                 "Transferring back {} to {} after stake failed",
                 amount,
@@ -94,22 +93,22 @@ impl NearxPool {
             ext_staking_pool::get_account_staked_balance(
                 env::current_account_id(),
                 // promise params
-                &stake_pool_account_id,
+                stake_pool_account_id,
                 NO_DEPOSIT,
-                ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
             )
             .then(
                 ext_staking_pool_callback::on_get_sp_staked_balance_reconcile(
                     sp_inx,
                     amount,
                     // promise params
-                    &env::current_account_id(),
+                    env::current_account_id(),
                     NO_DEPOSIT,
-                    ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                    gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
                 ),
             );
             PromiseOrValue::Value(true)
-        };
+        }
     }
 
     pub fn on_get_sp_staked_balance_reconcile(

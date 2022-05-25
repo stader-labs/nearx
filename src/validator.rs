@@ -1,10 +1,10 @@
 use crate::*;
-use near_sdk::EpochHeight;
+use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    ext_contract, EpochHeight,
+};
 
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::ext_contract;
-
-#[derive(Default, BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct ValidatorInfo {
     pub account_id: AccountId,
 

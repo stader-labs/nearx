@@ -1,19 +1,18 @@
+use crate::*;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore,
     metadata::{FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC},
     resolver::FungibleTokenResolver,
 };
-
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap};
-use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::{
-    assert_one_yocto, env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue,
+    assert_one_yocto,
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::{LazyOption, LookupMap},
+    env, ext_contract,
+    json_types::U128,
+    log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult,
     StorageUsage,
 };
-use near_sdk::{ext_contract, PromiseResult};
-
-use crate::*;
 
 #[ext_contract(ext_ft_receiver)]
 pub trait FungibleTokenReceiver {
@@ -35,10 +34,10 @@ trait FungibleTokenResolver {
     ) -> U128;
 }
 
-const GAS_FOR_FT_TRANSFER_CALL: u64 = 30_000_000_000_000;
-const GAS_FOR_RESOLVE_TRANSFER: u64 = 11_000_000_000_000;
-const FIVE_TGAS: u64 = 5_000_000_000_000;
-const ONE_TGAS: u64 = 1_000_000_000_000;
+const GAS_FOR_FT_TRANSFER_CALL: Gas = Gas(30_000_000_000_000);
+const GAS_FOR_RESOLVE_TRANSFER: Gas = Gas(11_000_000_000_000);
+const FIVE_TGAS: Gas = Gas(5_000_000_000_000);
+const ONE_TGAS: Gas = Gas(1_000_000_000_000);
 
 const NO_DEPOSIT: Balance = 0;
 
@@ -62,22 +61,18 @@ impl FungibleTokenCore for NearxPool {
     #[payable]
     fn ft_transfer(
         &mut self,
-        receiver_id: ValidAccountId,
+        receiver_id: AccountId,
         amount: U128,
         #[allow(unused)] memo: Option<String>,
     ) {
         assert_one_yocto();
-        self.internal_nearx_transfer(
-            &env::predecessor_account_id(),
-            &receiver_id.into(),
-            amount.0,
-        );
+        self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
     }
 
     #[payable]
     fn ft_transfer_call(
         &mut self,
-        receiver_id: ValidAccountId,
+        receiver_id: AccountId,
         amount: U128,
         #[allow(unused)] memo: Option<String>,
         msg: String,
@@ -85,11 +80,11 @@ impl FungibleTokenCore for NearxPool {
         assert_one_yocto();
         assert!(
             env::prepaid_gas() > GAS_FOR_FT_TRANSFER_CALL + GAS_FOR_RESOLVE_TRANSFER + FIVE_TGAS,
-            "require at least {} gas",
+            "require at least {:?} gas",
             GAS_FOR_FT_TRANSFER_CALL + GAS_FOR_RESOLVE_TRANSFER + FIVE_TGAS
         );
 
-        let receiver_id: AccountId = receiver_id.into();
+        let receiver_id: AccountId = receiver_id;
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
 
         ext_ft_receiver::ft_on_transfer(
@@ -97,8 +92,8 @@ impl FungibleTokenCore for NearxPool {
             amount,
             msg,
             //promise params:
-            &receiver_id, //contract
-            NO_DEPOSIT,   //attached native NEAR amount
+            receiver_id.clone(), //contract
+            NO_DEPOSIT,          //attached native NEAR amount
             env::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL - GAS_FOR_RESOLVE_TRANSFER - ONE_TGAS, // set almost all remaining gas for ft_on_transfer
         )
         .then(ext_self::ft_resolve_transfer(
@@ -106,8 +101,8 @@ impl FungibleTokenCore for NearxPool {
             receiver_id,
             amount,
             //promise params:
-            &env::current_account_id(), //contract
-            NO_DEPOSIT,                 //attached native NEAR amount
+            env::current_account_id(), //contract
+            NO_DEPOSIT,                //attached native NEAR amount
             GAS_FOR_RESOLVE_TRANSFER,
         ))
         .into()
@@ -118,10 +113,8 @@ impl FungibleTokenCore for NearxPool {
         self.total_stake_shares.into()
     }
 
-    fn ft_balance_of(&self, account_id: ValidAccountId) -> U128 {
-        self.internal_get_account(&account_id.into())
-            .stake_shares
-            .into()
+    fn ft_balance_of(&self, account_id: AccountId) -> U128 {
+        self.internal_get_account(&account_id).stake_shares.into()
     }
 }
 
@@ -133,13 +126,12 @@ impl FungibleTokenResolver for NearxPool {
     #[private]
     fn ft_resolve_transfer(
         &mut self,
-        sender_id: ValidAccountId,
-        receiver_id: ValidAccountId,
+        sender_id: AccountId,
+        receiver_id: AccountId,
         amount: U128,
     ) -> U128 {
-        let sender_id: AccountId = sender_id.into();
         let (used_amount, burned_amount) =
-            self.int_ft_resolve_transfer(&sender_id, receiver_id.into(), amount);
+            self.int_ft_resolve_transfer(&sender_id, receiver_id, amount);
         if burned_amount > 0 {
             log!("{} tokens burned", burned_amount);
         }
@@ -197,8 +189,7 @@ impl NearxPool {
         receiver_id: AccountId,
         amount: U128,
     ) -> (u128, u128) {
-        let sender_id: AccountId = sender_id.into();
-        let receiver_id: AccountId = receiver_id;
+        let receiver_id = receiver_id;
         let amount: Balance = amount.into();
 
         // Get the unused amount from the `ft_on_transfer` call result.
@@ -222,9 +213,9 @@ impl NearxPool {
                 receiver_acc.sub_stake_shares(refund_amount);
                 self.internal_update_account(&receiver_id, &receiver_acc);
 
-                let mut sender_acc = self.internal_get_account(&sender_id);
+                let mut sender_acc = self.internal_get_account(sender_id);
                 sender_acc.add_stake_shares(refund_amount);
-                self.internal_update_account(&sender_id, &sender_acc);
+                self.internal_update_account(sender_id, &sender_acc);
 
                 log!(
                     "Refund {} from {} to {}",
