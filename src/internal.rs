@@ -3,18 +3,12 @@ use crate::staking_pool::*;
 use crate::utils::{amount_from_shares, assert_callback_calling, shares_from_amount};
 use crate::*;
 use near_sdk::{
-    is_promise_success,
-    json_types::{ValidAccountId, U128},
-    log, AccountId, Balance, Promise, PromiseOrValue, PromiseResult,
+    is_promise_success, json_types::U128, log, AccountId, Balance, Promise, PromiseOrValue,
+    PromiseResult,
 };
 
 #[near_bindgen]
 impl NearxPool {
-    pub(crate) fn native_transfer_to_predecessor(&mut self, amount: u128) -> Promise {
-        self.contract_account_balance -= amount;
-        return Promise::new(env::predecessor_account_id()).transfer(amount);
-    }
-
     /// mints NearX based on user's deposited amount and current NearX price
     pub(crate) fn internal_deposit_and_stake(&mut self, user_amount: Balance) {
         log!("User deposited amount is {}", user_amount);
@@ -50,7 +44,7 @@ impl NearxPool {
             sp_inx,
             user_amount,
             num_shares,
-            account_id.clone(),
+            account_id,
             // promise parameters
             &env::current_account_id(),
             NO_DEPOSIT,
@@ -100,7 +94,7 @@ impl NearxPool {
             PromiseOrValue::Promise(Promise::new(user).transfer(amount))
         } else {
             log!("Reconciling total staked balance");
-            self.internal_update_account(&user, &acc);
+            self.internal_update_account(&user, acc);
             // Reconcile the total staked amount to the right value
             ext_staking_pool::get_account_staked_balance(
                 env::current_account_id(),
@@ -150,12 +144,12 @@ impl NearxPool {
     /// Returns the number of NearX (stake shares) corresponding to the given near amount at current NearX price
     /// if the amount & the shares are incorporated, price remains the same
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
-        return shares_from_amount(amount, self.total_staked, self.total_stake_shares);
+        shares_from_amount(amount, self.total_staked, self.total_stake_shares)
     }
 
     /// Returns the amount corresponding to the given number of NearX (stake shares).
     pub(crate) fn amount_from_stake_shares(&self, num_shares: u128) -> u128 {
-        return amount_from_shares(num_shares, self.total_staked, self.total_stake_shares);
+        amount_from_shares(num_shares, self.total_staked, self.total_stake_shares)
     }
 
     /// Inner method to get the given account or a new default value account.
@@ -169,7 +163,7 @@ impl NearxPool {
         if account.is_empty() {
             self.accounts.remove(account_id);
         } else {
-            self.accounts.insert(account_id, &account); //insert_or_update
+            self.accounts.insert(account_id, account); //insert_or_update
         }
     }
 
@@ -203,8 +197,8 @@ impl NearxPool {
             "Sender and receiver should be different"
         );
         assert!(amount > 0, "The amount should be a positive number");
-        let mut sender_acc = self.internal_get_account(&sender_id);
-        let mut receiver_acc = self.internal_get_account(&receiver_id);
+        let mut sender_acc = self.internal_get_account(sender_id);
+        let mut receiver_acc = self.internal_get_account(receiver_id);
         assert!(
             amount <= sender_acc.stake_shares,
             "{} does not have enough NearX balance {}",
@@ -215,8 +209,8 @@ impl NearxPool {
         sender_acc.sub_stake_shares(amount);
         receiver_acc.add_stake_shares(amount);
 
-        self.internal_update_account(&sender_id, &sender_acc);
-        self.internal_update_account(&receiver_id, &receiver_acc);
+        self.internal_update_account(sender_id, &sender_acc);
+        self.internal_update_account(receiver_id, &receiver_acc);
     }
 
     pub fn int_ft_resolve_transfer(
@@ -226,7 +220,7 @@ impl NearxPool {
         amount: U128,
     ) -> (u128, u128) {
         let sender_id: AccountId = sender_id.into();
-        let receiver_id: AccountId = receiver_id.into();
+        let receiver_id: AccountId = receiver_id;
         let amount: Balance = amount.into();
 
         // Get the unused amount from the `ft_on_transfer` call result.

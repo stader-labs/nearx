@@ -1,10 +1,5 @@
-use crate::*;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::log;
 use near_sdk::serde::{Deserialize, Serialize};
-
-use crate::types::*;
-use crate::utils::*;
 
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -14,7 +9,7 @@ pub struct Account {
 
 impl Account {
     pub fn is_empty(&self) -> bool {
-        return self.stake_shares == 0;
+        self.stake_shares == 0
     }
 
     pub fn add_nearx(&mut self, nearx_amount: u128) {

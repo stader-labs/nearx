@@ -1,7 +1,6 @@
 use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::AccountId;
-use uint::construct_uint;
 
 pub type U128String = U128;
 pub type U64String = U64;
@@ -14,10 +13,14 @@ pub struct RewardFeeFraction {
     pub denominator: u32,
 }
 
-construct_uint! {
-    /// 256-bit unsigned integer.
-    pub struct U256(4);
+#[allow(clippy::all)]
+mod uint_impl {
+    uint::construct_uint! {
+        /// 256-bit unsigned integer.
+        pub struct U256(4);
+    }
 }
+pub use uint_impl::U256;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[serde(crate = "near_sdk::serde")]
