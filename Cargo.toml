@@ -8,9 +8,21 @@ authors = ["bchain <bchain@staderlabs.com>"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = "3.1.0"
+near-sdk = { version = "=4.0.0-pre.9" }
 near-contract-standards = "3.1.0"
 uint = { version = "0.8.3", default-features = false }
+#syn = { version = "=1.0.78"}
 
 [dev-dependencies]
-near-sdk-sim = "3.2.0"
+anyhow = "1.0"
+borsh = "0.9"
+maplit = "1.0"
+near-units = "0.1.0"
+serde = "1.0"
+serde_with = "1"
+# arbitrary_precision enabled for u128 types that workspaces requires for Balance types
+serde_json = { version = "1.0", features = ["arbitrary_precision"] }
+tokio = { version = "1.10.0", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3.5", features = ["env-filter"] }
+workspaces = { git = "https://github.com/near/workspaces-rs" }
