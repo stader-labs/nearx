@@ -13,7 +13,7 @@ use crate::validator::ValidatorInfo;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::UnorderedMap;
 use near_sdk::json_types::Base58PublicKey;
-use near_sdk::{env, AccountId, PanicOnDefault};
+use near_sdk::{env, AccountId, PanicOnDefault, Promise, PromiseOrValue};
 use near_sdk::{ext_contract, near_bindgen};
 
 pub mod account;
@@ -52,7 +52,7 @@ pub trait ExtNearxStakingPoolCallbacks {
         &mut self,
         sp_inx: usize,
         #[callback] total_staked_balance: U128String,
-    );
+    ) -> PromiseOrValue<bool>;
 
     fn on_get_sp_staked_balance_reconcile(
         &mut self,
@@ -194,8 +194,8 @@ impl NearxPool {
 
     pub fn add_validator(&mut self, account_id: AccountId) {
         self.assert_operator_or_owner();
-        for sp_inx in 0..self.validators.len() {
-            if self.validators[sp_inx].account_id == account_id {
+        for inx in 0..self.validators.len() {
+            if self.validators[inx].account_id == account_id {
                 panic!("already in list");
             }
         }
@@ -274,7 +274,7 @@ impl NearxPool {
     }
 
     // Contract state query
-    pub fn get_near_pool_state(&self) -> NearxPoolStateResponse {
+    pub fn get_nearx_pool_state(&self) -> NearxPoolStateResponse {
         NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
@@ -302,7 +302,7 @@ impl NearxPool {
             inx,
             account_id: sp.account_id.clone(),
             staked: sp.staked.into(),
-            last_asked_rewards_epoch_height: sp.last_asked_rewards_epoch_height.into(),
+            last_asked_rewards_epoch_height: sp.last_redeemed_rewards_epoch.into(),
             lock: sp.lock,
         }
     }
@@ -315,7 +315,7 @@ impl NearxPool {
                 account_id: self.validators[i].account_id.clone(),
                 staked: U128String::from(self.validators[i].staked),
                 last_asked_rewards_epoch_height: U64String::from(
-                    self.validators[i].last_asked_rewards_epoch_height,
+                    self.validators[i].last_redeemed_rewards_epoch,
                 ),
                 lock: self.validators[i].lock,
             });

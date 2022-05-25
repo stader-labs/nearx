@@ -21,7 +21,8 @@ pub fn assert_one_yocto() {
     assert_eq!(
         env::attached_deposit(),
         1,
-        "{}", ERROR_REQUIRE_ONE_YOCTO_NEAR
+        "{}",
+        ERROR_REQUIRE_ONE_YOCTO_NEAR
     );
 }
 
@@ -29,7 +30,8 @@ pub fn is_promise_success() -> bool {
     assert_eq!(
         env::promise_results_count(),
         1,
-        "{}", ERROR_EXPECT_RESULT_ON_CALLBACK
+        "{}",
+        ERROR_EXPECT_RESULT_ON_CALLBACK
     );
 
     matches!(env::promise_result(0), PromiseResult::Successful(_))

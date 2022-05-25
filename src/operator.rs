@@ -25,7 +25,7 @@ impl NearxPool {
             return;
         }
 
-        if val.last_asked_rewards_epoch_height == epoch_height {
+        if val.last_redeemed_rewards_epoch == epoch_height {
             return;
         }
 
@@ -60,7 +60,7 @@ impl NearxPool {
         &mut self,
         val_inx: usize,
         #[callback] total_staked_balance: U128String,
-    ) {
+    ) -> PromiseOrValue<bool> {
         assert_callback_calling();
 
         let val = &mut self.validators[val_inx];
@@ -68,7 +68,7 @@ impl NearxPool {
         val.lock = false;
         self.contract_lock = false;
 
-        val.last_asked_rewards_epoch_height = env::epoch_height();
+        val.last_redeemed_rewards_epoch = env::epoch_height();
 
         //new_total_balance has the new staked amount for this pool
         let new_total_balance = total_staked_balance.0;
@@ -76,6 +76,7 @@ impl NearxPool {
 
         //compute rewards, as new balance minus old balance
         let rewards = new_total_balance.saturating_sub(val.total_balance());
+        println!("rewards are {:?}", rewards);
 
         log!(
             "sp:{} old_balance:{} new_balance:{} rewards:{}",
@@ -90,20 +91,13 @@ impl NearxPool {
         //updated new "staked" value for this pool
         val.staked = new_total_balance;
 
-        if rewards > 0 {
-            self.total_staked += rewards;
+        let operator_fee = apply_multiplier(rewards, self.rewards_fee_pct);
+        self.total_staked += rewards;
 
-            // compute the reward fee
-            let mut operator_account = self.internal_get_account(&self.operator_account_id.clone());
-            println!("operator_account is {:?}", self.operator_account_id.clone());
-            let operator_fee = apply_multiplier(rewards, self.rewards_fee_pct);
-            println!("operator_fee is {:?}", operator_fee);
-            let operator_fee_shares = self.stake_shares_from_amount(operator_fee);
-            println!("operator_shares is {:?}", operator_fee_shares);
-            if operator_fee_shares > 0 {
-                operator_account.stake_shares += operator_fee_shares;
-                self.internal_update_account(&self.operator_account_id.clone(), &operator_account);
-            }
+        if rewards > 0 {
+            PromiseOrValue::Promise(Promise::new(env::current_account_id()).transfer(operator_fee))
+        } else {
+            PromiseOrValue::Value(true)
         }
     }
 }

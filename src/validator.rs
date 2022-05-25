@@ -14,8 +14,7 @@ pub struct ValidatorInfo {
     //total staked here
     pub staked: u128,
 
-    //EpochHeight where we asked the sp what were our staking rewards
-    pub last_asked_rewards_epoch_height: EpochHeight,
+    pub last_redeemed_rewards_epoch: EpochHeight,
 }
 
 impl ValidatorInfo {
@@ -28,7 +27,7 @@ impl ValidatorInfo {
             account_id,
             lock: false,
             staked: 0,
-            last_asked_rewards_epoch_height: 0,
+            last_redeemed_rewards_epoch: 0,
         }
     }
     pub fn total_balance(&self) -> u128 {

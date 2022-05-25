@@ -656,6 +656,7 @@ mod unit_tests {
             }]
         ));
 
+        // Redeeming rewards with no stake amount with validators
         contract.distribute_rewards(0);
 
         assert!(!contract.contract_lock);
@@ -664,7 +665,7 @@ mod unit_tests {
         /*
            Redeeming rewards in the same epoch
         */
-        contract.validators[0].last_asked_rewards_epoch_height = context.epoch_height;
+        contract.validators[0].last_redeemed_rewards_epoch = context.epoch_height;
         contract.validators[0].staked = ntoy(100);
 
         contract.distribute_rewards(0);
@@ -677,7 +678,7 @@ mod unit_tests {
         */
         context.epoch_height = 100;
         testing_env!(context.clone());
-        contract.validators[0].last_asked_rewards_epoch_height = context.epoch_height - 10;
+        contract.validators[0].last_redeemed_rewards_epoch = context.epoch_height - 10;
         contract.validators[0].staked = ntoy(100);
 
         contract.distribute_rewards(0);
@@ -718,27 +719,17 @@ mod unit_tests {
         contract.total_staked = ntoy(100);
         contract.total_stake_shares = ntoy(100);
 
-        contract.on_get_sp_staked_balance_for_rewards(0, U128String::from(ntoy(150)));
+        let res = contract.on_get_sp_staked_balance_for_rewards(0, U128String::from(ntoy(150)));
 
         assert!(!contract.contract_lock);
         assert!(!contract.validators[0].lock);
         assert_eq!(contract.validators[0].staked, ntoy(150));
         assert_eq!(
-            contract.validators[0].last_asked_rewards_epoch_height,
+            contract.validators[0].last_redeemed_rewards_epoch,
             context.epoch_height
         );
         assert_eq!(contract.total_staked, ntoy(150));
         assert_eq!(contract.total_stake_shares, ntoy(100));
         assert_eq!(contract.accumulated_staked_rewards, ntoy(50));
-        let operator_acc = contract.get_account(operator_account());
-        assert_eq!(
-            operator_acc,
-            HumanReadableAccount {
-                account_id: operator_account(),
-                unstaked_balance: U128String::from(0),
-                staked_balance: U128String::from(4999999999999999999999999),
-                can_withdraw: false
-            }
-        );
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "integration_tests"
 version = "0.1.0"
-edition = "2021"
+edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -18,4 +18,3 @@ tokio = { version = "1.10.0", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3.5", features = ["env-filter"] }
 workspaces = { git = "https://github.com/near/workspaces-rs" }
-#near-liquid-token = { path = "./../../near-liquid-token" }
