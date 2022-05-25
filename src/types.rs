@@ -24,13 +24,10 @@ pub use uint_impl::U256;
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 #[serde(crate = "near_sdk::serde")]
-pub struct HumanReadableAccount {
+pub struct AccountResponse {
     pub account_id: AccountId,
-    /// The unstaked balance that can be withdrawn or staked.
     pub unstaked_balance: U128,
-    /// The amount balance staked at the current "stake" share price.
     pub staked_balance: U128,
-    /// Whether the unstaked balance is available for withdrawal now.
     pub can_withdraw: bool,
 }
 
@@ -39,14 +36,9 @@ pub struct HumanReadableAccount {
 pub struct NearxPoolStateResponse {
     pub owner_account_id: AccountId,
 
-    /// Avoid re-entry when async-calls are in-flight
     pub contract_lock: bool,
 
-    /// no auto-staking. true while changing staking pools
     pub staking_paused: bool,
-
-    // The amount of NEAR in the contract
-    pub contract_account_balance: U128,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     pub total_staked: U128,
@@ -57,14 +49,13 @@ pub struct NearxPoolStateResponse {
     // share_price = total_for_staking/total_shares
     pub total_stake_shares: U128, //total NearX minted
 
-    /// the staking pools will add rewards to the staked amount on each epoch
-    /// here we store the accumulated amount only for stats purposes. This amount can only grow
     pub accumulated_staked_rewards: U128,
 
     /// min amount accepted as deposit or stake
     pub min_deposit_amount: U128,
 
     pub operator_account_id: AccountId,
+
     /// pct of rewards which will go to the operator
     pub rewards_fee_pct: U128,
 }

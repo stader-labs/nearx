@@ -17,7 +17,7 @@ pub struct ValidatorInfoResponse {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
-pub struct HumanReadableAccount {
+pub struct AccountResponse {
     pub account_id: AccountId,
     /// The unstaked balance that can be withdrawn or staked.
     pub unstaked_balance: String,

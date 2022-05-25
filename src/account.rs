@@ -12,16 +12,8 @@ impl Account {
         self.stake_shares == 0
     }
 
-    pub fn add_nearx(&mut self, nearx_amount: u128) {
-        self.add_stake_shares(nearx_amount)
-    }
-
     pub fn add_stake_shares(&mut self, num_shares: u128) {
         self.stake_shares += num_shares;
-    }
-
-    pub fn sub_nearx(&mut self, nearx_amount: u128) {
-        self.sub_stake_shares(nearx_amount)
     }
 
     pub fn sub_stake_shares(&mut self, num_shares: u128) {

@@ -1,5 +1,6 @@
 use crate::constants::NO_DEPOSIT;
 use crate::errors::ERROR_VALIDATOR_IS_BUSY;
+use crate::gas::{GET_ACCOUNT_TOTAL_BALANCE, ON_GET_SP_STAKED_BALANCE_TO_RECONCILE};
 use crate::utils::{apply_multiplier, assert_callback_calling};
 use crate::validator::*;
 use crate::*;
@@ -43,7 +44,7 @@ impl NearxPool {
             //promise params
             &val.account_id,
             NO_DEPOSIT,
-            gas::staking_pool::GET_ACCOUNT_TOTAL_BALANCE,
+            GET_ACCOUNT_TOTAL_BALANCE,
         )
         .then(
             ext_staking_pool_callback::on_get_sp_staked_balance_for_rewards(
@@ -51,7 +52,7 @@ impl NearxPool {
                 //promise params
                 &env::current_account_id(),
                 NO_DEPOSIT,
-                gas::owner_callbacks::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
             ),
         );
     }
@@ -76,7 +77,6 @@ impl NearxPool {
 
         //compute rewards, as new balance minus old balance
         let rewards = new_total_balance.saturating_sub(val.total_balance());
-        println!("rewards are {:?}", rewards);
 
         log!(
             "sp:{} old_balance:{} new_balance:{} rewards:{}",

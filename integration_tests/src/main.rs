@@ -5,14 +5,14 @@ use serde_json::json;
 use workspaces::{Account, AccountId, Contract, Worker};
 
 use crate::helpers::ntoy;
-use crate::types::{HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse};
+use crate::types::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
 use near_units::*;
 use workspaces::network::Sandbox;
 use workspaces::prelude::*;
 
 const NEAR_LIQUID_TOKEN_WASM_FILEPATH: &str =
-    "/Users/bharath12345/stader-work/near-liquid-token/target/wasm32-unknown-unknown/release/near_liquid_token.wasm";
-const STAKE_POOL_WASM: &str = "/Users/bharath12345/BlockChainStuff/near-learn/core-contracts/staking-pool/res/staking_pool.wasm";
+    "./../target/wasm32-unknown-unknown/release/near_liquid_token.wasm";
+const STAKE_POOL_WASM: &str = "./..//res/staking_pool.wasm";
 
 // Return type is the worker, nearx liquid token contract and stake pool contract with 3 users and operator, owner account
 async fn setup_sandbox_workspace() -> anyhow::Result<(
@@ -170,7 +170,7 @@ async fn get_user_deposit(
         .args_json(json!({ "account_id": user }))?
         .view()
         .await?
-        .json::<HumanReadableAccount>()?;
+        .json::<AccountResponse>()?;
 
     Ok(result.staked_balance)
 }

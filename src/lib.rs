@@ -6,7 +6,7 @@ use crate::errors::{
     ERROR_CONTRACT_BUSY, ERROR_MIN_DEPOSIT, ERROR_STAKING_PAUSED, ERROR_UNAUTHORIZED,
 };
 use crate::types::{
-    HumanReadableAccount, NearxPoolStateResponse, RewardFeeFraction, U128String, U64String,
+    AccountResponse, NearxPoolStateResponse, RewardFeeFraction, U128String, U64String,
     ValidatorInfoResponse,
 };
 use crate::validator::ValidatorInfo;
@@ -77,10 +77,6 @@ pub struct NearxPool {
 
     pub staking_paused: bool,
 
-    /// The total NEAR in the contract
-    /// TODO - bchain - We might not need this, we can just use env::account_balance()
-    pub contract_account_balance: u128,
-
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     // nearx_price = (total_staked) / (total_stake_shares)
     pub total_staked: u128,
@@ -116,7 +112,6 @@ impl NearxPool {
             owner_account_id,
             contract_lock: false,
             operator_account_id,
-            contract_account_balance: 0,
             staking_paused: false,
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
@@ -251,10 +246,10 @@ impl NearxPool {
         self.staking_paused
     }
 
-    pub fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
+    pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
         let account = self.internal_get_account(&account_id);
         println!("account is {:?}", account);
-        HumanReadableAccount {
+        AccountResponse {
             account_id,
             unstaked_balance: U128String::from(0), // TODO - implement unstake
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
@@ -266,7 +261,7 @@ impl NearxPool {
         self.accounts.len()
     }
 
-    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<HumanReadableAccount> {
+    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<AccountResponse> {
         let keys = self.accounts.keys_as_vector();
         (from_index..std::cmp::min(from_index + limit, keys.len()))
             .map(|index| self.get_account(keys.get(index).unwrap()))
@@ -279,7 +274,6 @@ impl NearxPool {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
             staking_paused: self.staking_paused,
-            contract_account_balance: U128String::from(self.contract_account_balance),
             total_staked: U128String::from(self.total_staked),
             total_stake_shares: U128String::from(self.total_stake_shares),
             accumulated_staked_rewards: U128String::from(self.accumulated_staked_rewards),

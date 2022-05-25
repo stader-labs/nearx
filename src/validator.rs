@@ -8,10 +8,9 @@ use near_sdk::ext_contract;
 pub struct ValidatorInfo {
     pub account_id: AccountId,
 
-    //if we've made an async call to this pool
+    // TODO - bchain99 - we might not need this
     pub lock: bool,
 
-    //total staked here
     pub staked: u128,
 
     pub last_redeemed_rewards_epoch: EpochHeight,

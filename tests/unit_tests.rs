@@ -1,7 +1,5 @@
 mod unit_tests {
-    use near_liquid_token::types::{
-        HumanReadableAccount, U128String, U64String, ValidatorInfoResponse,
-    };
+    use near_liquid_token::types::{AccountResponse, U128String, U64String, ValidatorInfoResponse};
     use near_liquid_token::NearxPool;
     use near_sdk::json_types::{Base58PublicKey, U64};
     use near_sdk::testing_env;
@@ -435,8 +433,6 @@ mod unit_tests {
         testing_env!(context);
 
         contract.deposit_and_stake();
-
-        assert_eq!(contract.contract_account_balance, 5000000000000000000000000);
     }
 
     #[test]
@@ -504,7 +500,6 @@ mod unit_tests {
         context.predecessor_account_id = contract_account();
         testing_env!(context.clone());
 
-        contract.contract_account_balance = ntoy(100);
         contract.total_stake_shares = ntoy(200);
         contract.total_staked = ntoy(200);
 
@@ -520,14 +515,13 @@ mod unit_tests {
         let res = contract.on_stake_pool_deposit_and_stake(0, ntoy(100), ntoy(100), user.clone());
         assert!(matches!(res, PromiseOrValue::Value(..)));
 
-        assert_eq!(contract.contract_account_balance, 0);
         assert_eq!(contract.total_stake_shares, ntoy(300));
         assert_eq!(contract.total_staked, ntoy(300));
 
         let user_account = contract.get_account(user.clone());
         assert_eq!(
             user_account,
-            HumanReadableAccount {
+            AccountResponse {
                 account_id: user.to_string(),
                 unstaked_balance: U128String::from(0),
                 staked_balance: U128String::from(ntoy(100)),

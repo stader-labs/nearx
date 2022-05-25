@@ -1,4 +1,7 @@
 use crate::constants::NO_DEPOSIT;
+use crate::gas::{
+    DEPOSIT_AND_STAKE, ON_GET_SP_STAKED_BALANCE_TO_RECONCILE, ON_STAKING_POOL_DEPOSIT_AND_STAKE,
+};
 use crate::utils::{amount_from_shares, assert_callback_calling, shares_from_amount};
 use crate::validator::*;
 use crate::*;
@@ -17,8 +20,6 @@ impl NearxPool {
 
         let account_id = env::predecessor_account_id();
 
-        self.contract_account_balance += user_amount;
-
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
         let num_shares = self.stake_shares_from_amount(user_amount);
         assert!(num_shares > 0);
@@ -35,7 +36,7 @@ impl NearxPool {
             &selected_stake_pool.account_id,
             user_amount, //attached amount
             // promise parameters
-            gas::staking_pool::DEPOSIT_AND_STAKE,
+            DEPOSIT_AND_STAKE,
         )
         .then(ext_staking_pool_callback::on_stake_pool_deposit_and_stake(
             sp_inx,
@@ -45,7 +46,7 @@ impl NearxPool {
             // promise parameters
             &env::current_account_id(),
             NO_DEPOSIT,
-            gas::owner_callbacks::ON_STAKING_POOL_DEPOSIT_AND_STAKE,
+            ON_STAKING_POOL_DEPOSIT_AND_STAKE,
         ));
     }
 
@@ -66,9 +67,6 @@ impl NearxPool {
         let stake_succeeded = is_promise_success();
 
         if stake_succeeded {
-            //we send NEAR to the staking-pool
-            //we took from contract balance (transfer)
-            self.contract_account_balance -= amount;
             //move into staked
             sp.staked += amount;
             acc.stake_shares += shares;
@@ -98,7 +96,7 @@ impl NearxPool {
                 // promise params
                 &stake_pool_account_id,
                 NO_DEPOSIT,
-                gas::owner_callbacks::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
             )
             .then(
                 ext_staking_pool_callback::on_get_sp_staked_balance_reconcile(
@@ -107,7 +105,7 @@ impl NearxPool {
                     // promise params
                     &env::current_account_id(),
                     NO_DEPOSIT,
-                    gas::owner_callbacks::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
+                    ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
                 ),
             );
             PromiseOrValue::Value(true)
