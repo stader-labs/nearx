@@ -35,18 +35,12 @@ pub fn check_equal_vec<S: PartialEq>(v1: Vec<S>, v2: Vec<S>) -> bool {
 }
 
 pub fn testing_env_with_promise_results(context: VMContext, promise_result: PromiseResult) {
-    let storage = near_sdk::env::take_blockchain_interface()
-        .unwrap()
-        .as_mut_mocked_blockchain()
-        .unwrap()
-        .take_storage();
-
     near_sdk::env::set_blockchain_interface(MockedBlockchain::new(
         context,
         VMConfig::test(),
         RuntimeFeesConfig::test(),
         vec![promise_result],
-        storage,
+        Default::default(),
         Default::default(),
         Default::default(),
     ));
@@ -103,7 +97,7 @@ fn contract_setup(owner_account: AccountId, operator_account: AccountId) -> (VMC
 #[test]
 #[should_panic]
 fn test_add_staking_pool_fail() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
        Non operator adding stake pool
@@ -152,7 +146,7 @@ fn test_add_staking_pool_success() {
         stake_pools,
         vec![ValidatorInfoResponse {
             inx: 0,
-            account_id: stake_public_key_1,
+            account_id: stake_public_key_1.clone(),
             staked: U128String::from(0),
             last_asked_rewards_epoch_height: U64String::from(0),
             lock: false
@@ -556,7 +550,7 @@ fn test_on_get_sp_staked_balance_reconcile() {
     context.predecessor_account_id = contract_account();
     testing_env!(context.clone());
 
-    let user = AccountId::from_str("user1").unwrap();
+    let _user = AccountId::from_str("user1").unwrap();
 
     testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
     contract.validators[0].lock = true;
@@ -564,7 +558,7 @@ fn test_on_get_sp_staked_balance_reconcile() {
     contract.validators[0].staked = ntoy(299);
     contract.total_staked = ntoy(498);
 
-    let res =
+    let _res =
         contract.on_get_sp_staked_balance_reconcile(0, ntoy(100), U128String::from(ntoy(298)));
     assert_eq!(contract.validators[0].staked, ntoy(298));
     assert_eq!(contract.total_staked, ntoy(497));
@@ -710,7 +704,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     contract.total_staked = ntoy(100);
     contract.total_stake_shares = ntoy(100);
 
-    let res = contract.on_get_sp_staked_balance_for_rewards(0, U128String::from(ntoy(150)));
+    let _res = contract.on_get_sp_staked_balance_for_rewards(0, U128String::from(ntoy(150)));
 
     assert!(!contract.contract_lock);
     assert!(!contract.validators[0].lock);
