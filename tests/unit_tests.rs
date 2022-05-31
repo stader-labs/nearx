@@ -47,7 +47,7 @@ pub fn testing_env_with_promise_results(context: VMContext, promise_result: Prom
 }
 
 pub fn default_pubkey() -> PublicKey {
-    PublicKey::try_from(vec![0]).unwrap()
+    PublicKey::try_from(vec![0; 33]).unwrap()
 }
 
 pub fn get_context(

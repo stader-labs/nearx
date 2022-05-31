@@ -243,8 +243,8 @@ async fn get_total_tokens_supply(
         .json::<U128>()
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+#[tokio::test]
+async fn main_tests() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");
     let (worker, near_pool_contract, stake_pool_contract, user1, user2, user3, operator, _owner) =
