@@ -7,7 +7,7 @@ use near_liquid_token::{
 };
 use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
-    VMContext,
+    RuntimeFeesConfig, VMConfig, VMContext,
 };
 use near_sdk_sim::{to_ts, utils::system_account};
 use std::{convert::TryFrom, str::FromStr};
@@ -41,15 +41,15 @@ pub fn testing_env_with_promise_results(context: VMContext, promise_result: Prom
         .unwrap()
         .take_storage();
 
-    near_sdk::env::set_blockchain_interface(Box::new(MockedBlockchain::new(
+    near_sdk::env::set_blockchain_interface(MockedBlockchain::new(
         context,
-        Default::default(),
-        Default::default(),
+        VMConfig::test(),
+        RuntimeFeesConfig::test(),
         vec![promise_result],
         storage,
         Default::default(),
         Default::default(),
-    )));
+    ));
 }
 
 pub fn default_pubkey() -> PublicKey {
@@ -84,7 +84,9 @@ pub fn get_context(
 }
 
 fn basic_context() -> VMContext {
-    get_context(system_account(), ntoy(100), 0, to_ts(500), false)
+    let account = AccountId::from_str(&system_account()).unwrap();
+
+    get_context(account, ntoy(100), 0, to_ts(500))
 }
 
 fn new_contract(owner_account: AccountId, operator_account: AccountId) -> NearxPool {
