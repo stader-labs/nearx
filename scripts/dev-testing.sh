@@ -4,8 +4,8 @@ near dev-deploy --wasmFile res/nearX.wasm
 near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'"}' --accountId=$ID
 
 # add some validators
-near call $CONTRACT_NAME add_staking_pool '{"account_id": "legends.pool.f863973.m0"}' --accountId=$ID
-near call $CONTRACT_NAME add_staking_pool '{"account_id": "masternode24.pool.f863973.m0"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"account_id": "legends.pool.f863973.m0"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"account_id": "masternode24.pool.f863973.m0"}' --accountId=$ID
 
 # 10 deposits
 for i in {1..10};
@@ -19,20 +19,20 @@ near view $CONTRACT_NAME get_nearx_price
 
 near view $CONTRACT_NAME get_total_staked
 
-near view $CONTRACT_NAME get_stake_pools
+near view $CONTRACT_NAME get_validators
 
 # get staking pool
-near view $CONTRACT_NAME get_sp_info '{"inx": 0}'
-near view $CONTRACT_NAME get_sp_info '{"inx": 1}'
-near view $CONTRACT_NAME get_sp_info '{"inx": 2}'
+near view $CONTRACT_NAME get_val_info '{"inx": 0}'
+near view $CONTRACT_NAME get_val_info '{"inx": 1}'
+near view $CONTRACT_NAME get_val_info '{"inx": 2}'
 
 # get user state
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
 
 # Reward distribution
-near call $CONTRACT_NAME distribute_rewards '{"sp_inx": 0}' --accountId=$ID --gas=300000000000000
-near call $CONTRACT_NAME distribute_rewards '{"sp_inx": 1}' --accountId=$ID --gas=300000000000000
-near call $CONTRACT_NAME distribute_rewards '{"sp_inx": 2}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME distribute_rewards '{"val_inx": 0}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME distribute_rewards '{"val_inx": 1}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME distribute_rewards '{"val_inx": 2}' --accountId=$ID --gas=300000000000000
 
 near view $CONTRACT_NAME ft_balance_of '{"account_id": "learning12345.testnet"}'
 near view $CONTRACT_NAME ft_total_supply

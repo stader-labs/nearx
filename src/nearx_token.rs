@@ -2,7 +2,6 @@ use crate::*;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore,
     metadata::{FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC},
-    resolver::FungibleTokenResolver,
 };
 use near_sdk::{
     assert_one_yocto,
@@ -87,25 +86,19 @@ impl FungibleTokenCore for NearxPool {
         let receiver_id: AccountId = receiver_id;
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
 
-        ext_ft_receiver::ft_on_transfer(
-            env::predecessor_account_id(),
-            amount,
-            msg,
-            //promise params:
-            receiver_id.clone(), //contract
-            NO_DEPOSIT,          //attached native NEAR amount
-            env::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL - GAS_FOR_RESOLVE_TRANSFER - ONE_TGAS, // set almost all remaining gas for ft_on_transfer
-        )
-        .then(ext_self::ft_resolve_transfer(
-            env::predecessor_account_id(),
-            receiver_id,
-            amount,
-            //promise params:
-            env::current_account_id(), //contract
-            NO_DEPOSIT,                //attached native NEAR amount
-            GAS_FOR_RESOLVE_TRANSFER,
-        ))
-        .into()
+        ext_ft_receiver::ext(receiver_id.clone())
+            .with_attached_deposit(NO_DEPOSIT)
+            .with_static_gas(
+                env::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL - GAS_FOR_RESOLVE_TRANSFER - ONE_TGAS,
+            )
+            .ft_on_transfer(env::predecessor_account_id(), amount, msg)
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(GAS_FOR_RESOLVE_TRANSFER)
+                    .ft_resolve_transfer(env::predecessor_account_id(), receiver_id, amount),
+            )
+            .into()
     }
 
     //NearX total supply

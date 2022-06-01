@@ -31,22 +31,16 @@ impl NearxPool {
 
         log!("Amount is {}", user_amount);
         //schedule async deposit_and_stake on that pool
-        ext_staking_pool::deposit_and_stake(
-            selected_stake_pool.account_id.clone(),
-            user_amount, //attached amount
-            // promise parameters
-            gas::DEPOSIT_AND_STAKE,
-        )
-        .then(ext_staking_pool_callback::on_stake_pool_deposit_and_stake(
-            sp_inx,
-            user_amount,
-            num_shares,
-            account_id,
-            // promise parameters
-            env::current_account_id(),
-            NO_DEPOSIT,
-            gas::ON_STAKING_POOL_DEPOSIT_AND_STAKE,
-        ));
+        ext_staking_pool::ext(selected_stake_pool.account_id.clone())
+            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .with_attached_deposit(user_amount)
+            .deposit_and_stake()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKING_POOL_DEPOSIT_AND_STAKE)
+                    .on_stake_pool_deposit_and_stake(sp_inx, user_amount, num_shares, account_id),
+            );
     }
 
     pub fn on_stake_pool_deposit_and_stake(
@@ -90,23 +84,16 @@ impl NearxPool {
             log!("Reconciling total staked balance");
             self.internal_update_account(&user, acc);
             // Reconcile the total staked amount to the right value
-            ext_staking_pool::get_account_staked_balance(
-                env::current_account_id(),
-                // promise params
-                stake_pool_account_id,
-                NO_DEPOSIT,
-                gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
-            )
-            .then(
-                ext_staking_pool_callback::on_get_sp_staked_balance_reconcile(
-                    sp_inx,
-                    amount,
-                    // promise params
-                    env::current_account_id(),
-                    NO_DEPOSIT,
-                    gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
-                ),
-            );
+            ext_staking_pool::ext(stake_pool_account_id)
+                .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
+                .with_attached_deposit(NO_DEPOSIT)
+                .get_account_staked_balance(env::current_account_id())
+                .then(
+                    ext_staking_pool_callback::ext(env::current_account_id())
+                        .with_attached_deposit(NO_DEPOSIT)
+                        .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
+                        .on_get_sp_staked_balance_reconcile(sp_inx, amount),
+                );
             PromiseOrValue::Value(true)
         }
     }

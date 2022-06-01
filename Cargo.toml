@@ -8,10 +8,9 @@ authors = ["bchain <bchain@staderlabs.com>"]
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-near-sdk = "=4.0.0-pre.9"
-near-contract-standards = "=4.0.0-pre.9"
+near-sdk = "=4.0.0"
+near-contract-standards = "=4.0.0"
 uint = { version = "0.8.3", default-features = false }
-#syn = { version = "=1.0.78"}
 
 [dev-dependencies]
 anyhow = "1.0"

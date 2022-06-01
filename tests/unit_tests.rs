@@ -583,7 +583,7 @@ fn test_distribute_rewards_contract_busy() {
 
     contract.contract_lock = true;
 
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 }
 
 #[test]
@@ -591,7 +591,7 @@ fn test_distribute_rewards_contract_busy() {
 fn test_distribute_rewards_invalid_stake_pool() {
     let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
 
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 }
 
 #[test]
@@ -622,7 +622,7 @@ fn test_distribute_rewards_stake_pool_busy() {
     ));
 
     contract.validators[0].lock = true;
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 }
 
 #[test]
@@ -652,7 +652,7 @@ fn test_distribute_rewards_stake_pool_with_no_stake() {
     ));
 
     // Redeeming rewards with no stake amount with validators
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 
     assert!(!contract.contract_lock);
     assert!(!contract.validators[0].lock);
@@ -663,7 +663,7 @@ fn test_distribute_rewards_stake_pool_with_no_stake() {
     contract.validators[0].last_redeemed_rewards_epoch = context.epoch_height;
     contract.validators[0].staked = ntoy(100);
 
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 
     assert!(!contract.contract_lock);
     assert!(!contract.validators[0].lock);
@@ -676,7 +676,7 @@ fn test_distribute_rewards_stake_pool_with_no_stake() {
     contract.validators[0].last_redeemed_rewards_epoch = context.epoch_height - 10;
     contract.validators[0].staked = ntoy(100);
 
-    contract.distribute_rewards(0);
+    contract.autocompound_rewards(0);
 
     assert!(contract.contract_lock);
     assert!(contract.validators[0].lock);

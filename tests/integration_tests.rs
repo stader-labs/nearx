@@ -10,8 +10,9 @@ use near_units::*;
 use workspaces::{network::Sandbox, prelude::*};
 
 const NEAR_LIQUID_TOKEN_WASM_FILEPATH: &str =
-    "./../target/wasm32-unknown-unknown/release/near_liquid_token.wasm";
-const STAKE_POOL_WASM: &str = "./..//res/staking_pool.wasm";
+    "/Users/bharath12345/stader-work/near-liquid-token/res/near_liquid_token.wasm";
+const STAKE_POOL_WASM: &str =
+    "/Users/bharath12345/stader-work/near-liquid-token/res/staking_pool.wasm";
 
 // Return type is the worker, nearx liquid token contract and stake pool contract with 3 users and operator, owner account
 async fn setup_sandbox_workspace() -> anyhow::Result<(
@@ -24,6 +25,7 @@ async fn setup_sandbox_workspace() -> anyhow::Result<(
     Account,
     Account,
 )> {
+    println!("Connecting to sandbox!");
     let worker = workspaces::sandbox().await?;
     let near_pool_wasm = std::fs::read(NEAR_LIQUID_TOKEN_WASM_FILEPATH)?;
     let stake_pool_wasm = std::fs::read(STAKE_POOL_WASM)?;
@@ -243,7 +245,7 @@ async fn get_total_tokens_supply(
         .json::<U128>()
 }
 
-#[tokio::test]
+#[tokio::main]
 async fn main_tests() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");

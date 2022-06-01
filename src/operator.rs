@@ -12,7 +12,7 @@ impl NearxPool {
     // This method queries the stake pol contract to check if there are any rewards to account for
     // if there are rewards since the last call of distribute_rewards, we increase the total_staked
     // amount which will increase the price of nearX
-    pub fn distribute_rewards(&mut self, val_inx: u16) {
+    pub fn autocompound_rewards(&mut self, val_inx: u16) {
         self.assert_not_busy();
 
         let inx = val_inx as usize;
@@ -40,22 +40,16 @@ impl NearxPool {
         val.lock = true;
 
         //query our current balance (includes staked+unstaked+staking rewards)
-        ext_staking_pool::get_account_staked_balance(
-            env::current_account_id(),
-            //promise params
-            val.account_id.clone(),
-            NO_DEPOSIT,
-            gas::GET_ACCOUNT_TOTAL_BALANCE,
-        )
-        .then(
-            ext_staking_pool_callback::on_get_sp_staked_balance_for_rewards(
-                inx,
-                //promise params
-                env::current_account_id(),
-                NO_DEPOSIT,
-                gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE,
-            ),
-        );
+        ext_staking_pool::ext(val.account_id.clone())
+            .with_attached_deposit(NO_DEPOSIT)
+            .with_static_gas(gas::GET_ACCOUNT_TOTAL_BALANCE)
+            .get_account_staked_balance(env::current_account_id())
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
+                    .on_get_sp_staked_balance_for_rewards(inx),
+            );
     }
 
     pub fn on_get_sp_staked_balance_for_rewards(
