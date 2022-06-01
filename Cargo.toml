@@ -14,7 +14,6 @@ uint = { version = "0.8.3", default-features = false }
 #syn = { version = "=1.0.78"}
 
 [dev-dependencies]
-near-sdk-sim = "=4.0.0-pre.9"
 anyhow = "1.0"
 borsh = "0.9"
 maplit = "1.0"

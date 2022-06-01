@@ -9,7 +9,6 @@ use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
-use near_sdk_sim::{to_ts, utils::system_account};
 use std::{convert::TryFrom, str::FromStr};
 
 pub fn owner_account() -> AccountId {
@@ -20,6 +19,19 @@ pub fn public_key(byte_val: u8) -> PublicKey {
     let mut pk = vec![byte_val; 33];
     pk[0] = 0;
     PublicKey::try_from(pk).unwrap()
+}
+
+pub fn system_account() -> AccountId {
+    AccountId::from_str("system").unwrap()
+}
+
+pub fn to_nanos(num_days: u64) -> u64 {
+    num_days * 86_400_000_000_000
+}
+
+pub fn to_ts(num_days: u64) -> u64 {
+    // 2018-08-01 UTC in nanoseconds
+    1_533_081_600_000_000_000 + to_nanos(num_days)
 }
 
 pub fn operator_account() -> AccountId {
@@ -78,9 +90,7 @@ pub fn get_context(
 }
 
 fn basic_context() -> VMContext {
-    let account = AccountId::from_str(&system_account()).unwrap();
-
-    get_context(account, ntoy(100), 0, to_ts(500))
+    get_context(system_account(), ntoy(100), 0, to_ts(500))
 }
 
 fn new_contract(owner_account: AccountId, operator_account: AccountId) -> NearxPool {
