@@ -1,1 +1,1 @@
-./build.sh; rm -rf neardev; near dev-deploy --wasmFile res/nearX.wasm; source neardev/dev-account.env
+rm -rf neardev; near dev-deploy --wasmFile res/near_liquid_token.wasm; source neardev/dev-account.env

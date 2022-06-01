@@ -1,24 +1,22 @@
 use crate::*;
-use near_sdk::EpochHeight;
+use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
+    ext_contract, EpochHeight,
+};
 
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::ext_contract;
-
-#[derive(Default, BorshDeserialize, BorshSerialize)]
-pub struct StakingPoolInfo {
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct ValidatorInfo {
     pub account_id: AccountId,
 
-    //if we've made an async call to this pool
+    // TODO - bchain99 - we might not need this
     pub lock: bool,
 
-    //total staked here
     pub staked: u128,
 
-    //EpochHeight where we asked the sp what were our staking rewards
-    pub last_asked_rewards_epoch_height: EpochHeight,
+    pub last_redeemed_rewards_epoch: EpochHeight,
 }
 
-impl StakingPoolInfo {
+impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
         self.lock == false && self.staked == 0
     }
@@ -28,7 +26,7 @@ impl StakingPoolInfo {
             account_id,
             lock: false,
             staked: 0,
-            last_asked_rewards_epoch_height: 0,
+            last_redeemed_rewards_epoch: 0,
         }
     }
     pub fn total_balance(&self) -> u128 {
