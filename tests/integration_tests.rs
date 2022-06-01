@@ -1,10 +1,10 @@
 mod helpers;
 
-use serde_json::json;
 use crate::helpers::ntoy;
 use near_liquid_token::types::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
 use near_sdk::json_types::U128;
 use near_units::*;
+use serde_json::json;
 use workspaces::{network::Sandbox, prelude::*, Account, AccountId, Contract, Worker};
 
 const NEAR_LIQUID_TOKEN_WASM_FILEPATH: &str =
@@ -243,7 +243,7 @@ async fn get_total_tokens_supply(
         .json::<U128>()
 }
 
-#[tokio::main]
+#[tokio::test]
 async fn main_tests() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");
