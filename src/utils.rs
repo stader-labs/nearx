@@ -1,4 +1,4 @@
-use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*, types::*};
+use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*};
 use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
@@ -35,14 +35,14 @@ pub fn is_promise_success() -> bool {
     matches!(env::promise_result(0), PromiseResult::Successful(_))
 }
 
-pub fn apply_multiplier(amount: u128, percentage: u16) -> u128 {
-    (amount.checked_mul(percentage as u128))
-        .unwrap()
-        .checked_div(100)
-        .unwrap()
-}
-/// returns amount * numerator/denominator
+/// Returns amount * numerator/denominator
+#[allow(clippy::all)]
 pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
+    uint::construct_uint! {
+        /// 256-bit unsigned integer.
+        pub struct U256(4);
+    }
+
     (U256::from(amount) * U256::from(numerator) / U256::from(denominator)).as_u128()
 }
 

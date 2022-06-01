@@ -2,8 +2,8 @@ mod helpers;
 
 use helpers::ntoy;
 use near_liquid_token::{
-    types::{AccountResponse, U128String, U64String, ValidatorInfoResponse},
-    NearxPool,
+    contract::NearxPool,
+    state::{AccountResponse, Fraction, U128String, U64String, ValidatorInfoResponse},
 };
 use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
@@ -370,7 +370,7 @@ fn test_set_reward_fee_fail() {
     /*
        Set reward fee more than 10%
     */
-    contract.set_reward_fee(15);
+    contract.set_reward_fee(15, 100);
 }
 
 #[test]
@@ -710,7 +710,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     testing_env!(context.clone());
 
     contract.validators[0].staked = ntoy(100);
-    contract.rewards_fee_pct = 10;
+    contract.rewards_fee = Fraction::new(10, 100);
     contract.total_staked = ntoy(100);
     contract.total_stake_shares = ntoy(100);
 

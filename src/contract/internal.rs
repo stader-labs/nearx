@@ -1,8 +1,8 @@
 use crate::{
     constants::{gas, NO_DEPOSIT},
+    contract::*,
+    state::*,
     utils::{amount_from_shares, assert_callback_calling, shares_from_amount},
-    validator::*,
-    *,
 };
 use near_sdk::{is_promise_success, log, AccountId, Balance, Promise, PromiseOrValue};
 
