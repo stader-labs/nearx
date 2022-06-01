@@ -2,8 +2,8 @@ mod helpers;
 
 use helpers::ntoy;
 use near_liquid_token::{
-    types::{AccountResponse, U128String, U64String, ValidatorInfoResponse},
-    NearxPool,
+    contract::NearxPool,
+    state::{AccountResponse, U128String, U64String, ValidatorInfoResponse},
 };
 use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,

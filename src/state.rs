@@ -1,7 +1,8 @@
 use near_sdk::{
+    borsh::{self, BorshDeserialize, BorshSerialize},
     json_types::{U128, U64},
     serde::{Deserialize, Serialize},
-    AccountId,
+    AccountId, EpochHeight,
 };
 
 pub type U128String = U128;
@@ -14,15 +15,6 @@ pub struct RewardFeeFraction {
     pub numerator: u32,
     pub denominator: u32,
 }
-
-#[allow(clippy::all)]
-mod uint_impl {
-    uint::construct_uint! {
-        /// 256-bit unsigned integer.
-        pub struct U256(4);
-    }
-}
-pub use uint_impl::U256;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
@@ -70,4 +62,60 @@ pub struct ValidatorInfoResponse {
     pub staked: U128String,
     pub last_asked_rewards_epoch_height: U64String,
     pub lock: bool,
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
+pub struct ValidatorInfo {
+    pub account_id: AccountId,
+
+    // TODO - bchain99 - we might not need this
+    pub lock: bool,
+
+    pub staked: u128,
+
+    pub last_redeemed_rewards_epoch: EpochHeight,
+}
+
+impl ValidatorInfo {
+    pub fn is_empty(&self) -> bool {
+        self.lock == false && self.staked == 0
+    }
+
+    pub fn new(account_id: AccountId) -> Self {
+        Self {
+            account_id,
+            lock: false,
+            staked: 0,
+            last_redeemed_rewards_epoch: 0,
+        }
+    }
+    pub fn total_balance(&self) -> u128 {
+        self.staked
+    }
+}
+
+#[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Account {
+    pub stake_shares: u128, //nearx this account owns
+}
+
+impl Account {
+    pub fn is_empty(&self) -> bool {
+        self.stake_shares == 0
+    }
+
+    pub fn add_stake_shares(&mut self, num_shares: u128) {
+        self.stake_shares += num_shares;
+    }
+
+    pub fn sub_stake_shares(&mut self, num_shares: u128) {
+        assert!(
+            self.stake_shares >= num_shares,
+            "sub_stake_shares self.stake_shares {} < num_shares {}",
+            self.stake_shares,
+            num_shares
+        );
+        self.stake_shares -= num_shares;
+    }
 }

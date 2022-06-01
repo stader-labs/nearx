@@ -1,7 +1,7 @@
 mod helpers;
 
 use crate::helpers::ntoy;
-use near_liquid_token::types::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_liquid_token::state::{AccountResponse, NearxPoolStateResponse, ValidatorInfoResponse};
 use near_sdk::json_types::U128;
 use near_units::*;
 use serde_json::json;
@@ -244,6 +244,7 @@ async fn get_total_tokens_supply(
 }
 
 #[tokio::test]
+#[ignore]
 async fn main_tests() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");
