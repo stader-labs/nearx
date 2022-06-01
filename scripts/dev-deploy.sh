@@ -1,0 +1,1 @@
+rm -rf neardev; near dev-deploy --wasmFile res/near_liquid_token.wasm; source neardev/dev-account.env
