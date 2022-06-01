@@ -9,9 +9,9 @@ pub type U128String = U128;
 pub type U64String = U64;
 
 /// Rewards fee fraction structure for the staking pool contract.
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
 #[serde(crate = "near_sdk::serde")]
-pub struct RewardFeeFraction {
+pub struct Fraction {
     pub numerator: u32,
     pub denominator: u32,
 }
@@ -51,7 +51,7 @@ pub struct NearxPoolStateResponse {
     pub operator_account_id: AccountId,
 
     /// pct of rewards which will go to the operator
-    pub rewards_fee_pct: U128,
+    pub rewards_fee_pct: Fraction,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -117,5 +117,22 @@ impl Account {
             num_shares
         );
         self.stake_shares -= num_shares;
+    }
+}
+
+impl Fraction {
+    pub fn new(numerator: u32, denominator: u32) -> Self {
+        Self {
+            numerator,
+            denominator,
+        }
+    }
+}
+
+impl std::ops::Mul<Fraction> for u128 {
+    type Output = u128;
+
+    fn mul(self, rhs: Fraction) -> Self::Output {
+        crate::utils::proportional(self, rhs.numerator.into(), rhs.denominator.into())
     }
 }

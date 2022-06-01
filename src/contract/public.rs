@@ -23,7 +23,7 @@ impl NearxPool {
             min_deposit_amount: NEAR,
             validators: Vec::new(),
             total_staked: 0,
-            rewards_fee_pct: 0,
+            rewards_fee: Fraction::new(0, 1),
         }
     }
 
@@ -129,17 +129,14 @@ impl NearxPool {
         self.owner_account_id.clone()
     }
 
-    pub fn get_reward_fee_fraction(&self) -> RewardFeeFraction {
-        RewardFeeFraction {
-            numerator: self.rewards_fee_pct.into(),
-            denominator: 100,
-        }
+    pub fn get_reward_fee_fraction(&self) -> Fraction {
+        self.rewards_fee
     }
 
-    pub fn set_reward_fee(&mut self, reward_fee: u16) {
+    pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!(reward_fee < 10); // less than 10%
-        self.rewards_fee_pct = reward_fee;
+        assert!(numerator * 100 / denominator < 10); // less than 10%
+        self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
     pub fn get_total_staked(&self) -> U128String {
@@ -187,7 +184,7 @@ impl NearxPool {
             accumulated_staked_rewards: U128String::from(self.accumulated_staked_rewards),
             min_deposit_amount: U128String::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
-            rewards_fee_pct: U128String::from(self.rewards_fee_pct as u128),
+            rewards_fee_pct: self.rewards_fee.clone(),
         }
     }
 

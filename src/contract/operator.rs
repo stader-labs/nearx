@@ -3,7 +3,7 @@ use crate::{
     contract::*,
     errors::ERROR_VALIDATOR_IS_BUSY,
     state::*,
-    utils::{apply_percentage, assert_callback_calling},
+    utils::assert_callback_calling,
 };
 use near_sdk::{log, near_bindgen};
 
@@ -86,7 +86,7 @@ impl NearxPool {
         //updated new "staked" value for this pool
         val.staked = new_total_balance;
 
-        let operator_fee = apply_percentage(rewards, self.rewards_fee_pct);
+        let operator_fee = rewards * self.rewards_fee;
         self.total_staked += rewards;
 
         if rewards > 0 {

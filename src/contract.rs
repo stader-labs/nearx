@@ -40,7 +40,7 @@ pub struct NearxPool {
     pub operator_account_id: AccountId,
 
     /// operator_rewards_fee_basis_points. (0.2% default) 100 basis point => 1%. E.g.: owner_fee_basis_points=30 => 0.3% owner's fee
-    pub rewards_fee_pct: u16,
+    pub rewards_fee: Fraction,
 }
 
 //self-callbacks

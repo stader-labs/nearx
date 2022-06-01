@@ -35,16 +35,9 @@ pub fn is_promise_success() -> bool {
     matches!(env::promise_result(0), PromiseResult::Successful(_))
 }
 
-pub fn apply_percentage(amount: u128, percentage: u16) -> u128 {
-    (amount.checked_mul(percentage as u128))
-        .unwrap()
-        .checked_div(100)
-        .unwrap()
-}
-
 /// Returns amount * numerator/denominator
 #[allow(clippy::all)]
-fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
+pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
     uint::construct_uint! {
         /// 256-bit unsigned integer.
         pub struct U256(4);
