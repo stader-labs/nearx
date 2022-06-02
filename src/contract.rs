@@ -3,6 +3,7 @@ mod operator;
 mod public;
 
 use crate::state::*;
+use near_sdk::json_types::U128;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
@@ -30,9 +31,7 @@ pub struct NearxPool {
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
-    // list of staking pools
-    // TODO - bchain use persistant vector
-    pub validators: Vec<ValidatorInfo>,
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
 
     /// min amount accepted as deposit or stake
     pub min_deposit_amount: u128,
@@ -46,58 +45,60 @@ pub struct NearxPool {
 //self-callbacks
 #[ext_contract(ext_staking_pool_callback)]
 pub trait ExtNearxStakingPoolCallbacks {
-    fn on_stake_pool_deposit(&mut self, amount: U128String) -> bool;
-
-    fn on_retrieve_from_staking_pool(&mut self, inx: u16) -> bool;
+    fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
     fn on_stake_pool_deposit_and_stake(
         &mut self,
-        sp_inx: usize,
+        validator_info: ValidatorInfo,
         amount: u128,
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
-    fn on_get_sp_total_balance(&mut self, sp_inx: usize, #[callback] total_balance: U128String);
+    fn on_get_sp_total_balance(
+        &mut self,
+        validator_info: ValidatorInfo,
+        #[callback] total_balance: U128,
+    );
 
     fn on_get_sp_staked_balance_for_rewards(
         &mut self,
-        sp_inx: usize,
-        #[callback] total_staked_balance: U128String,
+        validator_info: ValidatorInfo,
+        #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool>;
 
     fn on_get_sp_staked_balance_reconcile(
         &mut self,
-        sp_inx: usize,
+        validator_info: ValidatorInfo,
         amount_actually_staked: u128,
-        #[callback] total_staked_balance: U128String,
+        #[callback] total_staked_balance: U128,
     );
 
     fn on_get_sp_unstaked_balance(
         &mut self,
-        sp_inx: usize,
-        #[callback] unstaked_balance: U128String,
+        validator_info: ValidatorInfo,
+        #[callback] unstaked_balance: U128,
     );
 }
 
 #[ext_contract(ext_staking_pool)]
 pub trait ExtStakingPool {
-    fn get_account_staked_balance(&self, account_id: AccountId) -> U128String;
+    fn get_account_staked_balance(&self, account_id: AccountId) -> U128;
 
-    fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128String;
+    fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128;
 
-    fn get_account_total_balance(&self, account_id: AccountId) -> U128String;
+    fn get_account_total_balance(&self, account_id: AccountId) -> U128;
 
     fn deposit(&mut self);
 
     fn deposit_and_stake(&mut self);
 
-    fn withdraw(&mut self, amount: U128String);
+    fn withdraw(&mut self, amount: U128);
     fn withdraw_all(&mut self);
 
-    fn stake(&mut self, amount: U128String);
+    fn stake(&mut self, amount: U128);
 
-    fn unstake(&mut self, amount: U128String);
+    fn unstake(&mut self, amount: U128);
 
     fn unstake_all(&mut self);
 }

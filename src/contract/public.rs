@@ -1,9 +1,14 @@
+use crate::errors::{
+    ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT, ERROR_VALIDATOR_IS_NOT_PRESENT,
+};
 use crate::{
     constants::{NEAR, ONE_E24},
     contract::*,
     errors,
     state::*,
 };
+use near_sdk::json_types::U64;
+use near_sdk::log;
 use near_sdk::near_bindgen;
 
 #[near_bindgen]
@@ -21,7 +26,7 @@ impl NearxPool {
             total_stake_shares: 0,
             accounts: UnorderedMap::new(b"A".to_vec()),
             min_deposit_amount: NEAR,
-            validators: Vec::new(),
+            validator_info_map: UnorderedMap::new(b"B".to_vec()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
         }
@@ -73,7 +78,7 @@ impl NearxPool {
 
     #[payable]
     pub fn deposit(&mut self) {
-        panic!("Use only deposit_and_stake");
+        panic!("Not implemented!");
     }
 
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
@@ -85,24 +90,20 @@ impl NearxPool {
     /*
        Staking pool addition and deletion
     */
-    pub fn remove_validator(&mut self, inx: u16) {
+    pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
-
-        let sp = &self.validators[inx as usize];
-        if !sp.is_empty() {
-            panic!("sp is not empty")
-        }
-        self.validators.remove(inx as usize);
+        log!(format!("Removing validator {}", validator));
+        self.validator_info_map.remove(&validator);
     }
 
-    pub fn add_validator(&mut self, account_id: AccountId) {
+    pub fn add_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
-        for inx in 0..self.validators.len() {
-            if self.validators[inx].account_id == account_id {
-                panic!("already in list");
-            }
+        if self.validator_info_map.get(&validator).is_some() {
+            panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
-        self.validators.push(ValidatorInfo::new(account_id));
+        log!(format!("Adding validator {}", validator));
+        self.validator_info_map
+            .insert(&validator.clone(), &ValidatorInfo::new(validator));
     }
 
     pub fn toggle_staking_pause(&mut self) {
@@ -112,11 +113,11 @@ impl NearxPool {
 
     // View methods
 
-    pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128String {
+    pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
         self.get_account(account_id).staked_balance
     }
 
-    pub fn get_account_total_balance(&self, account_id: AccountId) -> U128String {
+    pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
         let acc = self.internal_get_account(&account_id);
         self.amount_from_stake_shares(acc.stake_shares).into()
     }
@@ -135,16 +136,16 @@ impl NearxPool {
 
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!(numerator * 100 / denominator < 10); // less than 10%
+        assert!((numerator * 100 / denominator) < 10); // less than 10%
         self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
-    pub fn get_total_staked(&self) -> U128String {
-        U128String::from(self.total_staked)
+    pub fn get_total_staked(&self) -> U128 {
+        U128::from(self.total_staked)
     }
 
     pub fn get_staking_key(&self) -> PublicKey {
-        panic!("No staking key for the staking pool");
+        panic!("{}", ERROR_NO_STAKING_KEY);
     }
 
     pub fn is_staking_paused(&self) -> bool {
@@ -156,7 +157,7 @@ impl NearxPool {
         println!("account is {:?}", account);
         AccountResponse {
             account_id,
-            unstaked_balance: U128String::from(0), // TODO - implement unstake
+            unstaked_balance: U128::from(0), // TODO - implement unstake
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
             can_withdraw: false,
         }
@@ -179,43 +180,43 @@ impl NearxPool {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
             staking_paused: self.staking_paused,
-            total_staked: U128String::from(self.total_staked),
-            total_stake_shares: U128String::from(self.total_stake_shares),
-            accumulated_staked_rewards: U128String::from(self.accumulated_staked_rewards),
-            min_deposit_amount: U128String::from(self.min_deposit_amount),
+            total_staked: U128::from(self.total_staked),
+            total_stake_shares: U128::from(self.total_stake_shares),
+            accumulated_staked_rewards: U128::from(self.accumulated_staked_rewards),
+            min_deposit_amount: U128::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
-            rewards_fee_pct: self.rewards_fee.clone(),
+            rewards_fee_pct: self.rewards_fee,
         }
     }
 
-    pub fn get_nearx_price(&self) -> U128String {
+    pub fn get_nearx_price(&self) -> U128 {
         self.amount_from_stake_shares(ONE_E24).into()
     }
 
-    // Staking pool query
-    pub fn get_validator_info(&self, inx: u16) -> ValidatorInfoResponse {
-        assert!((inx as usize) < self.validators.len());
-        let sp = &self.validators[inx as usize];
+    pub fn get_validator_info(&self, validator: AccountId) -> ValidatorInfoResponse {
+        let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
+            val_info
+        } else {
+            panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
+        };
 
         ValidatorInfoResponse {
-            inx,
-            account_id: sp.account_id.clone(),
-            staked: sp.staked.into(),
-            last_asked_rewards_epoch_height: sp.last_redeemed_rewards_epoch.into(),
-            lock: sp.lock,
+            account_id: validator_info.account_id.clone(),
+            staked: validator_info.staked.into(),
+            last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
+            lock: validator_info.lock,
         }
     }
 
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {
-        self.validators
+        self.validator_info_map
             .iter()
             .enumerate()
             .map(|(i, pool)| ValidatorInfoResponse {
-                inx: i as u16,
-                account_id: pool.account_id.clone(),
-                staked: U128String::from(pool.staked),
-                last_asked_rewards_epoch_height: U64String::from(pool.last_redeemed_rewards_epoch),
-                lock: pool.lock,
+                account_id: pool.1.account_id.clone(),
+                staked: U128::from(pool.1.staked),
+                last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
+                lock: pool.1.lock,
             })
             .collect()
     }

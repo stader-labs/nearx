@@ -9,3 +9,6 @@ pub const ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE: &str =
     "Contract balance should not go below the required minimum storage balance";
 pub const ERROR_REQUIRE_ONE_YOCTO_NEAR: &str = "Function requires at least one yocto near";
 pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on callback";
+pub const ERROR_VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
+pub const ERROR_VALIDATOR_IS_ALREADY_PRESENT: &str = "Validator is already present in list";
+pub const ERROR_NO_STAKING_KEY: &str = "Staking key not present";
