@@ -39,6 +39,10 @@ pub mod gas {
     /// the staking pool.
     pub const ON_STAKING_POOL_DEPOSIT_AND_STAKE: Gas = base_gas(1);
 
+    /// Gas attached to the inner callback for processing result of the unstake call to
+    /// the staking pool.
+    pub const ON_STAKING_POOL_UNSTAKE: Gas = base_gas(1);
+
     /// Gas attached to the inner callback for processing result of the call to get the current total balance from the staking pool.
     /// TODO - bchain - see if we can refactor this
     pub const ON_GET_SP_STAKED_BALANCE_TO_RECONCILE: Gas = tera(5);

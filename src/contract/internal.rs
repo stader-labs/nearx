@@ -2,10 +2,11 @@ use crate::errors::ERROR_VALIDATOR_IS_NOT_PRESENT;
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
+    errors,
     state::*,
-    utils::{amount_from_shares, assert_callback_calling, shares_from_amount},
+    utils::assert_callback_calling,
 };
-use near_sdk::{is_promise_success, log, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
@@ -107,6 +108,57 @@ impl NearxPool {
         }
     }
 
+    pub(crate) fn internal_unstake(&mut self, nearx_amount: Balance) {
+        log!("User unstaked amount is {}", nearx_amount);
+        let account_id = env::predecessor_account_id();
+        let mut account = self.internal_get_account(&account_id);
+        let near_amount = self.amount_from_stake_shares(nearx_amount);
+
+        require!(near_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
+        require!(
+            account.stake_shares >= nearx_amount,
+            errors::NOT_ENOUGH_SHARES
+        );
+
+        account.stake_shares -= nearx_amount;
+        account.unstaked += near_amount;
+        self.total_staked -= near_amount; //TODO Not sure if it must be sustracted here, or during withdraw
+        self.to_withdraw += near_amount;
+        self.total_stake_shares -= nearx_amount;
+
+        //TODO setup the epoch stuff so that we don't make the cooldown longer
+
+        self.internal_update_account(&account_id, &account);
+
+        // Undelegate the stake from a validator:
+        let validator = self.validator_with_max_stake().unwrap();
+        ext_staking_pool::ext(validator.clone())
+            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .unstake(near_amount.into())
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
+                    .on_stake_pool_unstake(validator, near_amount.into()),
+            );
+    }
+
+    pub fn on_stake_pool_unstake(
+        &mut self,
+        validator: AccountId,
+        amount: u128,
+        shares: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool> {
+        assert_callback_calling();
+
+        let _sp = &mut self.validators.iter().find(|v| v.account_id == validator);
+        todo!()
+    }
+
+    pub(crate) fn internal_withdraw(&mut self, near_amount: Balance) {
+        log!("User withdrawn amount is {}", near_amount);
+    }
+
     pub fn on_get_sp_staked_balance_reconcile(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
@@ -133,11 +185,21 @@ impl NearxPool {
     }
 
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
-        shares_from_amount(amount, self.total_staked, self.total_stake_shares)
+        if self.total_stake_shares == 0 {
+            amount
+        } else if amount == 0 || self.total_staked == 0 {
+            0
+        } else {
+            crate::utils::proportional(self.total_stake_shares, amount, self.total_staked)
+        }
     }
 
     pub(crate) fn amount_from_stake_shares(&self, num_shares: u128) -> u128 {
-        amount_from_shares(num_shares, self.total_staked, self.total_stake_shares)
+        if self.total_stake_shares == 0 || num_shares == 0 {
+            0
+        } else {
+            crate::utils::proportional(num_shares, self.total_staked, self.total_stake_shares)
+        }
     }
 
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
@@ -177,5 +239,12 @@ impl NearxPool {
             .values()
             .filter(|v| v.unlocked())
             .min_by_key(|v| v.staked)
+    }
+
+    pub fn validator_with_max_stake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked())
+            .max_by_key(|v| v.staked)
     }
 }

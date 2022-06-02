@@ -13,3 +13,6 @@ pub const ERROR_VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
 pub const ERROR_VALIDATOR_IS_ALREADY_PRESENT: &str = "Validator is already present in list";
 pub const ERROR_NO_STAKING_KEY: &str = "Staking key not present";
 pub const ERROR_CONTRACT_ALREADY_INITIALIZED: &str = "Contract has already been initialized";
+
+pub const NOT_ENOUGH_SHARES: &str = "User has not enough shares to unstake";
+pub const UNSTAKE_AMOUNT_ZERO: &str = "Unstake amount should not be 0";

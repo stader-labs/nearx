@@ -19,6 +19,7 @@ pub struct AccountResponse {
     pub account_id: AccountId,
     pub unstaked_balance: U128,
     pub staked_balance: U128,
+    pub stake_shares: U128,
     pub can_withdraw: bool,
 }
 
@@ -99,12 +100,13 @@ impl ValidatorInfo {
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Account {
-    pub stake_shares: u128, //nearx this account owns
+    pub stake_shares: u128, // nearx this account owns
+    pub unstaked: u128,     // How many NEAR this account can withdraw
 }
 
 impl Account {
     pub fn is_empty(&self) -> bool {
-        self.stake_shares == 0
+        self.stake_shares == 0 && self.unstaked == 0
     }
 
     pub fn add_stake_shares(&mut self, num_shares: u128) {

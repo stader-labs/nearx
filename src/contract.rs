@@ -26,6 +26,9 @@ pub struct NearxPool {
     /// how many "NearX" were minted.
     pub total_stake_shares: u128, //total NearX minted
 
+    /// The amount of unstaked tokens that will be withdrawn by users.
+    pub to_withdraw: u128,
+
     pub accumulated_staked_rewards: u128,
 
     // User account map
@@ -54,6 +57,9 @@ pub trait ExtNearxStakingPoolCallbacks {
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool>;
+
+    fn on_stake_pool_unstake(&mut self, validator: AccountId, amount: u128)
+        -> PromiseOrValue<bool>;
 
     fn on_get_sp_total_balance(
         &mut self,

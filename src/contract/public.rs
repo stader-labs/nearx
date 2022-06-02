@@ -27,6 +27,7 @@ impl NearxPool {
             contract_lock: false,
             operator_account_id,
             staking_paused: false,
+            to_withdraw: 0,
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(b"A".to_vec()),
@@ -162,8 +163,9 @@ impl NearxPool {
         println!("account is {:?}", account);
         AccountResponse {
             account_id,
-            unstaked_balance: U128::from(0), // TODO - implement unstake
+            unstaked_balance: U128::from(0), // TODO - implement unstake//
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
+            stake_shares: account.stake_shares.into(),
             can_withdraw: false,
         }
     }

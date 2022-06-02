@@ -544,6 +544,7 @@ fn test_stake_pool_deposit_and_stake_callback_success() {
             account_id: user,
             unstaked_balance: U128(0),
             staked_balance: U128(ntoy(100)),
+            stake_shares: U128(ntoy(100)),
             can_withdraw: false
         }
     );
