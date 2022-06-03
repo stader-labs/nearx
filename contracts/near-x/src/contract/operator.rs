@@ -36,7 +36,6 @@ impl NearxPool {
         validator_info.lock = true;
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
-        println!("setting validator lock to true");
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
@@ -88,7 +87,9 @@ impl NearxPool {
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
         if operator_fee > 0 {
-            PromiseOrValue::Promise(Promise::new(env::current_account_id()).transfer(operator_fee))
+            PromiseOrValue::Promise(
+                Promise::new(self.operator_account_id.clone()).transfer(operator_fee),
+            )
         } else {
             PromiseOrValue::Value(true)
         }
