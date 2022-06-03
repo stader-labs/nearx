@@ -69,7 +69,6 @@ pub fn get_context(
     account_balance: u128,
     account_locked_balance: u128,
     block_timestamp: u64,
-    //view_config: bool,
 ) -> VMContext {
     VMContext {
         current_account_id: contract_account(),

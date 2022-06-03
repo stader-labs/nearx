@@ -12,3 +12,4 @@ pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on c
 pub const ERROR_VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
 pub const ERROR_VALIDATOR_IS_ALREADY_PRESENT: &str = "Validator is already present in list";
 pub const ERROR_NO_STAKING_KEY: &str = "Staking key not present";
+pub const ERROR_CONTRACT_ALREADY_INITIALIZED: &str = "Contract has already been initialized";

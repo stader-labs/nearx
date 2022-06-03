@@ -1,5 +1,6 @@
 use crate::errors::{
-    ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT, ERROR_VALIDATOR_IS_NOT_PRESENT,
+    ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT,
+    ERROR_VALIDATOR_IS_NOT_PRESENT,
 };
 use crate::{
     constants::{NEAR, ONE_E24},
@@ -15,7 +16,11 @@ use near_sdk::near_bindgen;
 impl NearxPool {
     #[init]
     pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
-        assert!(!env::state_exists(), "The contract is already initialized");
+        assert!(
+            !env::state_exists(),
+            "{}",
+            ERROR_CONTRACT_ALREADY_INITIALIZED
+        );
 
         Self {
             owner_account_id,
@@ -78,7 +83,7 @@ impl NearxPool {
 
     #[payable]
     pub fn deposit(&mut self) {
-        panic!("Not implemented!");
+        unimplemented!();
     }
 
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
