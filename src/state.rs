@@ -5,9 +5,6 @@ use near_sdk::{
     AccountId, EpochHeight,
 };
 
-pub type U128String = U128;
-pub type U64String = U64;
-
 /// Rewards fee fraction structure for the staking pool contract.
 #[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
 #[serde(crate = "near_sdk::serde")]
@@ -57,14 +54,14 @@ pub struct NearxPoolStateResponse {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfoResponse {
-    pub inx: u16,
     pub account_id: AccountId,
-    pub staked: U128String,
-    pub last_asked_rewards_epoch_height: U64String,
+    pub staked: U128,
+    pub last_asked_rewards_epoch_height: U64,
     pub lock: bool,
 }
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfo {
     pub account_id: AccountId,
 
@@ -78,7 +75,7 @@ pub struct ValidatorInfo {
 
 impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
-        self.lock == false && self.staked == 0
+        self.unlocked() && self.staked == 0
     }
 
     pub fn new(account_id: AccountId) -> Self {
@@ -89,8 +86,13 @@ impl ValidatorInfo {
             last_redeemed_rewards_epoch: 0,
         }
     }
+
     pub fn total_balance(&self) -> u128 {
         self.staked
+    }
+
+    pub fn unlocked(&self) -> bool {
+        self.lock == false
     }
 }
 

@@ -52,11 +52,7 @@ pub struct Contract {
 
 #[near_bindgen]
 impl FungibleTokenCore for NearxPool {
-    //NEP-141 for default token NEARX, ft_transfer
-    /// Transfer `amount` of tokens from the caller of the contract (`predecessor_id`) to a contract at `receiver_id`.
-    /// Requirements:
-    /// * receiver_id must be a contract and must respond to `ft_on_transfer(&mut self, sender_id: AccountId, amount: U128String, _msg: String ) -> PromiseOrValue<U128>`
-    /// * if receiver_id is not a contract or `ft_on_transfer` fails, the transfer is rolled-back
+    /// NEP-141 for NEARX
     #[payable]
     fn ft_transfer(
         &mut self,
@@ -101,7 +97,6 @@ impl FungibleTokenCore for NearxPool {
             .into()
     }
 
-    //NearX total supply
     fn ft_total_supply(&self) -> U128 {
         self.total_stake_shares.into()
     }
@@ -113,9 +108,6 @@ impl FungibleTokenCore for NearxPool {
 
 #[near_bindgen]
 impl FungibleTokenResolver for NearxPool {
-    /// Returns the amount of burned tokens in a corner case when the sender
-    /// has deleted (unregistered) their account while the `ft_transfer_call` was still in flight.
-    /// Returns (Used token amount, Burned token amount)
     #[private]
     fn ft_resolve_transfer(
         &mut self,
