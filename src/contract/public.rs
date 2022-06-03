@@ -211,8 +211,7 @@ impl NearxPool {
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {
         self.validator_info_map
             .iter()
-            .enumerate()
-            .map(|(i, pool)| ValidatorInfoResponse {
+            .map(|pool| ValidatorInfoResponse {
                 account_id: pool.1.account_id.clone(),
                 staked: U128::from(pool.1.staked),
                 last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
