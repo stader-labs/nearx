@@ -4,7 +4,7 @@ use crate::{
     contract::*,
     errors,
     state::*,
-    utils::assert_callback_calling,
+    utils::{assert_callback_calling, unwrap_validator_info},
 };
 use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
@@ -25,10 +25,7 @@ impl NearxPool {
         let num_shares = self.stake_shares_from_amount(user_amount);
         assert!(num_shares > 0);
 
-        let selected_validator = self.get_stake_pool_with_min_stake();
-        assert!(selected_validator.is_some(), "All validators busy");
-
-        let selected_validator = selected_validator.unwrap();
+        let selected_validator = unwrap_validator_info(self.validator_with_min_stake());
 
         log!("Amount is {}", user_amount);
         //schedule async deposit_and_stake on that pool
@@ -131,27 +128,27 @@ impl NearxPool {
         self.internal_update_account(&account_id, &account);
 
         // Undelegate the stake from a validator:
-        let validator = self.validator_with_max_stake().unwrap();
-        ext_staking_pool::ext(validator.clone())
+        let selected_validator = unwrap_validator_info(self.validator_with_max_stake());
+
+        ext_staking_pool::ext(selected_validator.account_id.clone())
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
             .unstake(near_amount.into())
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                    .on_stake_pool_unstake(validator, near_amount.into()),
+                    .on_stake_pool_unstake(selected_validator, near_amount.into()),
             );
     }
 
     pub fn on_stake_pool_unstake(
         &mut self,
-        validator: AccountId,
+        validator_info: ValidatorInfo,
         amount: u128,
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
 
-        let _sp = &mut self.validators.iter().find(|v| v.account_id == validator);
         todo!()
     }
 
@@ -234,7 +231,7 @@ impl NearxPool {
         }
     }
 
-    pub fn get_stake_pool_with_min_stake(&self) -> Option<ValidatorInfo> {
+    pub fn validator_with_min_stake(&self) -> Option<ValidatorInfo> {
         self.validator_info_map
             .values()
             .filter(|v| v.unlocked())

@@ -308,7 +308,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
         Get stake pool in empty stake pool set
     */
-    let stake_pool = contract.get_stake_pool_with_min_stake();
+    let stake_pool = contract.validator_with_min_stake();
     assert!(stake_pool.is_none());
 
     /*
@@ -367,7 +367,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
        Get stake pool to stake into
     */
-    let validator = contract.get_stake_pool_with_min_stake();
+    let validator = contract.validator_with_min_stake();
     assert!(validator.is_some());
     assert_eq!(validator.unwrap().account_id, stake_public_key_1);
 }

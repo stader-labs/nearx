@@ -1,4 +1,8 @@
-use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*};
+use crate::{
+    constants::MIN_BALANCE_FOR_STORAGE,
+    errors::{self, *},
+    state::ValidatorInfo,
+};
 use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
@@ -44,4 +48,8 @@ pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
     }
 
     (U256::from(amount) * U256::from(numerator) / U256::from(denominator)).as_u128()
+}
+
+pub fn unwrap_validator_info(validator_info: Option<ValidatorInfo>) -> ValidatorInfo {
+    validator_info.expect(errors::VALIDATORS_ARE_BUSY)
 }

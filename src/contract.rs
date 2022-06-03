@@ -58,8 +58,11 @@ pub trait ExtNearxStakingPoolCallbacks {
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
-    fn on_stake_pool_unstake(&mut self, validator: AccountId, amount: u128)
-        -> PromiseOrValue<bool>;
+    fn on_stake_pool_unstake(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+    ) -> PromiseOrValue<bool>;
 
     fn on_get_sp_total_balance(
         &mut self,
