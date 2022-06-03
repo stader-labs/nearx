@@ -14,6 +14,10 @@ pub const FIVE_NEAR: u128 = 5 * NEAR;
 pub const TEN_NEAR: u128 = 10 * NEAR;
 pub const K_NEAR: u128 = 1_000 * NEAR;
 
+/// Storage keys
+pub const ACCOUNTS_MAP: &str = "A";
+pub const VALIDATOR_MAP: &str = "B";
+
 pub mod gas {
     use near_sdk::Gas;
 

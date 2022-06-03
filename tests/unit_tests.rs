@@ -1,16 +1,19 @@
 mod helpers;
 
 use helpers::ntoy;
+use near_liquid_token::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use near_liquid_token::state::ValidatorInfo;
 use near_liquid_token::{
     contract::NearxPool,
     state::{AccountResponse, Fraction, ValidatorInfoResponse},
 };
 use near_sdk::json_types::{U128, U64};
+use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
+use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
 pub fn owner_account() -> AccountId {
@@ -48,17 +51,26 @@ pub fn check_equal_vec<S: PartialEq>(v1: Vec<S>, v2: Vec<S>) -> bool {
     v1.len() == v2.len() && v1.iter().all(|x| v2.contains(x)) && v2.iter().all(|x| v1.contains(x))
 }
 
-pub fn testing_env_with_promise_results(context: VMContext, promise_result: PromiseResult) {
-    near_sdk::env::set_blockchain_interface(MockedBlockchain::new(
-        context,
-        VMConfig::test(),
-        RuntimeFeesConfig::test(),
-        vec![promise_result],
-        Default::default(),
-        Default::default(),
-        Default::default(),
-    ));
-}
+// pub fn testing_env_with_promise_results(context: VMContext, promise_result: PromiseResult) {
+//     let storage_keys = vec![ACCOUNTS_MAP, VALIDATOR_MAP];
+//     let mut storage_map = HashMap::default();
+//     for s_key in storage_keys {
+//         let s_key_vec = s_key.as_bytes();
+//         let key_storage = near_sdk::env::storage_read(s_key_vec).unwrap();
+//         storage_map.insert(s_key_vec.to_vec(), key_storage);
+//     }
+//
+//
+//     near_sdk::env::set_blockchain_interface(MockedBlockchain::new(
+//         context,
+//         VMConfig::test(),
+//         RuntimeFeesConfig::test(),
+//         vec![promise_result],
+//         storage_map,
+//         Default::default(),
+//         Default::default(),
+//     ));
+// }
 
 pub fn default_pubkey() -> PublicKey {
     PublicKey::try_from(vec![0; 33]).unwrap()
@@ -449,7 +461,6 @@ fn test_deposit_and_stake_success() {
 }
 
 #[test]
-#[ignore]
 fn test_stake_pool_deposit_and_stake_callback_fail() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
@@ -480,6 +491,7 @@ fn test_stake_pool_deposit_and_stake_callback_fail() {
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     validator1.lock = true;
+    validator1.staked = ntoy(10);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
     contract.contract_lock = true;
@@ -488,13 +500,13 @@ fn test_stake_pool_deposit_and_stake_callback_fail() {
         contract.on_stake_pool_deposit_and_stake(validator1, ntoy(100), ntoy(100), user.clone());
     assert!(matches!(res, PromiseOrValue::Promise(..)));
 
+    assert!(!contract.contract_lock);
+
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert!(!validator1.lock);
-    assert!(!contract.contract_lock);
 }
 
 #[test]
-#[ignore]
 fn test_stake_pool_deposit_and_stake_callback_success() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
