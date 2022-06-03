@@ -365,9 +365,9 @@ checksum = "771fe0050b883fcc3ea2359b1a96bcfbc090b7116eae7c3c512c7a083fdf23d3"
 
 [[package]]
 name = "bumpalo"
-version = "3.9.1"
+version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a45a46ab1f2412e53d3a0ade76ffad2025804294569aae387231a0cd6e0899"
+checksum = "37ccbd214614c6783386c1af30caf03192f17891059cecc394b4fb119e363de3"
 
 [[package]]
 name = "byte-slice-cast"
@@ -1117,6 +1117,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "integration-tests"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "near-sdk",
+ "near-units",
+ "near-x",
+ "serde_json",
+ "tokio",
+ "workspaces",
+]
+
+[[package]]
 name = "ipnet"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1244,6 +1257,15 @@ dependencies = [
  "log",
  "wasi 0.11.0+wasi-snapshot-preview1",
  "windows-sys",
+]
+
+[[package]]
+name = "mock-stake-pool"
+version = "0.0.1"
+dependencies = [
+ "near-contract-standards",
+ "near-sdk",
+ "uint 0.9.3",
 ]
 
 [[package]]
@@ -1449,20 +1471,6 @@ dependencies = [
  "thiserror",
  "tracing",
  "uuid",
-]
-
-[[package]]
-name = "near-liquid-token"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "near-contract-standards",
- "near-sdk",
- "near-units",
- "serde_json",
- "tokio",
- "uint 0.8.5",
- "workspaces",
 ]
 
 [[package]]
@@ -1756,6 +1764,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "near-x"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "near-contract-standards",
+ "near-sdk",
+ "near-units",
+ "serde_json",
+ "tokio",
+ "uint 0.8.5",
+ "workspaces",
+]
+
+[[package]]
 name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1879,9 +1901,9 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.73"
+version = "0.9.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d5fd19fb3e0a8191c1e34935718976a3e70c112ab9a24af6d7cadccd9d90bc0"
+checksum = "835363342df5fba8354c5b453325b110ffd54044e588c539cf2f20a8014e4cb1"
 dependencies = [
  "autocfg",
  "cc",
@@ -3141,7 +3163,7 @@ dependencies = [
 [[package]]
 name = "workspaces"
 version = "0.3.0"
-source = "git+https://github.com/near/workspaces-rs#a039d06f4bca1618e2a1e285811f1b8be22a7e42"
+source = "git+https://github.com/near/workspaces-rs#810c21032ef77b845ff507383e029d7d38586a2f"
 dependencies = [
  "anyhow",
  "async-trait",

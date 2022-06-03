@@ -142,7 +142,7 @@ impl NearxPool {
 
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!((numerator * 100 / denominator) < 10); // less than 10%
+        assert!((numerator * 100 / denominator) < 20); // less than 20%
         self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
@@ -196,7 +196,12 @@ impl NearxPool {
     }
 
     pub fn get_nearx_price(&self) -> U128 {
-        self.amount_from_stake_shares(ONE_E24).into()
+        let amount = self.amount_from_stake_shares(ONE_E24);
+        if amount == 0 {
+            return U128(ONE_E24);
+        } else {
+            U128(amount)
+        }
     }
 
     pub fn get_validator_info(&self, validator: AccountId) -> ValidatorInfoResponse {
@@ -224,5 +229,9 @@ impl NearxPool {
                 lock: pool.1.lock,
             })
             .collect()
+    }
+
+    pub fn get_current_epoch(&self) -> U64 {
+        U64(env::epoch_height())
     }
 }

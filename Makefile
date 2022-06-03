@@ -1,12 +1,15 @@
 RFLAGS="-C link-arg=-s"
 
-all: linear
+all: near-x mock-stake-pool
 
-linear:
-	#rustup target add wasm32-unknown-unknown
-	RUSTFLAGS=$(RFLAGS) cargo +stable build --target wasm32-unknown-unknown --release
+near-x: contracts/near-x
+	rustup target add wasm32-unknown-unknown
+	RUSTFLAGS=$(RFLAGS) cargo +stable build -p near-x --target wasm32-unknown-unknown --release
 	mkdir -p res
-	cp target/wasm32-unknown-unknown/release/*.wasm ./res
+	cp target/wasm32-unknown-unknown/release/near_x.wasm ./res/near_x.wasm
 
-#RUSTFLAGS='-C link-arg=-s' cargo +stable build --all --target wasm32-unknown-unknown --release
-#cp -u target/wasm32-unknown-unknown/release/metapool.wasm res/
+mock-stake-pool: contracts/mock-stake-pool
+	rustup target add wasm32-unknown-unknown
+	RUSTFLAGS=$(RFLAGS) cargo build -p mock-stake-pool --target wasm32-unknown-unknown --release
+	mkdir -p res
+	cp target/wasm32-unknown-unknown/release/mock_stake_pool.wasm ./res/mock_stake_pool.wasm
