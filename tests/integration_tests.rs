@@ -244,7 +244,6 @@ async fn get_total_tokens_supply(
 }
 
 #[tokio::main]
-#[test]
 async fn main_tests() -> anyhow::Result<()> {
     // Initialization
     println!("***** Step 1: Initialization *****");

@@ -1,3 +1,4 @@
+use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::{
     ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT,
     ERROR_VALIDATOR_IS_NOT_PRESENT,
@@ -29,9 +30,9 @@ impl NearxPool {
             staking_paused: false,
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
-            accounts: UnorderedMap::new(b"A".to_vec()),
+            accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: NEAR,
-            validator_info_map: UnorderedMap::new(b"B".to_vec()),
+            validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
         }
