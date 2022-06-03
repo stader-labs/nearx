@@ -1,4 +1,3 @@
-use crate::errors::ERROR_VALIDATOR_IS_NOT_PRESENT;
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
@@ -53,7 +52,7 @@ impl NearxPool {
 
     pub fn on_get_sp_staked_balance_for_rewards(
         &mut self,
-        mut validator_info: ValidatorInfo,
+        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();

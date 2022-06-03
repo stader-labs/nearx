@@ -75,7 +75,7 @@ pub struct ValidatorInfo {
 
 impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
-        self.lock == false && self.staked == 0
+        self.unlocked() && self.staked == 0
     }
 
     pub fn new(account_id: AccountId) -> Self {
@@ -89,6 +89,10 @@ impl ValidatorInfo {
 
     pub fn total_balance(&self) -> u128 {
         self.staked
+    }
+
+    pub fn unlocked(&self) -> bool {
+        self.lock == false
     }
 }
 

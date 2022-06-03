@@ -50,7 +50,7 @@ impl NearxPool {
 
     pub fn on_stake_pool_deposit_and_stake(
         &mut self,
-        mut validator_info: ValidatorInfo,
+        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
         shares: u128,
         user: AccountId,
@@ -109,7 +109,7 @@ impl NearxPool {
 
     pub fn on_get_sp_staked_balance_reconcile(
         &mut self,
-        mut validator_info: ValidatorInfo,
+        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount_actually_staked: u128,
         #[callback] total_staked_balance: U128,
     ) {
@@ -141,11 +141,11 @@ impl NearxPool {
     }
 
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
-        return if let Some(val_info) = self.validator_info_map.get(&validator) {
+        if let Some(val_info) = self.validator_info_map.get(validator) {
             val_info
         } else {
             panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
-        };
+        }
     }
 
     pub(crate) fn internal_update_validator(
@@ -173,16 +173,9 @@ impl NearxPool {
     }
 
     pub fn get_stake_pool_with_min_stake(&self) -> Option<ValidatorInfo> {
-        let mut min_stake_amount: u128 = u128::MAX;
-        let mut selected_validator: Option<ValidatorInfo> = None;
-
-        for (_, validator_info) in self.validator_info_map.iter().enumerate() {
-            if !validator_info.1.lock && validator_info.1.staked < min_stake_amount {
-                min_stake_amount = validator_info.1.staked;
-                selected_validator = Some(validator_info.1);
-            }
-        }
-
-        selected_validator
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked())
+            .min_by_key(|v| v.staked)
     }
 }
