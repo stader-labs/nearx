@@ -82,7 +82,7 @@ impl NearxPool {
             self.contract_lock = false;
         }
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator_info);
 
         if transfer_funds {
             log!("Transfering back {} to {} after stake failed", amount, user);
@@ -108,7 +108,7 @@ impl NearxPool {
     pub(crate) fn internal_unstake(&mut self, nearx_amount: Balance) {
         log!("User unstaked amount is {}", nearx_amount);
         let account_id = env::predecessor_account_id();
-        let mut account = self.internal_get_account(&account_id);
+        let account = self.internal_get_account(&account_id);
         let near_amount = self.amount_from_stake_shares(nearx_amount);
 
         require!(near_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
@@ -117,17 +117,6 @@ impl NearxPool {
             errors::NOT_ENOUGH_SHARES
         );
 
-        account.stake_shares -= nearx_amount;
-        account.unstaked += near_amount;
-        self.total_staked -= near_amount; //TODO Not sure if it must be sustracted here, or during withdraw
-        self.to_withdraw += near_amount;
-        self.total_stake_shares -= nearx_amount;
-
-        //TODO setup the epoch stuff so that we don't make the cooldown longer
-
-        self.internal_update_account(&account_id, &account);
-
-        // Undelegate the stake from a validator:
         let selected_validator = unwrap_validator_info(self.validator_with_max_stake());
 
         ext_staking_pool::ext(selected_validator.account_id.clone())
@@ -142,18 +131,66 @@ impl NearxPool {
 
     pub fn on_stake_pool_unstake(
         &mut self,
-        validator_info: ValidatorInfo,
-        amount: u128,
-        shares: u128,
+        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
+        near_amount: u128,
+        nearx_amount: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
+        let mut account = self.internal_get_account(&user);
 
-        todo!()
+        let unstake_succeeded = is_promise_success();
+        println!("unstake_succeeded {:?}", unstake_succeeded);
+
+        if unstake_succeeded {
+            // User account update:
+            account.stake_shares -= nearx_amount;
+            account.unstaked += near_amount;
+            // Validator update:
+            validator_info.staked -= near_amount;
+            // Pool update:
+            self.total_staked -= near_amount; //TODO Not sure if it must be sustracted here, or during withdraw
+            self.to_withdraw += near_amount;
+            self.total_stake_shares -= nearx_amount;
+
+            self.internal_update_account(&user, &account);
+            self.internal_update_validator(&validator_info);
+
+            //TODO setup the epoch stuff so that we don't make the cooldown longer
+
+            log!(
+                "Successfully unstaked {} from {}",
+                near_amount,
+                validator_info.account_id,
+            );
+        } else {
+            log!(
+                "Failed to unstake {} from {}",
+                near_amount,
+                validator_info.account_id,
+            );
+
+            validator_info.lock = false;
+            self.contract_lock = false;
+        }
+
+        PromiseOrValue::Value(true)
     }
 
     pub(crate) fn internal_withdraw(&mut self, near_amount: Balance) {
         log!("User withdrawn amount is {}", near_amount);
+        let account_id = env::predecessor_account_id();
+        let mut account = self.internal_get_account(&account_id);
+
+        require!(
+            near_amount <= account.unstaked,
+            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW
+        );
+
+        account.unstaked -= near_amount;
+        self.internal_update_account(&account_id, &account);
+
+        Promise::new(account_id).transfer(near_amount);
     }
 
     pub fn on_get_sp_staked_balance_reconcile(
@@ -178,7 +215,7 @@ impl NearxPool {
         validator_info.staked = total_staked_balance.0;
         validator_info.lock = false;
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator_info);
     }
 
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
@@ -207,15 +244,12 @@ impl NearxPool {
         }
     }
 
-    pub(crate) fn internal_update_validator(
-        &mut self,
-        validator: &AccountId,
-        validator_info: &ValidatorInfo,
-    ) {
+    pub(crate) fn internal_update_validator(&mut self, validator_info: &ValidatorInfo) {
         if validator_info.is_empty() {
-            self.validator_info_map.remove(validator);
+            self.validator_info_map.remove(&validator_info.account_id);
         } else {
-            self.validator_info_map.insert(validator, validator_info);
+            self.validator_info_map
+                .insert(&validator_info.account_id, validator_info);
         }
     }
 

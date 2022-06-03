@@ -93,6 +93,15 @@ impl NearxPool {
         self.internal_deposit_and_stake(env::attached_deposit());
     }
 
+    #[payable] //TODO not sure if a nearX transfer must be marked as payable
+    pub fn unstake(&mut self) {
+        self.internal_unstake(env::attached_deposit());
+    }
+
+    pub fn withdraw(&mut self) {
+        self.internal_withdraw(env::attached_deposit());
+    }
+
     /*
        Staking pool addition and deletion
     */

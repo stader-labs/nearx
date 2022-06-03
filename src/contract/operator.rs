@@ -35,7 +35,7 @@ impl NearxPool {
         self.contract_lock = true;
         validator_info.lock = true;
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator_info);
         println!("setting validator lock to true");
 
         ext_staking_pool::ext(validator_info.account_id.clone())
@@ -85,7 +85,7 @@ impl NearxPool {
         let operator_fee = rewards * self.rewards_fee;
         self.total_staked += rewards;
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator_info);
 
         if operator_fee > 0 {
             PromiseOrValue::Promise(Promise::new(env::current_account_id()).transfer(operator_fee))

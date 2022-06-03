@@ -17,3 +17,4 @@ pub const ERROR_CONTRACT_ALREADY_INITIALIZED: &str = "Contract has already been 
 pub const NOT_ENOUGH_SHARES: &str = "User has not enough shares to unstake";
 pub const UNSTAKE_AMOUNT_ZERO: &str = "Unstake amount should not be 0";
 pub const VALIDATORS_ARE_BUSY: &str = "Not a single validator is available";
+pub const NOT_ENOUGH_TOKEN_TO_WITHDRAW: &str = "User has not enough tokens to withdraw";
