@@ -51,27 +51,6 @@ pub fn check_equal_vec<S: PartialEq>(v1: Vec<S>, v2: Vec<S>) -> bool {
     v1.len() == v2.len() && v1.iter().all(|x| v2.contains(x)) && v2.iter().all(|x| v1.contains(x))
 }
 
-// pub fn testing_env_with_promise_results(context: VMContext, promise_result: PromiseResult) {
-//     let storage_keys = vec![ACCOUNTS_MAP, VALIDATOR_MAP];
-//     let mut storage_map = HashMap::default();
-//     for s_key in storage_keys {
-//         let s_key_vec = s_key.as_bytes();
-//         let key_storage = near_sdk::env::storage_read(s_key_vec).unwrap();
-//         storage_map.insert(s_key_vec.to_vec(), key_storage);
-//     }
-//
-//
-//     near_sdk::env::set_blockchain_interface(MockedBlockchain::new(
-//         context,
-//         VMConfig::test(),
-//         RuntimeFeesConfig::test(),
-//         vec![promise_result],
-//         storage_map,
-//         Default::default(),
-//         Default::default(),
-//     ));
-// }
-
 pub fn default_pubkey() -> PublicKey {
     PublicKey::try_from(vec![0; 33]).unwrap()
 }
