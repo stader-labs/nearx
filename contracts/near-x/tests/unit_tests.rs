@@ -1,12 +1,6 @@
 mod helpers;
 
 use helpers::ntoy;
-use near_liquid_token::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
-use near_liquid_token::state::ValidatorInfo;
-use near_liquid_token::{
-    contract::NearxPool,
-    state::{AccountResponse, Fraction, ValidatorInfoResponse},
-};
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
@@ -15,6 +9,8 @@ use near_sdk::{
 };
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
+use near_x::contract::NearxPool;
+use near_x::state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
 
 pub fn owner_account() -> AccountId {
     AccountId::from_str("owner_account").unwrap()

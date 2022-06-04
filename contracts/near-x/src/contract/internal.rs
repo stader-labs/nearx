@@ -85,13 +85,13 @@ impl NearxPool {
         }
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_account(&user, acc);
 
         if transfer_funds {
             log!("Transfering back {} to {} after stake failed", amount, user);
             PromiseOrValue::Promise(Promise::new(user).transfer(amount))
         } else {
             log!("Reconciling total staked balance");
-            self.internal_update_account(&user, acc);
             // Reconcile the total staked amount to the right value
             ext_staking_pool::ext(validator_info.account_id.clone())
                 .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
