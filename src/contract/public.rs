@@ -1,16 +1,9 @@
 use crate::errors::{
-    ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT,
-    ERROR_VALIDATOR_IS_NOT_PRESENT,
+    self, ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY,
+    ERROR_VALIDATOR_IS_ALREADY_PRESENT,
 };
-use crate::{
-    constants::{NEAR, ONE_E24},
-    contract::*,
-    errors,
-    state::*,
-};
-use near_sdk::json_types::U64;
-use near_sdk::log;
-use near_sdk::near_bindgen;
+use crate::{constants::ONE_E24, contract::*, state::*};
+use near_sdk::{json_types::U64, log, near_bindgen, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -28,10 +21,11 @@ impl NearxPool {
             operator_account_id,
             staking_paused: false,
             to_withdraw: 0,
+            to_unstake: 0,
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(b"A".to_vec()),
-            min_deposit_amount: NEAR,
+            min_deposit_amount: ONE_NEAR,
             validator_info_map: UnorderedMap::new(b"B".to_vec()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
@@ -96,6 +90,10 @@ impl NearxPool {
     #[payable] //TODO not sure if a nearX transfer must be marked as payable
     pub fn unstake(&mut self) {
         self.internal_unstake(env::attached_deposit());
+    }
+
+    pub fn epoch_unstake(&mut self) {
+        self.internal_epoch_unstake();
     }
 
     pub fn withdraw(&mut self) {
@@ -213,7 +211,7 @@ impl NearxPool {
         let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
             val_info
         } else {
-            panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
+            panic!("{}", errors::VALIDATOR_IS_NOT_PRESENT);
         };
 
         ValidatorInfoResponse {

@@ -26,6 +26,9 @@ pub struct NearxPool {
     /// how many "NearX" were minted.
     pub total_stake_shares: u128, //total NearX minted
 
+    /// The amount of tokens to unstake in epoch_unstake.
+    pub to_unstake: u128,
+
     /// The amount of unstaked tokens that will be withdrawn by users.
     pub to_withdraw: u128,
 
@@ -41,7 +44,6 @@ pub struct NearxPool {
 
     pub operator_account_id: AccountId,
 
-    /// operator_rewards_fee_basis_points. (0.2% default) 100 basis point => 1%. E.g.: owner_fee_basis_points=30 => 0.3% owner's fee
     pub rewards_fee: Fraction,
 }
 
@@ -58,7 +60,7 @@ pub trait ExtNearxStakingPoolCallbacks {
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
-    fn on_stake_pool_unstake(
+    fn epoch_unstake_callback(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,

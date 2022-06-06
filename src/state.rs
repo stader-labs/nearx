@@ -1,5 +1,6 @@
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
+    env,
     json_types::{U128, U64},
     serde::{Deserialize, Serialize},
     AccountId, EpochHeight,
@@ -72,6 +73,9 @@ pub struct ValidatorInfo {
     pub staked: u128,
 
     pub last_redeemed_rewards_epoch: EpochHeight,
+
+    /// The epoch when we can run the unstake instruction again.
+    available_for_unstake: EpochHeight,
 }
 
 impl ValidatorInfo {
@@ -85,6 +89,7 @@ impl ValidatorInfo {
             lock: false,
             staked: 0,
             last_redeemed_rewards_epoch: 0,
+            available_for_unstake: 0,
         }
     }
 
@@ -94,6 +99,15 @@ impl ValidatorInfo {
 
     pub fn unlocked(&self) -> bool {
         self.lock == false
+    }
+
+    pub fn make_unavailable(&mut self) {
+        self.available_for_unstake = env::epoch_height() + 3; //TODO: do not use a magic number
+    }
+
+    /// Returns whether the validator is available for unstaking at that epoch, or not.
+    pub fn available(&self) -> bool {
+        env::epoch_height() > self.available_for_unstake
     }
 }
 

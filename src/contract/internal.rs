@@ -1,12 +1,13 @@
-use crate::errors::ERROR_VALIDATOR_IS_NOT_PRESENT;
 use crate::{
-    constants::{gas, NO_DEPOSIT},
+    constants::{gas, MIN_STAKE_AMOUNT, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
     contract::*,
     errors,
     state::*,
     utils::{assert_callback_calling, unwrap_validator_info},
 };
-use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{
+    is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
+};
 
 #[near_bindgen]
 impl NearxPool {
@@ -108,7 +109,7 @@ impl NearxPool {
     pub(crate) fn internal_unstake(&mut self, nearx_amount: Balance) {
         log!("User unstaked amount is {}", nearx_amount);
         let account_id = env::predecessor_account_id();
-        let account = self.internal_get_account(&account_id);
+        let mut account = self.internal_get_account(&account_id);
         let near_amount = self.amount_from_stake_shares(nearx_amount);
 
         require!(near_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
@@ -117,46 +118,68 @@ impl NearxPool {
             errors::NOT_ENOUGH_SHARES
         );
 
-        let selected_validator = unwrap_validator_info(self.validator_with_max_stake());
+        // User account update:
+        account.stake_shares -= nearx_amount;
+        account.unstaked += near_amount;
+        // Pool update:
+        self.to_unstake += near_amount;
+        self.total_stake_shares -= nearx_amount;
 
-        ext_staking_pool::ext(selected_validator.account_id.clone())
-            .with_static_gas(gas::DEPOSIT_AND_STAKE)
-            .unstake(near_amount.into())
-            .then(
-                ext_staking_pool_callback::ext(env::current_account_id())
-                    .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                    .on_stake_pool_unstake(selected_validator, near_amount.into()),
-            );
+        self.internal_update_account(&account_id, &account);
+
+        log!("Successfully unstaked {}", near_amount);
     }
 
-    pub fn on_stake_pool_unstake(
+    pub(crate) fn internal_epoch_unstake(&mut self) -> PromiseOrValue<bool> {
+        if self.to_unstake == 0 {
+            log!("Nothing to unstake");
+            PromiseOrValue::Value(false)
+        } else if self.to_unstake < MIN_UNSTAKE_AMOUNT {
+            log!("Not enough to unstake");
+            PromiseOrValue::Value(false)
+        } else if let Some(validator) = self.validator_available_for_unstake() {
+            let to_unstake = (validator.staked - ONE_NEAR).min(self.to_unstake);
+
+            if to_unstake < MIN_UNSTAKE_AMOUNT {
+                PromiseOrValue::Value(false)
+            } else {
+                ext_staking_pool::ext(validator.account_id.clone())
+                    .with_static_gas(gas::DEPOSIT_AND_STAKE)
+                    .unstake(to_unstake.into())
+                    .then(
+                        ext_staking_pool_callback::ext(env::current_account_id())
+                            .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
+                            .epoch_unstake_callback(validator, to_unstake.into()),
+                    )
+                    .into()
+            }
+        } else {
+            log!("No suitable validator found to unstake from");
+            PromiseOrValue::Value(false)
+        }
+    }
+
+    #[private]
+    #[allow(dead_code)] // The code isn't dead actually
+    fn epoch_unstake_callback(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         near_amount: u128,
-        nearx_amount: u128,
-        user: AccountId,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
-        let mut account = self.internal_get_account(&user);
 
         let unstake_succeeded = is_promise_success();
         println!("unstake_succeeded {:?}", unstake_succeeded);
 
         if unstake_succeeded {
-            // User account update:
-            account.stake_shares -= nearx_amount;
-            account.unstaked += near_amount;
             // Validator update:
             validator_info.staked -= near_amount;
             // Pool update:
             self.total_staked -= near_amount; //TODO Not sure if it must be sustracted here, or during withdraw
+            self.to_unstake -= near_amount;
             self.to_withdraw += near_amount;
-            self.total_stake_shares -= nearx_amount;
 
-            self.internal_update_account(&user, &account);
             self.internal_update_validator(&validator_info);
-
-            //TODO setup the epoch stuff so that we don't make the cooldown longer
 
             log!(
                 "Successfully unstaked {} from {}",
@@ -240,7 +263,7 @@ impl NearxPool {
         if let Some(val_info) = self.validator_info_map.get(validator) {
             val_info
         } else {
-            panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
+            panic!("{}", errors::VALIDATOR_IS_NOT_PRESENT);
         }
     }
 
@@ -272,10 +295,66 @@ impl NearxPool {
             .min_by_key(|v| v.staked)
     }
 
-    pub fn validator_with_max_stake(&self) -> Option<ValidatorInfo> {
+    pub fn validator_available_for_unstake(&self) -> Option<ValidatorInfo> {
         self.validator_info_map
             .values()
-            .filter(|v| v.unlocked())
+            .filter(|v| v.unlocked() && v.available() && v.staked > MIN_STAKE_AMOUNT + ONE_NEAR)
             .max_by_key(|v| v.staked)
     }
 }
+
+/*
+#[near_bindgen]
+impl ExtNearxStakingPoolCallbacks for NearxPool {
+    fn on_stake_pool_deposit(&mut self, amount: U128) -> bool {
+        todo!()
+    }
+
+    fn on_stake_pool_deposit_and_stake(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+        shares: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool> {
+        todo!()
+    }
+
+    fn epoch_unstake_callback(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+    ) -> PromiseOrValue<bool> {
+        todo!()
+    }
+
+    fn on_get_sp_total_balance(&mut self, validator_info: ValidatorInfo, total_balance: U128) {
+        todo!()
+    }
+
+    fn on_get_sp_staked_balance_for_rewards(
+        &mut self,
+        validator_info: ValidatorInfo,
+        total_staked_balance: U128,
+    ) -> PromiseOrValue<bool> {
+        todo!()
+    }
+
+    fn on_get_sp_staked_balance_reconcile(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount_actually_staked: u128,
+        total_staked_balance: U128,
+    ) {
+        todo!()
+    }
+
+    fn on_get_sp_unstaked_balance(
+        &mut self,
+        validator_info: ValidatorInfo,
+        unstaked_balance: U128,
+    ) {
+        todo!()
+    }
+}
+*/
