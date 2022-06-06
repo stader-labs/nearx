@@ -1,17 +1,11 @@
+use crate::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
+    env,
     json_types::{U128, U64},
     serde::{Deserialize, Serialize},
-    AccountId, EpochHeight,
+    AccountId, Balance, EpochHeight,
 };
-
-/// Rewards fee fraction structure for the staking pool contract.
-#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Fraction {
-    pub numerator: u32,
-    pub denominator: u32,
-}
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
@@ -71,6 +65,12 @@ pub struct ValidatorInfo {
     pub staked: u128,
 
     pub last_redeemed_rewards_epoch: EpochHeight,
+
+    pub unstaked_amount: Balance,
+
+    pub unstake_start_epoch: EpochHeight,
+
+    pub last_unstake_start_epoch: EpochHeight,
 }
 
 impl ValidatorInfo {
@@ -84,6 +84,9 @@ impl ValidatorInfo {
             lock: false,
             staked: 0,
             last_redeemed_rewards_epoch: 0,
+            unstaked_amount: 0,
+            unstake_start_epoch: 0,
+            last_unstake_start_epoch: 0,
         }
     }
 
@@ -94,17 +97,28 @@ impl ValidatorInfo {
     pub fn unlocked(&self) -> bool {
         self.lock == false
     }
+
+    /// whether the validator is in unstake releasing period.
+    pub fn pending_unstake_release(&self) -> bool {
+        let current_epoch = env::epoch_height();
+        current_epoch >= self.unstake_start_epoch
+            && current_epoch < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
+    }
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Account {
     pub stake_shares: u128, //nearx this account owns
+
+    pub unstaked_amount: Balance,
+
+    pub withdrawable_epoch_height: EpochHeight,
 }
 
 impl Account {
     pub fn is_empty(&self) -> bool {
-        self.stake_shares == 0
+        self.stake_shares == 0 && self.unstaked_amount == 0
     }
 
     pub fn add_stake_shares(&mut self, num_shares: u128) {
@@ -120,6 +134,14 @@ impl Account {
         );
         self.stake_shares -= num_shares;
     }
+}
+
+/// Rewards fee fraction structure for the staking pool contract.
+#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Fraction {
+    pub numerator: u32,
+    pub denominator: u32,
 }
 
 impl Fraction {

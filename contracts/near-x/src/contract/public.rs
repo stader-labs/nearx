@@ -29,12 +29,17 @@ impl NearxPool {
             operator_account_id,
             staking_paused: false,
             accumulated_staked_rewards: 0,
+            user_amount_to_stake_in_epoch: 0, // TODO - we can init with some seed amount
+            user_amount_to_unstake_in_epoch: 0,
+            reconciled_epoch_stake_amount: 0,
+            reconciled_epoch_unstake_amount: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: NEAR,
             validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
+            last_reconcilation_epoch: 0,
         }
     }
 
@@ -89,8 +94,45 @@ impl NearxPool {
 
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
     #[payable]
+    pub fn deposit_and_stake_direct_stake(&mut self) {
+        self.internal_deposit_and_stake_direct_stake(env::attached_deposit());
+    }
+
+    #[payable]
     pub fn deposit_and_stake(&mut self) {
         self.internal_deposit_and_stake(env::attached_deposit());
+    }
+
+    /// Unstakes all staked balance from the inner account of the predecessor.
+    /// The new total unstaked balance will be available for withdrawal in four epochs.
+    pub fn unstake_all(&mut self) {
+        let account_id = env::predecessor_account_id();
+        let account = self.internal_get_account(&account_id);
+        let amount = self.amount_from_stake_shares(account.stake_shares);
+        self.internal_unstake(amount);
+    }
+
+    /// Unstakes the given amount from the inner account of the predecessor.
+    /// The inner account should have enough staked balance.
+    /// The new total unstaked balance will be available for withdrawal in four epochs.
+    pub fn unstake(&mut self, amount: U128) {
+        let amount: Balance = amount.into();
+        self.internal_unstake(amount);
+    }
+
+    /// Withdraws the entire unstaked balance from the predecessor account.
+    /// It's only allowed if the `unstake` action was not performed in the four most recent epochs.
+    pub fn withdraw_all(&mut self) {
+        let account_id = env::predecessor_account_id();
+        let account = self.internal_get_account(&account_id);
+        self.internal_withdraw(account.unstaked_amount);
+    }
+
+    /// Withdraws the non staked balance for given account.
+    /// It's only allowed if the `unstake` action was not performed in the four most recent epochs.
+    pub fn withdraw(&mut self, amount: U128) {
+        let amount: Balance = amount.into();
+        self.internal_withdraw(amount);
     }
 
     /*
