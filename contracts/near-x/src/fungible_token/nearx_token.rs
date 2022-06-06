@@ -125,21 +125,6 @@ impl FungibleTokenResolver for NearxPool {
 }
 
 #[near_bindgen]
-impl FungibleTokenMetadataProvider for NearxPool {
-    fn ft_metadata(&self) -> FungibleTokenMetadata {
-        FungibleTokenMetadata {
-            spec: FT_METADATA_SPEC.to_string(),
-            name: "Stader and Near".to_string(),
-            symbol: "NEARX".to_string(),
-            icon: None,
-            reference: Some("https://nearX.app".into()),
-            reference_hash: None,
-            decimals: 24,
-        }
-    }
-}
-
-#[near_bindgen]
 impl NearxPool {
     pub fn internal_nearx_transfer(
         &mut self,
