@@ -1,16 +1,17 @@
-use crate::errors::ERROR_VALIDATOR_IS_NOT_PRESENT;
+use crate::constants::{MIN_BALANCE_FOR_STORAGE, NUM_EPOCHS_TO_UNLOCK};
+use crate::errors::{ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT, ERROR_NON_POSITIVE_STAKE_AMOUNT, ERROR_NON_POSITIVE_STAKE_SHARES, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT, ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT, ERROR_NON_POSITIVE_UNSTAKING_SHARES, ERROR_NON_POSITIVE_WITHDRAWAL, ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE, ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT, ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE, ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW, ERROR_NO_STAKED_BALANCE, ERROR_UNSTAKED_AMOUNT_IN_UNBONDING_PERIOD, ERROR_VALIDATOR_IS_NOT_PRESENT, ERROR_MIN_DEPOSIT};
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
     state::*,
     utils::{amount_from_shares, assert_callback_calling, shares_from_amount},
 };
-use near_sdk::{is_promise_success, log, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
     /// mints NearX based on user's deposited amount and current NearX price
-    pub(crate) fn internal_deposit_and_stake(&mut self, user_amount: Balance) {
+    pub(crate) fn internal_deposit_and_stake_direct_stake(&mut self, user_amount: Balance) {
         log!("User deposited amount is {}", user_amount);
         self.assert_not_busy();
 
@@ -24,7 +25,7 @@ impl NearxPool {
         let num_shares = self.stake_shares_from_amount(user_amount);
         assert!(num_shares > 0);
 
-        let selected_validator = self.get_stake_pool_with_min_stake();
+        let selected_validator = self.get_validator_to_stake();
         assert!(selected_validator.is_some(), "All validators busy");
 
         let selected_validator = selected_validator.unwrap();
@@ -38,8 +39,8 @@ impl NearxPool {
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKING_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake(
+                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
+                    .on_stake_pool_deposit_and_stake_direct(
                         selected_validator,
                         user_amount,
                         num_shares,
@@ -48,7 +49,115 @@ impl NearxPool {
             );
     }
 
-    pub fn on_stake_pool_deposit_and_stake(
+    // TODO - bchain - I think this is better than the direct stake
+    pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
+        require!(amount > self.min_deposit_amount, ERROR_MIN_DEPOSIT);
+        require!(amount > 0, ERROR_NON_POSITIVE_STAKE_AMOUNT);
+
+        let account_id = env::predecessor_account_id();
+        let mut account = self.internal_get_account(&account_id);
+
+        // Calculate the number of "stake" shares that the account will receive for staking the
+        // given amount.
+        let num_shares = self.stake_shares_from_amount(amount);
+        require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
+
+        account.stake_shares += num_shares;
+        self.internal_update_account(&account_id, &account);
+
+        self.total_staked += amount;
+        self.total_stake_shares += num_shares;
+
+        // Increase requested stake amount within the current epoch
+        self.user_amount_to_stake_in_epoch += amount;
+
+        log!(
+            "Total NEAR staked is {}. Total NEARX supply is {}",
+            self.total_staked,
+            self.total_stake_shares
+        );
+    }
+
+    pub(crate) fn internal_unstake(&mut self, amount: u128) {
+        require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
+
+        let account_id = env::predecessor_account_id();
+        let mut account = self.internal_get_account(&account_id);
+
+        require!(
+            self.total_staked > 0,
+            ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT
+        );
+
+        let num_shares = self.stake_shares_from_amount(amount);
+        require!(num_shares > 0, ERROR_NON_POSITIVE_UNSTAKING_SHARES);
+        require!(
+            account.stake_shares >= num_shares,
+            ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE
+        );
+
+        let receive_amount = self.amount_from_stake_shares(num_shares);
+        require!(
+            receive_amount > 0,
+            ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT
+        );
+
+        account.stake_shares -= num_shares;
+        account.unstaked_amount += receive_amount;
+        account.withdrawable_epoch_height =
+            env::epoch_height() + self.get_unstake_release_epoch(amount);
+        if self.last_reconcilation_epoch == env::epoch_height() {
+            // The unstake request is received after epoch_cleanup
+            // so actual unstake will happen in the next epoch,
+            // which will put withdraw off for one more epoch.
+            account.withdrawable_epoch_height += 1;
+        }
+
+        self.internal_update_account(&account_id, &account);
+
+        self.total_staked -= receive_amount;
+        self.total_stake_shares -= num_shares;
+
+        // Increase requested unstake amount within the current epoch
+        self.user_amount_to_unstake_in_epoch += receive_amount;
+
+        log!("Unstaked amount is {}", receive_amount);
+
+        log!(
+            "Total NEAR staked is {}. Total NEARX supply is {}",
+            self.total_staked,
+            self.total_stake_shares
+        );
+    }
+
+    pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
+        let account_id = env::predecessor_account_id();
+
+        require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
+
+        let account = self.internal_get_account(&account_id);
+        require!(
+            account.unstaked_amount >= amount,
+            ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW
+        );
+        require!(
+            account.withdrawable_epoch_height <= env::epoch_height(),
+            ERROR_UNSTAKED_AMOUNT_IN_UNBONDING_PERIOD
+        );
+
+        require!(
+            env::account_balance().saturating_sub(MIN_BALANCE_FOR_STORAGE) >= amount,
+            ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE
+        );
+
+        let mut account = self.internal_get_account(&account_id);
+        account.unstaked_amount -= amount;
+        self.internal_update_account(&account_id, &account);
+
+        Promise::new(account_id).transfer(amount);
+    }
+
+    pub fn on_stake_pool_deposit_and_stake_direct_stake(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
@@ -172,10 +281,59 @@ impl NearxPool {
         }
     }
 
-    pub fn get_stake_pool_with_min_stake(&self) -> Option<ValidatorInfo> {
+    #[private]
+    pub fn get_validator_to_stake(&self) -> Option<ValidatorInfo> {
         self.validator_info_map
             .values()
             .filter(|v| v.unlocked())
             .min_by_key(|v| v.staked)
+    }
+
+    #[private]
+    pub fn get_validator_to_unstake(&self) -> Option<ValidatorInfo> {
+        // let mut max_validator_stake_amount: u128 = 0;
+        // let mut current_validator: Option<ValidatorInfo> = None;
+        //
+        // for validator in self.validator_info_map.values() {
+        //     if !validator.pending_unstake_release() && validator.staked.gt(&max_validator_stake_amount) {
+        //         max_validator_stake_amount = validator.staked;
+        //         current_validator = Some(validator)
+        //     }
+        // }
+        //
+        // current_validator
+
+        self.validator_info_map
+            .values()
+            .filter(|v| !v.pending_unstake_release())
+            .max_by_key(|v| v.staked)
+    }
+
+    #[private]
+    pub fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
+        let mut available_amount: Balance = 0;
+        let mut total_staked_amount: Balance = 0;
+        for validator in self.validator_info_map.values() {
+            total_staked_amount += validator.staked;
+
+            if !validator.pending_unstake_release() && validator.staked > 0 {
+                available_amount += validator.staked;
+            }
+
+            // found enough balance to unstake from available validators
+            if available_amount >= amount {
+                return NUM_EPOCHS_TO_UNLOCK;
+            }
+        }
+
+        // nothing is actually staked, all balance should be available now
+        // still leave a buffer for the user
+        if total_staked_amount == 0 {
+            return NUM_EPOCHS_TO_UNLOCK;
+        }
+
+        // no enough available validators to unstake
+        // double the unstake wating time
+        2 * NUM_EPOCHS_TO_UNLOCK
     }
 }

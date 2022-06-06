@@ -7,7 +7,8 @@ use near_sdk::json_types::U128;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
-    env, ext_contract, near_bindgen, AccountId, PanicOnDefault, Promise, PromiseOrValue, PublicKey,
+    env, ext_contract, near_bindgen, AccountId, Balance, EpochHeight, PanicOnDefault, Promise,
+    PromiseOrValue, PublicKey,
 };
 
 #[near_bindgen]
@@ -28,6 +29,18 @@ pub struct NearxPool {
 
     pub accumulated_staked_rewards: u128,
 
+    /// Amount of NEAR that is users requested to stake
+    pub user_amount_to_stake_in_epoch: Balance,
+    /// Amount of NEAR that is users requested to unstake
+    pub user_amount_to_unstake_in_epoch: Balance,
+
+    /// Amount of NEAR that actually needs to be staked in the epoch
+    pub reconciled_epoch_stake_amount: Balance,
+    /// Amount of NEAR that actually needs to be unstaked in the epoch
+    pub reconciled_epoch_unstake_amount: Balance,
+    /// Last epoch height stake/unstake amount were reconciled
+    pub last_reconcilation_epoch: EpochHeight,
+
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
@@ -46,13 +59,19 @@ pub struct NearxPool {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
-    fn on_stake_pool_deposit_and_stake(
+    fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool>;
+
+    fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance);
+
+    fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128);
+
+    fn on_stake_pool_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128);
 
     fn on_get_sp_total_balance(
         &mut self,
@@ -93,6 +112,7 @@ pub trait ExtStakingPool {
     fn deposit_and_stake(&mut self);
 
     fn withdraw(&mut self, amount: U128);
+
     fn withdraw_all(&mut self);
 
     fn stake(&mut self, amount: U128);
