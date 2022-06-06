@@ -3,12 +3,15 @@ mod helpers;
 use helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
-use near_sdk::{testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey, RuntimeFeesConfig, VMConfig, VMContext, FunctionError};
+use near_sdk::{
+    testing_env, AccountId, FunctionError, Gas, MockedBlockchain, PromiseOrValue, PromiseResult,
+    PublicKey, RuntimeFeesConfig, VMConfig, VMContext,
+};
+use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::NearxPool;
 use near_x::state::{Account, AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
-use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 
 pub fn owner_account() -> AccountId {
     AccountId::from_str("owner_account").unwrap()
@@ -97,7 +100,6 @@ fn get_account(contract: &NearxPool, account_id: AccountId) -> Account {
 fn update_account(contract: &mut NearxPool, account_id: AccountId, account: &Account) {
     contract.accounts.insert(&account_id, account);
 }
-
 
 fn basic_context() -> VMContext {
     get_context(system_account(), ntoy(100), 0, to_ts(500))
@@ -1254,7 +1256,6 @@ fn test_epoch_unstake_fail_not_enough_to_unstake() {
     contract.add_validator(validator1.clone());
     contract.add_validator(validator2.clone());
     contract.add_validator(validator3.clone());
-
 
     let mut val1_info = get_validator(&contract, validator1.clone());
     val1_info.staked = ntoy(100);
