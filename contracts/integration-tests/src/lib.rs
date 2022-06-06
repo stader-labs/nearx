@@ -11,19 +11,32 @@ use serde_json::json;
 // Tests: Autocompound with operator rewards and autocompound in the same epoch
 #[tokio::test]
 async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new().await?;
+    let context = IntegrationTestContext::new(3).await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(0));
+    assert_eq!(validator2_info.staked, U128(0));
+    assert_eq!(validator3_info.staked, U128(0));
 
     // Add user deposits
     println!("User 1 depositing");
-    context.deposit(&context.user1).await?;
+    context.deposit_direct_stake(&context.user1).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context.deposit(&context.user2).await?;
+    context.deposit_direct_stake(&context.user2).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context.deposit(&context.user3).await?;
+    context.deposit_direct_stake(&context.user3).await?;
     println!("User 3 successfully deposited");
 
     let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
@@ -48,6 +61,19 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(ntoy(10)));
+    assert_eq!(validator2_info.staked, U128(ntoy(10)));
+    assert_eq!(validator3_info.staked, U128(ntoy(10)));
+
     let total_token_supply = context.get_total_tokens_supply().await?;
     assert_eq!(total_token_supply, U128(ntoy(30)));
 
@@ -68,7 +94,9 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     assert_eq!(reward_fee.denominator, 100);
 
     // Add 30Near of rewards
-    context.add_stake_pool_rewards(U128(ntoy(30))).await?;
+    context
+        .add_stake_pool_rewards(U128(ntoy(30)), context.get_stake_pool_contract(0))
+        .await?;
 
     // Get the operator details
     let operator_account = context
@@ -79,21 +107,21 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
 
     // auto compound the rewards
     context
-        .auto_compound_rewards(context.stake_pool_contract.id())
+        .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
 
     let nearx_price = context.get_nearx_price().await?;
     assert_eq!(nearx_price, U128(ntoy(2)));
 
     let validator = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
         validator,
         ValidatorInfoResponse {
             account_id: validator.account_id.clone(),
-            staked: U128(ntoy(60)),
+            staked: U128(ntoy(40)),
             last_asked_rewards_epoch_height: context.get_current_epoch().await?,
             lock: false
         }
@@ -139,15 +167,15 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
 
     // Deposit with NearX price > 1
     println!("User 1 depositing");
-    context.deposit(&context.user1).await?;
+    context.deposit_direct_stake(&context.user1).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context.deposit(&context.user2).await?;
+    context.deposit_direct_stake(&context.user2).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context.deposit(&context.user3).await?;
+    context.deposit_direct_stake(&context.user3).await?;
     println!("User 3 successfully deposited");
 
     let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
@@ -172,22 +200,21 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     assert_eq!(user2_token_balance, U128(ntoy(15)));
     assert_eq!(user3_token_balance, U128(ntoy(15)));
 
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(ntoy(40)));
+    assert_eq!(validator2_info.staked, U128(ntoy(30)));
+    assert_eq!(validator3_info.staked, U128(ntoy(20)));
+
     let total_token_supply = context.get_total_tokens_supply().await?;
     assert_eq!(total_token_supply, U128(ntoy(45)));
-
-    let validator = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
-        .await?;
-    println!("validator is {:?}", validator);
-    assert_eq!(
-        validator,
-        ValidatorInfoResponse {
-            account_id: validator.account_id.clone(),
-            staked: U128(ntoy(90)),
-            last_asked_rewards_epoch_height: context.get_current_epoch().await?,
-            lock: false
-        }
-    );
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
@@ -202,7 +229,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let previous_operator_balance = operator_account.balance;
 
     context
-        .auto_compound_rewards(context.stake_pool_contract.id())
+        .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
 
     let operator_account = context
@@ -212,14 +239,14 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let current_operator_balance = operator_account.balance;
 
     let validator = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
         validator,
         ValidatorInfoResponse {
             account_id: validator.account_id.clone(),
-            staked: U128(ntoy(90)),
+            staked: U128(ntoy(40)),
             last_asked_rewards_epoch_height: context.get_current_epoch().await?,
             lock: false
         }
@@ -242,10 +269,12 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
     println!("***** Step 1: Initialization *****");
-    let context = IntegrationTestContext::new().await?;
+    let context = IntegrationTestContext::new(3).await?;
 
     // Auto compound
-    context.auto_compound_rewards(context.stake_pool_contract.id());
+    context
+        .auto_compound_rewards(context.get_stake_pool_contract(0).id())
+        .await?;
 
     let nearx_price = context.get_nearx_price().await?;
     assert_eq!(nearx_price, U128(ntoy(1)));
@@ -255,7 +284,7 @@ async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
     assert_eq!(nearx_state.total_stake_shares, U128(0));
 
     let validator_info = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator_info.staked, U128(0));
     assert_eq!(validator_info.last_asked_rewards_epoch_height, U64(0));
@@ -266,7 +295,7 @@ async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("***** Step 1: Initialization *****");
-    let context = IntegrationTestContext::new().await?;
+    let context = IntegrationTestContext::new(3).await?;
 
     // First test
     // user1, user2 and user3 deposit 10 NEAR each. We check whether the staking contract
@@ -283,25 +312,30 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
 
     println!("Successfully checked initial user deposits");
 
-    let validator_info = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    println!(
-        "validator account details before deposits are {:?}",
-        validator_info
-    );
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(0));
+    assert_eq!(validator2_info.staked, U128(0));
+    assert_eq!(validator3_info.staked, U128(0));
 
     println!("**** Simulating user deposits ****");
     println!("User 1 depositing");
-    context.deposit(&context.user1).await?;
+    context.deposit_direct_stake(&context.user1).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context.deposit(&context.user2).await?;
+    context.deposit_direct_stake(&context.user2).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context.deposit(&context.user3).await?;
+    context.deposit_direct_stake(&context.user3).await?;
     println!("User 3 successfully deposited");
 
     println!("Checking user deposits after users have deposited");
@@ -327,6 +361,19 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(ntoy(10)));
+    assert_eq!(validator2_info.staked, U128(ntoy(10)));
+    assert_eq!(validator3_info.staked, U128(ntoy(10)));
+
     let nearx_price = context.get_nearx_price().await?;
     println!("nearx_price is {:?}", nearx_price);
     assert_eq!(nearx_price, U128(ntoy(1)));
@@ -334,10 +381,6 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     let total_staked_amount = context.get_total_staked_amount().await?;
     println!("total_staked_amount is {:?}", total_staked_amount);
     assert_eq!(total_staked_amount, U128(ntoy(30)));
-
-    let stake_pool_staked_amount = context.get_stake_pool_total_staked_amount().await?;
-    println!("stake_pool_staked_amount is {:?}", stake_pool_staked_amount);
-    assert_eq!(stake_pool_staked_amount, U128(ntoy(30)));
 
     let total_tokens_minted = context.get_total_tokens_supply().await?;
     assert_eq!(total_tokens_minted, U128(ntoy(30)));
@@ -390,9 +433,6 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     let total_staked_amount = context.get_total_staked_amount().await?;
     assert_eq!(total_staked_amount, U128(ntoy(30)));
 
-    let stake_pool_staked_amount = context.get_stake_pool_total_staked_amount().await?;
-    assert_eq!(stake_pool_staked_amount, U128(ntoy(30)));
-
     let total_tokens_minted = context.get_total_tokens_supply().await?;
     assert_eq!(total_tokens_minted, U128(ntoy(30)));
 
@@ -404,10 +444,9 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("Auto compounding stake pool");
 
     // Adding rewards
-    context.add_stake_pool_rewards(U128(ntoy(30))).await?;
-    let stake_pool_staked_amount = context.get_stake_pool_total_staked_amount().await?;
-    println!("stake pool staked amount is {:?}", stake_pool_staked_amount);
-    assert_eq!(stake_pool_staked_amount, U128(ntoy(60)));
+    context
+        .add_stake_pool_rewards(U128(ntoy(30)), context.get_stake_pool_contract(0))
+        .await?;
 
     // restake_staking_pool(&worker, &stake_pool_contract).await?;
     let nearx_state = context.get_nearx_state().await?;
@@ -415,7 +454,7 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
 
     println!("Auto compounding nearx pool");
     context
-        .auto_compound_rewards(context.stake_pool_contract.id())
+        .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
     //
     let nearx_price = context.get_nearx_price().await?;
@@ -448,14 +487,14 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     assert_eq!(user3_token_balance, U128(ntoy(12)));
 
     let validator = context
-        .get_validator_info(context.stake_pool_contract.id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
         validator,
         ValidatorInfoResponse {
             account_id: validator.account_id.clone(),
-            staked: U128(ntoy(60)),
+            staked: U128(ntoy(40)),
             last_asked_rewards_epoch_height: context.get_current_epoch().await?,
             lock: false
         }
