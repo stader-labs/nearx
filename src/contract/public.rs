@@ -3,7 +3,7 @@ use crate::errors::{
     ERROR_VALIDATOR_IS_ALREADY_PRESENT,
 };
 use crate::{constants::ONE_E24, contract::*, state::*};
-use near_sdk::{json_types::U64, log, near_bindgen, ONE_NEAR};
+use near_sdk::{json_types::U64, log, near_bindgen, Balance, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -87,17 +87,20 @@ impl NearxPool {
         self.internal_deposit_and_stake(env::attached_deposit());
     }
 
-    #[payable] //TODO not sure if a nearX transfer must be marked as payable
-    pub fn unstake(&mut self) {
-        self.internal_unstake(env::attached_deposit());
+    pub fn unstake(&mut self, near_amount: Balance) {
+        self.internal_unstake(near_amount)
     }
 
-    pub fn epoch_unstake(&mut self) {
-        self.internal_epoch_unstake();
+    pub fn epoch_unstake(&mut self) -> PromiseOrValue<bool> {
+        self.internal_epoch_unstake()
     }
 
-    pub fn withdraw(&mut self) {
-        self.internal_withdraw(env::attached_deposit());
+    pub fn epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
+        self.internal_epoch_withdraw()
+    }
+
+    pub fn withdraw(&mut self, near_amount: Balance) {
+        self.internal_withdraw(near_amount)
     }
 
     /*

@@ -1,3 +1,4 @@
+use crate::constants::UNSTAKE_COOLDOWN_EPOCH;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
@@ -102,7 +103,7 @@ impl ValidatorInfo {
     }
 
     pub fn make_unavailable(&mut self) {
-        self.available_for_unstake = env::epoch_height() + 3; //TODO: do not use a magic number
+        self.available_for_unstake = env::epoch_height() + UNSTAKE_COOLDOWN_EPOCH;
     }
 
     /// Returns whether the validator is available for unstaking at that epoch, or not.
@@ -114,8 +115,12 @@ impl ValidatorInfo {
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Account {
-    pub stake_shares: u128, // nearx this account owns
-    pub unstaked: u128,     // How many NEAR this account can withdraw
+    /// NearX this account owns.
+    pub stake_shares: u128,
+    /// How many NEAR this account can withdraw.
+    pub unstaked: u128,
+    /// When the user is allowed to withdraw.
+    pub allowed_to_unstake: EpochHeight,
 }
 
 impl Account {
@@ -135,6 +140,14 @@ impl Account {
             num_shares
         );
         self.stake_shares -= num_shares;
+    }
+
+    pub fn reset_withdraw_cooldown(&mut self) {
+        self.allowed_to_unstake = env::epoch_height() + 8;
+    }
+
+    pub fn cooldown_finished(&mut self) -> bool {
+        env::epoch_height() > self.allowed_to_unstake
     }
 }
 

@@ -1,4 +1,4 @@
-use near_sdk::ONE_NEAR;
+use near_sdk::{EpochHeight, ONE_NEAR};
 
 /// The contract keeps at least 40 NEAR in the account to avoid being transferred out to cover
 /// contract code storage and some internal state.
@@ -19,6 +19,11 @@ pub const MIN_STAKE_AMOUNT: u128 = ONE_NEAR;
 /// The minimum amount that we will unstake.
 /// If there remain less to unstake that this amount, we won't unstake.
 pub const MIN_UNSTAKE_AMOUNT: u128 = ONE_NEAR;
+
+/// How many epochs we wait for the stake to be inactive.
+pub const UNSTAKE_COOLDOWN_EPOCH: EpochHeight = 4;
+/// How many epochs the user must wait for unstaking the tokens.
+pub const WITHDRAW_COOLDOWN_EPOCH: EpochHeight = 8;
 
 pub mod gas {
     use near_sdk::Gas;

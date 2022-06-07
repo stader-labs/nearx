@@ -1,9 +1,9 @@
 use crate::{
-    constants::{gas, MIN_STAKE_AMOUNT, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
+    constants::{gas, MIN_BALANCE_FOR_STORAGE, MIN_STAKE_AMOUNT, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
     contract::*,
     errors,
     state::*,
-    utils::{assert_callback_calling, unwrap_validator_info},
+    utils::assert_callback_calling,
 };
 use near_sdk::{
     is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
@@ -26,7 +26,9 @@ impl NearxPool {
         let num_shares = self.stake_shares_from_amount(user_amount);
         assert!(num_shares > 0);
 
-        let selected_validator = unwrap_validator_info(self.validator_with_min_stake());
+        let selected_validator = self
+            .validator_with_min_stake()
+            .expect(errors::VALIDATORS_ARE_BUSY);
 
         log!("Amount is {}", user_amount);
         //schedule async deposit_and_stake on that pool
@@ -106,13 +108,13 @@ impl NearxPool {
         }
     }
 
-    pub(crate) fn internal_unstake(&mut self, nearx_amount: Balance) {
-        log!("User unstaked amount is {}", nearx_amount);
+    pub(crate) fn internal_unstake(&mut self, near_amount: Balance) {
+        log!("User unstaked amount is {}", near_amount);
         let account_id = env::predecessor_account_id();
         let mut account = self.internal_get_account(&account_id);
-        let near_amount = self.amount_from_stake_shares(nearx_amount);
+        let nearx_amount = self.stake_shares_from_amount(near_amount);
 
-        require!(near_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
+        require!(nearx_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
         require!(
             account.stake_shares >= nearx_amount,
             errors::NOT_ENOUGH_SHARES
@@ -179,8 +181,6 @@ impl NearxPool {
             self.to_unstake -= near_amount;
             self.to_withdraw += near_amount;
 
-            self.internal_update_validator(&validator_info);
-
             log!(
                 "Successfully unstaked {} from {}",
                 near_amount,
@@ -197,7 +197,13 @@ impl NearxPool {
             self.contract_lock = false;
         }
 
+        self.internal_update_validator(&validator_info);
+
         PromiseOrValue::Value(true)
+    }
+
+    pub(crate) fn internal_epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
+        //TODO
     }
 
     pub(crate) fn internal_withdraw(&mut self, near_amount: Balance) {
@@ -206,8 +212,16 @@ impl NearxPool {
         let mut account = self.internal_get_account(&account_id);
 
         require!(
+            account.cooldown_finished(),
+            errors::TOKENS_ARE_NOT_READY_FOR_WITHDRAWAL,
+        );
+        require!(
             near_amount <= account.unstaked,
-            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW
+            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
+        );
+        require!(
+            env::account_balance() - near_amount > MIN_BALANCE_FOR_STORAGE,
+            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
         );
 
         account.unstaked -= near_amount;
@@ -302,59 +316,3 @@ impl NearxPool {
             .max_by_key(|v| v.staked)
     }
 }
-
-/*
-#[near_bindgen]
-impl ExtNearxStakingPoolCallbacks for NearxPool {
-    fn on_stake_pool_deposit(&mut self, amount: U128) -> bool {
-        todo!()
-    }
-
-    fn on_stake_pool_deposit_and_stake(
-        &mut self,
-        validator_info: ValidatorInfo,
-        amount: u128,
-        shares: u128,
-        user: AccountId,
-    ) -> PromiseOrValue<bool> {
-        todo!()
-    }
-
-    fn epoch_unstake_callback(
-        &mut self,
-        validator_info: ValidatorInfo,
-        amount: u128,
-    ) -> PromiseOrValue<bool> {
-        todo!()
-    }
-
-    fn on_get_sp_total_balance(&mut self, validator_info: ValidatorInfo, total_balance: U128) {
-        todo!()
-    }
-
-    fn on_get_sp_staked_balance_for_rewards(
-        &mut self,
-        validator_info: ValidatorInfo,
-        total_staked_balance: U128,
-    ) -> PromiseOrValue<bool> {
-        todo!()
-    }
-
-    fn on_get_sp_staked_balance_reconcile(
-        &mut self,
-        validator_info: ValidatorInfo,
-        amount_actually_staked: u128,
-        total_staked_balance: U128,
-    ) {
-        todo!()
-    }
-
-    fn on_get_sp_unstaked_balance(
-        &mut self,
-        validator_info: ValidatorInfo,
-        unstaked_balance: U128,
-    ) {
-        todo!()
-    }
-}
-*/

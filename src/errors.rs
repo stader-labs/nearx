@@ -18,3 +18,4 @@ pub const NOT_ENOUGH_SHARES: &str = "User has not enough shares to unstake";
 pub const UNSTAKE_AMOUNT_ZERO: &str = "Unstake amount should not be 0";
 pub const VALIDATORS_ARE_BUSY: &str = "Not a single validator is available";
 pub const NOT_ENOUGH_TOKEN_TO_WITHDRAW: &str = "User has not enough tokens to withdraw";
+pub const TOKENS_ARE_NOT_READY_FOR_WITHDRAWAL: &str = "The cooldown has not be elapsed yet";
