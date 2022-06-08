@@ -1,5 +1,5 @@
 use crate::{
-    constants::{gas, MIN_BALANCE_FOR_STORAGE, MIN_STAKE_AMOUNT, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
+    constants::{gas, MIN_BALANCE_FOR_STORAGE, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
     contract::*,
     errors,
     state::*,
@@ -199,19 +199,5 @@ impl NearxPool {
         } else {
             self.accounts.insert(account_id, account); //insert_or_update
         }
-    }
-
-    pub fn validator_with_min_stake(&self) -> Option<ValidatorInfo> {
-        self.validator_info_map
-            .values()
-            .filter(|v| v.unlocked())
-            .min_by_key(|v| v.staked)
-    }
-
-    pub fn validator_available_for_unstake(&self) -> Option<ValidatorInfo> {
-        self.validator_info_map
-            .values()
-            .filter(|v| v.unlocked() && v.available() && v.staked > MIN_STAKE_AMOUNT + ONE_NEAR)
-            .max_by_key(|v| v.staked)
     }
 }

@@ -2,7 +2,11 @@ use crate::errors::{
     self, ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY,
     ERROR_VALIDATOR_IS_ALREADY_PRESENT,
 };
-use crate::{constants::ONE_E24, contract::*, state::*};
+use crate::{
+    constants::{MIN_STAKE_AMOUNT, ONE_E24},
+    contract::*,
+    state::*,
+};
 use near_sdk::{json_types::U64, log, near_bindgen, Balance, ONE_NEAR};
 
 #[near_bindgen]
@@ -31,47 +35,6 @@ impl NearxPool {
             rewards_fee: Fraction::new(0, 1),
         }
     }
-
-    /*
-       Utility stuff
-    */
-    /// Asserts that the method was called by the owner.
-    pub fn assert_owner_calling(&self) {
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.owner_account_id,
-            "{}",
-            errors::ERROR_UNAUTHORIZED
-        )
-    }
-    pub fn assert_operator_or_owner(&self) {
-        assert!(
-            env::predecessor_account_id() == self.owner_account_id
-                || env::predecessor_account_id() == self.operator_account_id,
-            "{}",
-            errors::ERROR_UNAUTHORIZED
-        );
-    }
-
-    pub fn assert_not_busy(&self) {
-        assert!(!self.contract_lock, "{}", errors::ERROR_CONTRACT_BUSY);
-    }
-
-    pub fn assert_min_deposit_amount(&self, amount: u128) {
-        assert!(
-            amount >= self.min_deposit_amount,
-            "{}",
-            errors::ERROR_MIN_DEPOSIT
-        );
-    }
-
-    pub fn assert_staking_not_paused(&self) {
-        assert!(!self.staking_paused, "{}", errors::ERROR_STAKING_PAUSED);
-    }
-
-    /*
-       Main staking pool api
-    */
 
     /// Rewards claiming
     pub fn ping(&mut self) {}
@@ -102,10 +65,10 @@ impl NearxPool {
     pub fn withdraw(&mut self, near_amount: Balance) {
         self.internal_withdraw(near_amount)
     }
+}
 
-    /*
-       Staking pool addition and deletion
-    */
+/// Staking pool addition and deletion.
+impl NearxPool {
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
         log!(format!("Removing validator {}", validator));
@@ -126,9 +89,10 @@ impl NearxPool {
         self.assert_operator_or_owner();
         self.staking_paused = !self.staking_paused;
     }
+}
 
-    // View methods
-
+/// View methods.
+impl NearxPool {
     pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
         self.get_account(account_id).staked_balance
     }
@@ -235,5 +199,56 @@ impl NearxPool {
                 lock: pool.1.lock,
             })
             .collect()
+    }
+
+    pub fn validator_with_min_stake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked())
+            .min_by_key(|v| v.staked)
+    }
+
+    pub fn validator_available_for_unstake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked() && v.available() && v.staked > MIN_STAKE_AMOUNT + ONE_NEAR)
+            .max_by_key(|v| v.staked)
+    }
+}
+
+/// Utility stuff.
+impl NearxPool {
+    /// Asserts that the method was called by the owner.
+    pub fn assert_owner_calling(&self) {
+        assert_eq!(
+            &env::predecessor_account_id(),
+            &self.owner_account_id,
+            "{}",
+            errors::ERROR_UNAUTHORIZED
+        )
+    }
+    pub fn assert_operator_or_owner(&self) {
+        assert!(
+            env::predecessor_account_id() == self.owner_account_id
+                || env::predecessor_account_id() == self.operator_account_id,
+            "{}",
+            errors::ERROR_UNAUTHORIZED
+        );
+    }
+
+    pub fn assert_not_busy(&self) {
+        assert!(!self.contract_lock, "{}", errors::ERROR_CONTRACT_BUSY);
+    }
+
+    pub fn assert_min_deposit_amount(&self, amount: u128) {
+        assert!(
+            amount >= self.min_deposit_amount,
+            "{}",
+            errors::ERROR_MIN_DEPOSIT
+        );
+    }
+
+    pub fn assert_staking_not_paused(&self) {
+        assert!(!self.staking_paused, "{}", errors::ERROR_STAKING_PAUSED);
     }
 }
