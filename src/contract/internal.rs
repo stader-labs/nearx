@@ -126,10 +126,12 @@ impl NearxPool {
         }
     }
 
-    pub(crate) fn internal_withdraw(&mut self, near_amount: Balance) {
-        log!("User withdrawn amount is {}", near_amount);
+    pub(crate) fn internal_withdraw(&mut self, near_amount: Option<Balance>) {
         let account_id = env::predecessor_account_id();
         let mut account = self.internal_get_account(&account_id);
+        let near_amount = near_amount.unwrap_or(account.unstaked);
+
+        log!("User withdrawn amount is {}", near_amount);
 
         require!(
             account.cooldown_finished(),

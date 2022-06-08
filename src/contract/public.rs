@@ -7,7 +7,7 @@ use crate::{
     contract::*,
     state::*,
 };
-use near_sdk::{json_types::U64, log, near_bindgen, Balance, ONE_NEAR};
+use near_sdk::{json_types::U64, log, near_bindgen, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -39,21 +39,6 @@ impl NearxPool {
     /// Rewards claiming
     pub fn ping(&mut self) {}
 
-    #[payable]
-    pub fn deposit(&mut self) {
-        unimplemented!();
-    }
-
-    /// Deposits the attached amount into the inner account of the predecessor and stakes it.
-    #[payable]
-    pub fn deposit_and_stake(&mut self) {
-        self.internal_deposit_and_stake(env::attached_deposit());
-    }
-
-    pub fn unstake(&mut self, near_amount: Balance) {
-        self.internal_unstake(near_amount)
-    }
-
     pub fn epoch_unstake(&mut self) -> PromiseOrValue<bool> {
         self.internal_epoch_unstake()
     }
@@ -61,9 +46,54 @@ impl NearxPool {
     pub fn epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
         self.internal_epoch_withdraw()
     }
+}
 
-    pub fn withdraw(&mut self, near_amount: Balance) {
-        self.internal_withdraw(near_amount)
+#[near_bindgen]
+impl ExtStakingPool for NearxPool {
+    fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
+        self.get_account(account_id).staked_balance
+    }
+
+    fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128 {
+        self.internal_get_account(&account_id).unstaked.into()
+    }
+
+    fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
+        (self.get_account_staked_balance(account_id.clone()).0
+            + self.get_account_unstaked_balance(account_id).0)
+            .into()
+    }
+
+    #[payable]
+    fn deposit(&mut self) {
+        unimplemented!();
+    }
+
+    /// Deposits the attached amount into the inner account of the predecessor and stakes it.
+    #[payable]
+    fn deposit_and_stake(&mut self) {
+        self.internal_deposit_and_stake(env::attached_deposit());
+    }
+
+    fn stake(&mut self, amount: U128) {
+        let _ = amount;
+        unimplemented!();
+    }
+
+    fn withdraw(&mut self, near_amount: U128) {
+        self.internal_withdraw(Some(near_amount.0))
+    }
+
+    fn withdraw_all(&mut self) {
+        self.internal_withdraw(None)
+    }
+
+    fn unstake(&mut self, near_amount: U128) {
+        self.internal_unstake(near_amount.0)
+    }
+
+    fn unstake_all(&mut self) {
+        todo!()
     }
 }
 
@@ -95,19 +125,6 @@ impl NearxPool {
 /// View methods.
 #[near_bindgen]
 impl NearxPool {
-    pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
-        self.get_account(account_id).staked_balance
-    }
-
-    pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
-        let acc = self.internal_get_account(&account_id);
-        self.amount_from_stake_shares(acc.stake_shares).into()
-    }
-
-    pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
-        self.get_account(account_id).can_withdraw
-    }
-
     pub fn get_owner_id(&self) -> AccountId {
         self.owner_account_id.clone()
     }

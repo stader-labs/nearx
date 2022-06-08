@@ -103,15 +103,11 @@ pub trait ExtNearxStakingPoolCallbacks {
 #[ext_contract(ext_staking_pool)]
 pub trait ExtStakingPool {
     fn get_account_staked_balance(&self, account_id: AccountId) -> U128;
-
     fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128;
-
     fn get_account_total_balance(&self, account_id: AccountId) -> U128;
 
     fn deposit(&mut self);
-
     fn deposit_and_stake(&mut self);
-
     fn stake(&mut self, amount: U128);
 
     fn withdraw(&mut self, amount: U128);
