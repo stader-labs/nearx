@@ -1,9 +1,9 @@
 mod helpers;
 
 use helpers::ntoy;
-use near_liquid_token::state::ValidatorInfo;
 use near_liquid_token::{
-    contract::NearxPool,
+    contract::{ExtNearxStakingPoolCallbacks, NearxPool},
+    state::ValidatorInfo,
     state::{AccountResponse, Fraction, ValidatorInfoResponse},
 };
 use near_sdk::json_types::{U128, U64};

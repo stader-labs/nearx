@@ -1,3 +1,4 @@
+mod callbacks;
 mod internal;
 mod operator;
 mod public;
@@ -61,13 +62,16 @@ pub trait ExtNearxStakingPoolCallbacks {
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
-    fn epoch_unstake_callback(
+    fn on_stake_pool_epoch_unstake(
         &mut self,
         validator_info: ValidatorInfo,
         amount: Balance,
     ) -> PromiseOrValue<bool>;
 
-    fn epoch_withdraw_callback(&mut self, validator_info: ValidatorInfo) -> PromiseOrValue<bool>;
+    fn on_stake_pool_epoch_withdraw(
+        &mut self,
+        validator_info: ValidatorInfo,
+    ) -> PromiseOrValue<bool>;
 
     fn on_get_sp_total_balance(
         &mut self,
