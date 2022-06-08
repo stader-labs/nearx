@@ -12,6 +12,7 @@ use near_sdk::{
     log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult,
     StorageUsage,
 };
+use crate::constants::NO_DEPOSIT;
 
 #[ext_contract(ext_ft_receiver)]
 pub trait FungibleTokenReceiver {
@@ -37,8 +38,6 @@ const GAS_FOR_FT_TRANSFER_CALL: Gas = Gas(30_000_000_000_000);
 const GAS_FOR_RESOLVE_TRANSFER: Gas = Gas(11_000_000_000_000);
 const FIVE_TGAS: Gas = Gas(5_000_000_000_000);
 const ONE_TGAS: Gas = Gas(1_000_000_000_000);
-
-const NO_DEPOSIT: Balance = 0;
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -132,10 +131,6 @@ impl NearxPool {
         receiver_id: &AccountId,
         amount: u128,
     ) {
-        assert_ne!(
-            sender_id, receiver_id,
-            "Sender and receiver should be different"
-        );
         assert!(amount > 0, "The amount should be a positive number");
         let mut sender_acc = self.internal_get_account(sender_id);
         let mut receiver_acc = self.internal_get_account(receiver_id);

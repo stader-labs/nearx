@@ -118,7 +118,7 @@ fn contract_setup(owner_account: AccountId, operator_account: AccountId) -> (VMC
 
 #[test]
 #[should_panic]
-fn test_add_staking_pool_fail() {
+fn test_add_validator_fail() {
     let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
@@ -131,7 +131,7 @@ fn test_add_staking_pool_fail() {
 
 #[test]
 #[should_panic]
-fn test_remove_staking_pool_fail() {
+fn test_remove_validator_fail() {
     let (_context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
@@ -169,7 +169,9 @@ fn test_add_validator_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -188,13 +190,17 @@ fn test_add_validator_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1,
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2,
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             }
         ]
@@ -202,7 +208,7 @@ fn test_add_validator_success() {
 }
 
 #[test]
-fn test_remove_staking_pool_success() {
+fn test_remove_validator_success() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
@@ -228,19 +234,25 @@ fn test_remove_staking_pool_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             }
         ]
@@ -259,13 +271,17 @@ fn test_remove_staking_pool_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             }
         ]
@@ -283,7 +299,9 @@ fn test_remove_staking_pool_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_3.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -298,7 +316,7 @@ fn test_remove_staking_pool_success() {
 }
 
 #[test]
-fn test_get_stake_pool_with_min_stake() {
+fn test_get_validator_with_min_stake() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
@@ -342,19 +360,25 @@ fn test_get_stake_pool_with_min_stake() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1.clone(),
                 staked: U128(100),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(200),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(300),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
                 lock: false
             }
         ]
@@ -433,7 +457,9 @@ fn test_deposit_and_stake_direct_stake_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1,
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -461,7 +487,9 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -480,7 +508,7 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
 
     contract.contract_lock = true;
 
-    let res = contract.on_stake_pool_deposit_and_stake_direct_stake(
+    let res = contract.on_stake_pool_deposit_and_stake_direct(
         validator1,
         ntoy(100),
         ntoy(100),
@@ -511,7 +539,9 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -530,7 +560,7 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
     contract.contract_lock = true;
 
-    let res = contract.on_stake_pool_deposit_and_stake_direct_stake(
+    let res = contract.on_stake_pool_deposit_and_stake_direct(
         validator1,
         ntoy(100),
         ntoy(100),
@@ -548,7 +578,7 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
             account_id: user,
             unstaked_balance: U128(0),
             staked_balance: U128(ntoy(100)),
-            can_withdraw: false
+            withdrawable_epoch: U64(0)
         }
     );
 
@@ -574,7 +604,9 @@ fn test_on_get_sp_staked_balance_reconcile() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -622,15 +654,15 @@ fn test_autocompound_rewards_contract_busy() {
 
 #[test]
 #[should_panic]
-fn test_autocompound_rewards_invalid_stake_pool() {
+fn test_autocompound_rewards_invalid_validator() {
     let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
 
-    contract.epoch_autocompound_rewards(AccountId::from_str("invalid_stake_pool").unwrap());
+    contract.epoch_autocompound_rewards(AccountId::from_str("invalid_validator").unwrap());
 }
 
 #[test]
 #[should_panic]
-fn test_autocompound_rewards_stake_pool_busy() {
+fn test_autocompound_rewards_validator_busy() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     /*
@@ -649,7 +681,9 @@ fn test_autocompound_rewards_stake_pool_busy() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -680,7 +714,9 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -739,7 +775,9 @@ fn test_on_get_sp_staked_balance_for_rewards() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
             lock: false
         }]
     ));
@@ -874,7 +912,7 @@ fn test_epoch_stake() {
 }
 
 #[test]
-fn test_on_stake_pool_deposit_and_stake_failed() {
+fn test_on_validator_deposit_and_stake_failed() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.epoch_height = 100;
@@ -899,7 +937,7 @@ fn test_on_stake_pool_deposit_and_stake_failed() {
 }
 
 #[test]
-fn test_on_stake_pool_deposit_and_stake_success() {
+fn test_on_validator_deposit_and_stake_success() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.epoch_height = 100;
@@ -1241,8 +1279,7 @@ fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
 }
 
 #[test]
-#[should_panic]
-fn test_epoch_unstake_fail_not_enough_to_unstake() {
+fn test_epoch_unstake_fail_less_than_one_near() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
@@ -1276,12 +1313,14 @@ fn test_epoch_unstake_fail_not_enough_to_unstake() {
     update_validator(&mut contract, validator3.clone(), &val3_info);
 
     contract.last_reconcilation_epoch = 99;
-    contract.user_amount_to_stake_in_epoch = ntoy(1000);
+    contract.total_staked = ntoy(600);
+    contract.user_amount_to_stake_in_epoch = ntoy(1499);
     contract.user_amount_to_unstake_in_epoch = ntoy(1500);
     contract.reconciled_epoch_stake_amount = ntoy(10);
     contract.reconciled_epoch_unstake_amount = ntoy(10);
 
-    contract.epoch_unstake();
+    let res = contract.epoch_unstake();
+    assert_eq!(res, false);
 }
 
 #[test]

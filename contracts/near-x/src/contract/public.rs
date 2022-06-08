@@ -10,16 +10,15 @@ use crate::{
     state::*,
 };
 use near_sdk::json_types::U64;
-use near_sdk::log;
+use near_sdk::{log, require};
 use near_sdk::near_bindgen;
 
 #[near_bindgen]
 impl NearxPool {
     #[init]
     pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
-        assert!(
+        require!(
             !env::state_exists(),
-            "{}",
             ERROR_CONTRACT_ALREADY_INITIALIZED
         );
 
@@ -48,36 +47,32 @@ impl NearxPool {
     */
     /// Asserts that the method was called by the owner.
     pub fn assert_owner_calling(&self) {
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.owner_account_id,
-            "{}",
+        require!(
+            &env::predecessor_account_id() == &self.owner_account_id,
             errors::ERROR_UNAUTHORIZED
         )
     }
     pub fn assert_operator_or_owner(&self) {
-        assert!(
+        require!(
             env::predecessor_account_id() == self.owner_account_id
                 || env::predecessor_account_id() == self.operator_account_id,
-            "{}",
             errors::ERROR_UNAUTHORIZED
         );
     }
 
     pub fn assert_not_busy(&self) {
-        assert!(!self.contract_lock, "{}", errors::ERROR_CONTRACT_BUSY);
+        require!(!self.contract_lock, errors::ERROR_CONTRACT_BUSY);
     }
 
     pub fn assert_min_deposit_amount(&self, amount: u128) {
-        assert!(
+        require!(
             amount >= self.min_deposit_amount,
-            "{}",
             errors::ERROR_MIN_DEPOSIT
         );
     }
 
     pub fn assert_staking_not_paused(&self) {
-        assert!(!self.staking_paused, "{}", errors::ERROR_STAKING_PAUSED);
+        require!(!self.staking_paused, errors::ERROR_STAKING_PAUSED);
     }
 
     /*
@@ -170,10 +165,6 @@ impl NearxPool {
         self.amount_from_stake_shares(acc.stake_shares).into()
     }
 
-    pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
-        self.get_account(account_id).can_withdraw
-    }
-
     pub fn get_owner_id(&self) -> AccountId {
         self.owner_account_id.clone()
     }
@@ -184,7 +175,7 @@ impl NearxPool {
 
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!((numerator * 100 / denominator) < 20); // less than 20%
+        require!((numerator * 100 / denominator) < 20); // less than 20%
         self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
@@ -202,12 +193,11 @@ impl NearxPool {
 
     pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
         let account = self.internal_get_account(&account_id);
-        println!("account is {:?}", account);
         AccountResponse {
             account_id,
-            unstaked_balance: U128::from(0), // TODO - implement unstake
+            unstaked_balance: U128(account.unstaked_amount), // TODO - implement unstake
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
-            can_withdraw: false,
+            withdrawable_epoch: U64(account.withdrawable_epoch_height),
         }
     }
 
@@ -234,6 +224,11 @@ impl NearxPool {
             min_deposit_amount: U128::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
             rewards_fee_pct: self.rewards_fee,
+            user_amount_to_stake_in_epoch: U128(self.user_amount_to_stake_in_epoch),
+            user_amount_to_unstake_in_epoch: U128(self.user_amount_to_unstake_in_epoch),
+            reconciled_epoch_stake_amount: U128(self.reconciled_epoch_stake_amount),
+            reconciled_epoch_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
+            last_reconcilation_epoch: U64(self.last_reconcilation_epoch)
         }
     }
 
@@ -256,7 +251,9 @@ impl NearxPool {
         ValidatorInfoResponse {
             account_id: validator_info.account_id.clone(),
             staked: validator_info.staked.into(),
+            unstaked: U128(validator_info.unstaked_amount),
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
+            last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
             lock: validator_info.lock,
         }
     }
@@ -268,7 +265,9 @@ impl NearxPool {
                 account_id: pool.1.account_id.clone(),
                 staked: U128::from(pool.1.staked),
                 last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
+                last_unstake_start_epoch: U64(pool.1.unstake_start_epoch),
                 lock: pool.1.lock,
+                unstaked: U128(pool.1.unstaked_amount),
             })
             .collect()
     }
