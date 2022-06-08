@@ -1,3 +1,4 @@
+use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::{
     self, ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY,
     ERROR_VALIDATOR_IS_ALREADY_PRESENT,
@@ -28,9 +29,9 @@ impl NearxPool {
             to_unstake: 0,
             accumulated_staked_rewards: 0,
             total_stake_shares: 0,
-            accounts: UnorderedMap::new(b"A".to_vec()),
+            accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: ONE_NEAR,
-            validator_info_map: UnorderedMap::new(b"B".to_vec()),
+            validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
         }
@@ -135,7 +136,7 @@ impl NearxPool {
 
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!((numerator * 100 / denominator) < 10); // less than 10%
+        assert!((numerator * 100 / denominator) < 20); // less than 20%
         self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
@@ -190,7 +191,12 @@ impl NearxPool {
     }
 
     pub fn get_nearx_price(&self) -> U128 {
-        self.amount_from_stake_shares(ONE_E24).into()
+        let amount = self.amount_from_stake_shares(ONE_E24);
+        if amount == 0 {
+            return U128(ONE_E24);
+        } else {
+            U128(amount)
+        }
     }
 
     pub fn get_validator_info(&self, validator: AccountId) -> ValidatorInfoResponse {
@@ -270,5 +276,9 @@ impl NearxPool {
 
     pub fn assert_staking_not_paused(&self) {
         assert!(!self.staking_paused, "{}", errors::ERROR_STAKING_PAUSED);
+    }
+
+    pub fn get_current_epoch(&self) -> U64 {
+        U64(env::epoch_height())
     }
 }

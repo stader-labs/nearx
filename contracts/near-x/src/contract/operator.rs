@@ -34,7 +34,6 @@ impl NearxPool {
         validator_info.lock = true;
 
         self.internal_update_validator(&validator_info);
-        println!("setting validator lock to true");
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
