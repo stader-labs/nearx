@@ -1,19 +1,16 @@
 mod helpers;
 
 use helpers::ntoy;
-use near_liquid_token::{
-    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
-    state::ValidatorInfo,
-    state::{AccountResponse, Fraction, ValidatorInfoResponse},
-};
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
-use near_x::contract::NearxPool;
-use near_x::state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
+use near_x::{
+    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
+    state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse},
+};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
