@@ -2,7 +2,7 @@ mod helpers;
 
 use helpers::ntoy;
 use near_liquid_token::{
-    contract::{ExtNearxStakingPoolCallbacks, NearxPool},
+    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
     state::ValidatorInfo,
     state::{AccountResponse, Fraction, ValidatorInfoResponse},
 };
