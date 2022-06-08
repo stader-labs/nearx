@@ -1,9 +1,5 @@
-use crate::{
-    constants::MIN_BALANCE_FOR_STORAGE,
-    errors::{self, *},
-    state::ValidatorInfo,
-};
-use near_sdk::{env, PromiseResult};
+use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*};
+use near_sdk::{env, Balance, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
     assert!(amount > 0, "{}", ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO);
@@ -48,4 +44,10 @@ pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
     }
 
     (U256::from(amount) * U256::from(numerator) / U256::from(denominator)).as_u128()
+}
+
+pub fn fallible_subassign(n: &mut Balance, to_sub: Balance) -> Balance {
+    *n = n.checked_sub(to_sub).expect("Overflow");
+
+    *n
 }

@@ -3,7 +3,7 @@ use crate::{
     contract::*,
     errors,
     state::*,
-    utils::assert_callback_calling,
+    utils::{assert_callback_calling, fallible_subassign},
 };
 use near_sdk::{
     is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
@@ -121,11 +121,11 @@ impl NearxPool {
         );
 
         // User account update:
-        account.stake_shares -= nearx_amount;
+        fallible_subassign(&mut account.stake_shares, nearx_amount);
         account.unstaked += near_amount;
         // Pool update:
         self.to_unstake += near_amount;
-        self.total_stake_shares -= nearx_amount;
+        fallible_subassign(&mut self.total_stake_shares, nearx_amount);
 
         self.internal_update_account(&account_id, &account);
 
@@ -139,19 +139,26 @@ impl NearxPool {
         } else if self.to_unstake < MIN_UNSTAKE_AMOUNT {
             log!("Not enough to unstake");
             PromiseOrValue::Value(false)
-        } else if let Some(validator) = self.validator_available_for_unstake() {
-            let to_unstake = (validator.staked - ONE_NEAR).min(self.to_unstake);
+        } else if let Some(mut validator_info) = self.validator_available_for_unstake() {
+            let to_unstake = (validator_info.staked - ONE_NEAR).min(self.to_unstake);
 
             if to_unstake < MIN_UNSTAKE_AMOUNT {
                 PromiseOrValue::Value(false)
             } else {
-                ext_staking_pool::ext(validator.account_id.clone())
+                // Validator update:
+                fallible_subassign(&mut validator_info.staked, to_unstake);
+                // Pool update:
+                fallible_subassign(&mut self.total_staked, to_unstake);
+                fallible_subassign(&mut self.to_unstake, to_unstake);
+                self.to_withdraw += to_unstake;
+                //TODO Not sure if it must be sustracted here, or during withdraw
+                ext_staking_pool::ext(validator_info.account_id.clone())
                     .with_static_gas(gas::DEPOSIT_AND_STAKE)
                     .unstake(to_unstake.into())
                     .then(
                         ext_staking_pool_callback::ext(env::current_account_id())
                             .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                            .epoch_unstake_callback(validator, to_unstake.into()),
+                            .epoch_unstake_callback(validator_info, to_unstake.into()),
                     )
                     .into()
             }
@@ -165,8 +172,8 @@ impl NearxPool {
     #[allow(dead_code)] // The code isn't dead actually
     fn epoch_unstake_callback(
         &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
-        near_amount: u128,
+        mut validator_info: ValidatorInfo,
+        near_amount: Balance,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
 
@@ -174,24 +181,27 @@ impl NearxPool {
         println!("unstake_succeeded {:?}", unstake_succeeded);
 
         if unstake_succeeded {
-            // Validator update:
-            validator_info.staked -= near_amount;
-            // Pool update:
-            self.total_staked -= near_amount; //TODO Not sure if it must be sustracted here, or during withdraw
-            self.to_unstake -= near_amount;
-            self.to_withdraw += near_amount;
-
             log!(
                 "Successfully unstaked {} from {}",
                 near_amount,
                 validator_info.account_id,
             );
+
+            validator_info.to_withdraw += near_amount;
         } else {
             log!(
                 "Failed to unstake {} from {}",
                 near_amount,
                 validator_info.account_id,
             );
+
+            // ROLLBACK:
+            // Validator update:
+            validator_info.staked += near_amount;
+            // Pool update:
+            self.total_staked += near_amount;
+            self.to_unstake += near_amount;
+            self.to_withdraw -= near_amount;
 
             validator_info.lock = false;
             self.contract_lock = false;
@@ -203,7 +213,38 @@ impl NearxPool {
     }
 
     pub(crate) fn internal_epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
-        //TODO
+        match self
+            .validator_info_map
+            .values()
+            .find(|v| v.to_withdraw != 0)
+        {
+            Some(validator_info) => ext_staking_pool::ext(validator_info.account_id.clone())
+                .with_static_gas(gas::DEPOSIT_AND_STAKE)
+                .withdraw_all()
+                .then(
+                    ext_staking_pool_callback::ext(env::current_account_id())
+                        .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
+                        .epoch_withdraw_callback(validator_info),
+                )
+                .into(),
+            None => PromiseOrValue::Value(false),
+        }
+    }
+
+    #[private]
+    #[allow(dead_code)] // The code isn't dead actually
+    fn epoch_withdraw_callback(
+        &mut self,
+        mut validator_info: ValidatorInfo,
+    ) -> PromiseOrValue<bool> {
+        assert_callback_calling();
+
+        let withdraw_succeeded = is_promise_success();
+        println!("withdraw_succeeded {:?}", withdraw_succeeded);
+
+        validator_info.to_withdraw = 0;
+
+        PromiseOrValue::Value(true)
     }
 
     pub(crate) fn internal_withdraw(&mut self, near_amount: Balance) {
@@ -224,7 +265,7 @@ impl NearxPool {
             errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
         );
 
-        account.unstaked -= near_amount;
+        fallible_subassign(&mut account.unstaked, near_amount);
         self.internal_update_account(&account_id, &account);
 
         Promise::new(account_id).transfer(near_amount);

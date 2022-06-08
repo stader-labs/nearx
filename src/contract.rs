@@ -4,6 +4,7 @@ mod public;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
+use near_sdk::Balance;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
@@ -63,8 +64,10 @@ pub trait ExtNearxStakingPoolCallbacks {
     fn epoch_unstake_callback(
         &mut self,
         validator_info: ValidatorInfo,
-        amount: u128,
+        amount: Balance,
     ) -> PromiseOrValue<bool>;
+
+    fn epoch_withdraw_callback(&mut self, validator_info: ValidatorInfo) -> PromiseOrValue<bool>;
 
     fn on_get_sp_total_balance(
         &mut self,

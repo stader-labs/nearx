@@ -73,6 +73,10 @@ pub struct ValidatorInfo {
 
     pub staked: u128,
 
+    /// Amount of unstaked tokens that are ready for withdrawal
+    /// when the current epoch is at `available_for_unstake`.
+    pub to_withdraw: u128,
+
     pub last_redeemed_rewards_epoch: EpochHeight,
 
     /// The epoch when we can run the unstake instruction again.
@@ -89,6 +93,7 @@ impl ValidatorInfo {
             account_id,
             lock: false,
             staked: 0,
+            to_withdraw: 0,
             last_redeemed_rewards_epoch: 0,
             available_for_unstake: 0,
         }
