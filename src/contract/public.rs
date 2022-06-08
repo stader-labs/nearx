@@ -68,6 +68,7 @@ impl NearxPool {
 }
 
 /// Staking pool addition and deletion.
+#[near_bindgen]
 impl NearxPool {
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
@@ -92,6 +93,7 @@ impl NearxPool {
 }
 
 /// View methods.
+#[near_bindgen]
 impl NearxPool {
     pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
         self.get_account(account_id).staked_balance
@@ -217,6 +219,7 @@ impl NearxPool {
 }
 
 /// Utility stuff.
+#[near_bindgen]
 impl NearxPool {
     /// Asserts that the method was called by the owner.
     pub fn assert_owner_calling(&self) {
