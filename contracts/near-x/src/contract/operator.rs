@@ -74,6 +74,7 @@ impl NearxPool {
         let mut validator_info = self.internal_get_validator(&validator);
         if is_promise_success() {
             validator_info.staked += amount;
+            // reconcile total staked amount to the actual total staked amount
         } else {
             self.reconciled_epoch_stake_amount += amount;
         }
@@ -84,9 +85,15 @@ impl NearxPool {
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_not_busy();
 
+        let min_gas = AUTOCOMPOUND_EPOCH + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
         let mut validator_info = self.internal_get_validator(&validator);
 
-        assert!(!validator_info.lock, "{}", ERROR_VALIDATOR_IS_BUSY);
+        require!(!validator_info.lock, ERROR_VALIDATOR_IS_BUSY);
 
         let epoch_height = env::epoch_height();
 
@@ -111,12 +118,12 @@ impl NearxPool {
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
-            .with_static_gas(gas::GET_ACCOUNT_TOTAL_BALANCE)
+            .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
             .get_account_staked_balance(env::current_account_id())
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
+                    .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
     }
@@ -177,7 +184,9 @@ impl NearxPool {
 
         self.epoch_reconcilation();
 
+        println!("reconciled epoch unstake amount is {:?}", self.reconciled_epoch_unstake_amount / ONE_NEAR);
         // after cleanup, there might be no need to unstake
+
         if self.reconciled_epoch_unstake_amount == 0 {
             log!("No amount to unstake");
             return false;
@@ -195,7 +204,7 @@ impl NearxPool {
             ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT
         );
 
-        if amount_to_unstake < ONE_NEAR {
+        if amount_to_unstake <= ONE_NEAR {
             log!("unstake amount too low: {}", amount_to_unstake);
             return false;
         }

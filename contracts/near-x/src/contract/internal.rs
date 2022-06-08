@@ -1,14 +1,5 @@
 use crate::constants::{MIN_BALANCE_FOR_STORAGE, NUM_EPOCHS_TO_UNLOCK};
-use crate::errors::{
-    ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT, ERROR_MIN_DEPOSIT,
-    ERROR_NON_POSITIVE_STAKE_AMOUNT, ERROR_NON_POSITIVE_STAKE_SHARES,
-    ERROR_NON_POSITIVE_UNSTAKE_AMOUNT, ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT,
-    ERROR_NON_POSITIVE_UNSTAKING_SHARES, ERROR_NON_POSITIVE_WITHDRAWAL,
-    ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE, ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT,
-    ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE, ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW,
-    ERROR_NO_STAKED_BALANCE, ERROR_UNSTAKED_AMOUNT_IN_UNBONDING_PERIOD,
-    ERROR_VALIDATOR_IS_NOT_PRESENT,
-};
+use crate::errors::{ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT, ERROR_MIN_DEPOSIT, ERROR_NON_POSITIVE_STAKE_AMOUNT, ERROR_NON_POSITIVE_STAKE_SHARES, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT, ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT, ERROR_NON_POSITIVE_UNSTAKING_SHARES, ERROR_NON_POSITIVE_WITHDRAWAL, ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE, ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT, ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE, ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW, ERROR_NO_STAKED_BALANCE, ERROR_UNSTAKED_AMOUNT_IN_UNBONDING_PERIOD, ERROR_VALIDATOR_IS_NOT_PRESENT, ERROR_STAKING_PAUSED};
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
@@ -60,8 +51,10 @@ impl NearxPool {
 
     // TODO - bchain - I think this is better than the direct stake
     pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
-        require!(amount > self.min_deposit_amount, ERROR_MIN_DEPOSIT);
-        require!(amount > 0, ERROR_NON_POSITIVE_STAKE_AMOUNT);
+
+        self.assert_staking_not_paused();
+
+        self.assert_min_deposit_amount(amount);
 
         let account_id = env::predecessor_account_id();
         let mut account = self.internal_get_account(&account_id);
@@ -116,7 +109,7 @@ impl NearxPool {
         account.withdrawable_epoch_height =
             env::epoch_height() + self.get_unstake_release_epoch(amount);
         if self.last_reconcilation_epoch == env::epoch_height() {
-            // The unstake request is received after epoch_cleanup
+            // The unstake request is received after epoch_reconcilation
             // so actual unstake will happen in the next epoch,
             // which will put withdraw off for one more epoch.
             account.withdrawable_epoch_height += 1;
@@ -178,10 +171,7 @@ impl NearxPool {
         let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
         let mut transfer_funds = false;
 
-        let stake_succeeded = is_promise_success();
-        println!("stake_succeeded {:?}", stake_succeeded);
-
-        if stake_succeeded {
+        if is_promise_success() {
             validator_info.staked += amount;
             acc.stake_shares += shares;
             self.total_stake_shares += shares;
@@ -300,22 +290,22 @@ impl NearxPool {
 
     #[private]
     pub fn get_validator_to_unstake(&self) -> Option<ValidatorInfo> {
-        // let mut max_validator_stake_amount: u128 = 0;
-        // let mut current_validator: Option<ValidatorInfo> = None;
-        //
-        // for validator in self.validator_info_map.values() {
-        //     if !validator.pending_unstake_release() && validator.staked.gt(&max_validator_stake_amount) {
-        //         max_validator_stake_amount = validator.staked;
-        //         current_validator = Some(validator)
-        //     }
-        // }
-        //
-        // current_validator
+        let mut max_validator_stake_amount: u128 = 0;
+        let mut current_validator: Option<ValidatorInfo> = None;
 
-        self.validator_info_map
-            .values()
-            .filter(|v| !v.pending_unstake_release())
-            .max_by_key(|v| v.staked)
+        for validator in self.validator_info_map.values() {
+            if !validator.pending_unstake_release() && validator.staked.gt(&max_validator_stake_amount) {
+                max_validator_stake_amount = validator.staked;
+                current_validator = Some(validator)
+            }
+        }
+
+        current_validator
+
+        // self.validator_info_map
+        //     .values()
+        //     .filter(|v| !v.pending_unstake_release())
+        //     .max_by_key(|v| v.staked)
     }
 
     #[private]

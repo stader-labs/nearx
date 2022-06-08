@@ -13,7 +13,7 @@ pub struct AccountResponse {
     pub account_id: AccountId,
     pub unstaked_balance: U128,
     pub staked_balance: U128,
-    pub can_withdraw: bool,
+    pub withdrawable_epoch: U64
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,6 +43,18 @@ pub struct NearxPoolStateResponse {
 
     /// pct of rewards which will go to the operator
     pub rewards_fee_pct: Fraction,
+
+    /// Amount of NEAR that is users requested to stake
+    pub user_amount_to_stake_in_epoch: U128,
+    /// Amount of NEAR that is users requested to unstake
+    pub user_amount_to_unstake_in_epoch: U128,
+
+    /// Amount of NEAR that actually needs to be staked in the epoch
+    pub reconciled_epoch_stake_amount: U128,
+    /// Amount of NEAR that actually needs to be unstaked in the epoch
+    pub reconciled_epoch_unstake_amount: U128,
+    /// Last epoch height stake/unstake amount were reconciled
+    pub last_reconcilation_epoch: U64,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -50,7 +62,9 @@ pub struct NearxPoolStateResponse {
 pub struct ValidatorInfoResponse {
     pub account_id: AccountId,
     pub staked: U128,
+    pub unstaked: U128,
     pub last_asked_rewards_epoch_height: U64,
+    pub last_unstake_start_epoch: U64,
     pub lock: bool,
 }
 

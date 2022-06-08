@@ -31,10 +31,6 @@ pub mod gas {
     /// Gas attached to stake call on the staking pool contract.
     pub const STAKE: Gas = base_gas(3);
 
-    /// The amount of gas required to get the current staked balance of this account from the
-    /// staking pool.
-    pub const GET_ACCOUNT_STAKED_BALANCE: Gas = base_gas(1);
-
     /// The amount of gas required to get current unstaked balance of this account from the
     /// staking pool.
     pub const GET_ACCOUNT_UNSTAKED_BALANCE: Gas = base_gas(1);
@@ -48,6 +44,12 @@ pub mod gas {
     pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE: Gas = base_gas(1);
 
     pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB: Gas = base_gas(1);
+
+    /// The amount of gas required to get the current staked balance of this account from the
+    /// staking pool.
+    pub const ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE: Gas = base_gas(1);
+
+    pub const ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB: Gas = base_gas(1);
 
     /// Gas attached to the inner callback for processing result of the call to get the current total balance from the staking pool.
     /// TODO - bchain - see if we can refactor this
@@ -66,6 +68,8 @@ pub mod gas {
     pub const UNSTAKE_EPOCH: Gas = base_gas(3);
 
     pub const STAKE_EPOCH: Gas = base_gas(3);
+
+    pub const AUTOCOMPOUND_EPOCH: Gas = base_gas(3);
 
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
