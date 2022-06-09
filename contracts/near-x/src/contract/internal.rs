@@ -81,15 +81,13 @@ impl NearxPool {
             log!("Not enough to unstake");
             PromiseOrValue::Value(false)
         } else if let Some(mut validator_info) = self.validator_available_for_unstake() {
-            let to_unstake = (validator_info.staked - ONE_NEAR).min(self.to_unstake);
+            let to_unstake = self.to_unstake;
 
             // Validator update:
             fallible_subassign(&mut validator_info.staked, to_unstake);
             // Pool update:
-            //fallible_subassign(&mut self.total_staked, to_unstake);
             fallible_subassign(&mut self.to_unstake, to_unstake);
             self.to_withdraw += to_unstake;
-            //TODO Not sure if it must be sustracted here, or during withdraw
             ext_staking_pool::ext(validator_info.account_id.clone())
                 .with_static_gas(gas::DEPOSIT_AND_STAKE)
                 .unstake(to_unstake.into())
