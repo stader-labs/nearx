@@ -6,3 +6,4 @@ pub mod errors;
 pub mod fungible_token;
 pub mod state;
 pub mod utils;
+pub mod events;
