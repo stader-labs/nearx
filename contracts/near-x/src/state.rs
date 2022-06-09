@@ -1,5 +1,7 @@
+use crate::constants::UNSTAKE_COOLDOWN_EPOCH;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
+    env,
     json_types::{U128, U64},
     serde::{Deserialize, Serialize},
     AccountId, EpochHeight,
@@ -19,7 +21,8 @@ pub struct AccountResponse {
     pub account_id: AccountId,
     pub unstaked_balance: U128,
     pub staked_balance: U128,
-    pub can_withdraw: bool,
+    pub stake_shares: U128,
+    pub allowed_to_unstake: U64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -70,7 +73,14 @@ pub struct ValidatorInfo {
 
     pub staked: u128,
 
+    /// Amount of unstaked tokens that are ready for withdrawal
+    /// when the current epoch is at `available_for_unstake`.
+    pub to_withdraw: u128,
+
     pub last_redeemed_rewards_epoch: EpochHeight,
+
+    /// The epoch when we can run the unstake instruction again.
+    available_for_unstake: EpochHeight,
 }
 
 impl ValidatorInfo {
@@ -83,7 +93,9 @@ impl ValidatorInfo {
             account_id,
             lock: false,
             staked: 0,
+            to_withdraw: 0,
             last_redeemed_rewards_epoch: 0,
+            available_for_unstake: 0,
         }
     }
 
@@ -94,17 +106,31 @@ impl ValidatorInfo {
     pub fn unlocked(&self) -> bool {
         self.lock == false
     }
+
+    pub fn make_unavailable(&mut self) {
+        self.available_for_unstake = env::epoch_height() + UNSTAKE_COOLDOWN_EPOCH;
+    }
+
+    /// Returns whether the validator is available for unstaking at that epoch, or not.
+    pub fn available(&self) -> bool {
+        env::epoch_height() > self.available_for_unstake
+    }
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct Account {
-    pub stake_shares: u128, //nearx this account owns
+    /// NearX this account owns.
+    pub stake_shares: u128,
+    /// How many NEAR this account can withdraw.
+    pub unstaked: u128,
+    /// When the user is allowed to withdraw.
+    pub allowed_to_unstake: EpochHeight,
 }
 
 impl Account {
     pub fn is_empty(&self) -> bool {
-        self.stake_shares == 0
+        self.stake_shares == 0 && self.unstaked == 0
     }
 
     pub fn add_stake_shares(&mut self, num_shares: u128) {
@@ -119,6 +145,14 @@ impl Account {
             num_shares
         );
         self.stake_shares -= num_shares;
+    }
+
+    pub fn reset_withdraw_cooldown(&mut self) {
+        self.allowed_to_unstake = env::epoch_height() + 8;
+    }
+
+    pub fn cooldown_finished(&mut self) -> bool {
+        env::epoch_height() > self.allowed_to_unstake
     }
 }
 

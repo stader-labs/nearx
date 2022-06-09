@@ -2,8 +2,6 @@ use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
     errors::ERROR_VALIDATOR_IS_BUSY,
-    state::*,
-    utils::assert_callback_calling,
 };
 use near_sdk::{log, near_bindgen};
 
@@ -35,7 +33,7 @@ impl NearxPool {
         self.contract_lock = true;
         validator_info.lock = true;
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator_info);
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
@@ -47,51 +45,5 @@ impl NearxPool {
                     .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
-    }
-
-    pub fn on_get_sp_staked_balance_for_rewards(
-        &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
-        #[callback] total_staked_balance: U128,
-    ) -> PromiseOrValue<bool> {
-        assert_callback_calling();
-
-        validator_info.lock = false;
-        self.contract_lock = false;
-
-        validator_info.last_redeemed_rewards_epoch = env::epoch_height();
-
-        //new_total_balance has the new staked amount for this pool
-        let new_total_balance = total_staked_balance.0;
-        log!("total staked balance is {}", total_staked_balance.0);
-
-        //compute rewards, as new balance minus old balance
-        let rewards = new_total_balance.saturating_sub(validator_info.total_balance());
-
-        log!(
-            "validator account:{} old_balance:{} new_balance:{} rewards:{}",
-            validator_info.account_id,
-            validator_info.total_balance(),
-            new_total_balance,
-            rewards
-        );
-
-        //updated accumulated_staked_rewards value for the contract
-        self.accumulated_staked_rewards += rewards;
-        //updated new "staked" value for this pool
-        validator_info.staked = new_total_balance;
-
-        let operator_fee = rewards * self.rewards_fee;
-        self.total_staked += rewards;
-
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
-
-        if operator_fee > 0 {
-            PromiseOrValue::Promise(
-                Promise::new(self.operator_account_id.clone()).transfer(operator_fee),
-            )
-        } else {
-            PromiseOrValue::Value(true)
-        }
     }
 }

@@ -7,10 +7,12 @@ use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
+use near_x::{
+    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
+    state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse},
+};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
-use near_x::contract::NearxPool;
-use near_x::state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
 
 pub fn owner_account() -> AccountId {
     AccountId::from_str("owner_account").unwrap()
@@ -295,7 +297,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
         Get stake pool in empty stake pool set
     */
-    let stake_pool = contract.get_stake_pool_with_min_stake();
+    let stake_pool = contract.validator_with_min_stake();
     assert!(stake_pool.is_none());
 
     /*
@@ -354,7 +356,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
        Get stake pool to stake into
     */
-    let validator = contract.get_stake_pool_with_min_stake();
+    let validator = contract.validator_with_min_stake();
     assert!(validator.is_some());
     assert_eq!(validator.unwrap().account_id, stake_public_key_1);
 }
@@ -531,6 +533,7 @@ fn test_stake_pool_deposit_and_stake_callback_success() {
             account_id: user,
             unstaked_balance: U128(0),
             staked_balance: U128(ntoy(100)),
+            stake_shares: U128(ntoy(100)),
             can_withdraw: false
         }
     );

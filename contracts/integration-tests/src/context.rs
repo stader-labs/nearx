@@ -3,7 +3,7 @@ use near_units::parse_near;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 use workspaces::prelude::DevAccountDeployer;
-use workspaces::{network::Sandbox, prelude::*, Account, AccountId, Contract, Worker};
+use workspaces::{network::Sandbox, Account, AccountId, Contract, Worker};
 
 // TODO - bchain - Use generic paths
 const NEARX_WASM_FILEPATH: &str =
