@@ -113,7 +113,7 @@ impl NearxPool {
         &mut self,
         account_id: AccountId,
     ) -> PromiseOrValue<bool> {
-        let validator_info = self.get_validator_info(account_id.clone());
+        let validator_info = self.internal_get_validator(&account_id);
 
         ext_staking_pool::ext(account_id)
             .with_static_gas(gas::DEPOSIT_AND_STAKE)

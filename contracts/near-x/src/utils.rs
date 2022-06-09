@@ -1,5 +1,5 @@
 use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*};
-use near_sdk::{env, Balance, PromiseResult};
+use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
     assert!(amount > 0, "{}", ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO);
