@@ -62,9 +62,11 @@ impl NearxPool {
         // User account update:
         fallible_subassign(&mut account.stake_shares, nearx_amount);
         account.unstaked += near_amount;
+        account.reset_withdraw_cooldown();
         // Pool update:
         self.to_unstake += near_amount;
         fallible_subassign(&mut self.total_stake_shares, nearx_amount);
+        fallible_subassign(&mut self.total_staked, near_amount);
 
         self.internal_update_account(&account_id, &account);
 
@@ -81,26 +83,22 @@ impl NearxPool {
         } else if let Some(mut validator_info) = self.validator_available_for_unstake() {
             let to_unstake = (validator_info.staked - ONE_NEAR).min(self.to_unstake);
 
-            if to_unstake < MIN_UNSTAKE_AMOUNT {
-                PromiseOrValue::Value(false)
-            } else {
-                // Validator update:
-                fallible_subassign(&mut validator_info.staked, to_unstake);
-                // Pool update:
-                fallible_subassign(&mut self.total_staked, to_unstake);
-                fallible_subassign(&mut self.to_unstake, to_unstake);
-                self.to_withdraw += to_unstake;
-                //TODO Not sure if it must be sustracted here, or during withdraw
-                ext_staking_pool::ext(validator_info.account_id.clone())
-                    .with_static_gas(gas::DEPOSIT_AND_STAKE)
-                    .unstake(to_unstake.into())
-                    .then(
-                        ext_staking_pool_callback::ext(env::current_account_id())
-                            .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                            .on_stake_pool_epoch_unstake(validator_info, to_unstake.into()),
-                    )
-                    .into()
-            }
+            // Validator update:
+            fallible_subassign(&mut validator_info.staked, to_unstake);
+            // Pool update:
+            //fallible_subassign(&mut self.total_staked, to_unstake);
+            fallible_subassign(&mut self.to_unstake, to_unstake);
+            self.to_withdraw += to_unstake;
+            //TODO Not sure if it must be sustracted here, or during withdraw
+            ext_staking_pool::ext(validator_info.account_id.clone())
+                .with_static_gas(gas::DEPOSIT_AND_STAKE)
+                .unstake(to_unstake.into())
+                .then(
+                    ext_staking_pool_callback::ext(env::current_account_id())
+                        .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
+                        .on_stake_pool_epoch_unstake(validator_info, to_unstake.into()),
+                )
+                .into()
         } else {
             log!("No suitable validator found to unstake from");
             PromiseOrValue::Value(false)

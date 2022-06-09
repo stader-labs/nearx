@@ -22,7 +22,7 @@ pub struct AccountResponse {
     pub unstaked_balance: U128,
     pub staked_balance: U128,
     pub stake_shares: U128,
-    pub can_withdraw: bool,
+    pub allowed_to_unstake: U64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

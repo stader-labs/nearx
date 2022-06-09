@@ -104,7 +104,7 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
             // Validator update:
             validator_info.staked += near_amount;
             // Pool update:
-            self.total_staked += near_amount;
+            //self.total_staked += near_amount;
             self.to_unstake += near_amount;
             self.to_withdraw -= near_amount;
 
@@ -128,8 +128,9 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
         println!("withdraw_succeeded {:?}", withdraw_succeeded);
 
         validator_info.to_withdraw = 0;
+        self.internal_update_validator(&validator_info);
 
-        PromiseOrValue::Value(true)
+        PromiseOrValue::Value(withdraw_succeeded)
     }
 
     #[private]
