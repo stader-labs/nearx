@@ -39,8 +39,8 @@ impl NearxPool {
         self.internal_epoch_unstake()
     }
 
-    pub fn epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
-        self.internal_epoch_withdraw()
+    pub fn epoch_withdraw(&mut self, account_id: AccountId) -> PromiseOrValue<bool> {
+        self.internal_epoch_withdraw(account_id)
     }
 }
 
@@ -85,11 +85,11 @@ impl ExtStakingPool for NearxPool {
     }
 
     fn unstake(&mut self, near_amount: U128) {
-        self.internal_unstake(near_amount.0)
+        self.internal_unstake(Some(near_amount.0))
     }
 
     fn unstake_all(&mut self) {
-        todo!()
+        self.internal_unstake(None)
     }
 }
 

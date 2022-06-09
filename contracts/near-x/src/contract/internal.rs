@@ -3,9 +3,8 @@ use crate::{
     contract::*,
     errors,
     state::*,
-    utils::fallible_subassign,
 };
-use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR};
+use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
@@ -47,11 +46,18 @@ impl NearxPool {
             );
     }
 
-    pub(crate) fn internal_unstake(&mut self, near_amount: Balance) {
-        log!("User unstaked amount is {}", near_amount);
+    pub(crate) fn internal_unstake(&mut self, near_amount: Option<Balance>) {
         let account_id = env::predecessor_account_id();
         let mut account = self.internal_get_account(&account_id);
-        let nearx_amount = self.stake_shares_from_amount(near_amount);
+        let (near_amount, nearx_amount) = match near_amount {
+            Some(amount) => (amount, self.stake_shares_from_amount(amount)),
+            None => (
+                self.amount_from_stake_shares(account.stake_shares),
+                account.stake_shares,
+            ),
+        };
+
+        log!("User unstaked amount is {}", near_amount);
 
         require!(nearx_amount != 0, errors::UNSTAKE_AMOUNT_ZERO);
         require!(
@@ -60,13 +66,13 @@ impl NearxPool {
         );
 
         // User account update:
-        fallible_subassign(&mut account.stake_shares, nearx_amount);
+        account.stake_shares -= nearx_amount;
         account.unstaked += near_amount;
         account.reset_withdraw_cooldown();
         // Pool update:
         self.to_unstake += near_amount;
-        fallible_subassign(&mut self.total_stake_shares, nearx_amount);
-        fallible_subassign(&mut self.total_staked, near_amount);
+        self.total_stake_shares -= nearx_amount;
+        self.total_staked -= near_amount;
 
         self.internal_update_account(&account_id, &account);
 
@@ -84,9 +90,9 @@ impl NearxPool {
             let to_unstake = self.to_unstake;
 
             // Validator update:
-            fallible_subassign(&mut validator_info.staked, to_unstake);
+            validator_info.staked -= to_unstake;
             // Pool update:
-            fallible_subassign(&mut self.to_unstake, to_unstake);
+            self.to_unstake -= to_unstake;
             self.to_withdraw += to_unstake;
             ext_staking_pool::ext(validator_info.account_id.clone())
                 .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -103,23 +109,21 @@ impl NearxPool {
         }
     }
 
-    pub(crate) fn internal_epoch_withdraw(&mut self) -> PromiseOrValue<bool> {
-        match self
-            .validator_info_map
-            .values()
-            .find(|v| v.to_withdraw != 0)
-        {
-            Some(validator_info) => ext_staking_pool::ext(validator_info.account_id.clone())
-                .with_static_gas(gas::DEPOSIT_AND_STAKE)
-                .withdraw_all()
-                .then(
-                    ext_staking_pool_callback::ext(env::current_account_id())
-                        .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                        .on_stake_pool_epoch_withdraw(validator_info),
-                )
-                .into(),
-            None => PromiseOrValue::Value(false),
-        }
+    pub(crate) fn internal_epoch_withdraw(
+        &mut self,
+        account_id: AccountId,
+    ) -> PromiseOrValue<bool> {
+        let validator_info = self.get_validator_info(account_id.clone());
+
+        ext_staking_pool::ext(account_id)
+            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .withdraw_all()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
+                    .on_stake_pool_epoch_withdraw(validator_info),
+            )
+            .into()
     }
 
     pub(crate) fn internal_withdraw(&mut self, near_amount: Option<Balance>) {
@@ -142,7 +146,7 @@ impl NearxPool {
             errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
         );
 
-        fallible_subassign(&mut account.unstaked, near_amount);
+        account.unstaked -= near_amount;
         self.internal_update_account(&account_id, &account);
 
         Promise::new(account_id).transfer(near_amount);
