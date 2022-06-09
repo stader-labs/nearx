@@ -7,10 +7,10 @@ use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
-use std::collections::HashMap;
-use std::{convert::TryFrom, str::FromStr};
 use near_x::contract::NearxPool;
 use near_x::state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
+use std::collections::HashMap;
+use std::{convert::TryFrom, str::FromStr};
 
 pub fn owner_account() -> AccountId {
     AccountId::from_str("owner_account").unwrap()
@@ -295,7 +295,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
         Get stake pool in empty stake pool set
     */
-    let stake_pool = contract.get_stake_pool_with_min_stake();
+    let stake_pool = contract.get_validator_with_min_stake();
     assert!(stake_pool.is_none());
 
     /*
@@ -354,7 +354,7 @@ fn test_get_stake_pool_with_min_stake() {
     /*
        Get stake pool to stake into
     */
-    let validator = contract.get_stake_pool_with_min_stake();
+    let validator = contract.get_validator_with_min_stake();
     assert!(validator.is_some());
     assert_eq!(validator.unwrap().account_id, stake_public_key_1);
 }
@@ -372,7 +372,7 @@ fn test_set_reward_fee_fail() {
 
 #[test]
 #[should_panic]
-fn test_deposit_and_stake_contract_busy() {
+fn test_deposit_and_stake_direct_stake_contract_busy() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.attached_deposit = 100;
@@ -380,12 +380,12 @@ fn test_deposit_and_stake_contract_busy() {
 
     contract.contract_lock = true;
 
-    contract.deposit_and_stake();
+    contract.deposit_and_stake_direct_stake();
 }
 
 #[test]
 #[should_panic]
-fn test_deposit_and_stake_min_deposit() {
+fn test_deposit_and_stake_direct_stake_min_deposit() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.attached_deposit = 100;
@@ -393,22 +393,22 @@ fn test_deposit_and_stake_min_deposit() {
 
     contract.min_deposit_amount = 200;
 
-    contract.deposit_and_stake();
+    contract.deposit_and_stake_direct_stake();
 }
 
 #[test]
 #[should_panic]
-fn test_deposit_and_stake_with_no_stake_pools() {
+fn test_deposit_and_stake_direct_stake_with_no_stake_pools() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.attached_deposit = 5000000000000000000000000;
     testing_env!(context);
 
-    contract.deposit_and_stake();
+    contract.deposit_and_stake_direct_stake();
 }
 
 #[test]
-fn test_deposit_and_stake_success() {
+fn test_deposit_and_stake_direct_stake_success() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.predecessor_account_id = owner_account();
@@ -432,11 +432,11 @@ fn test_deposit_and_stake_success() {
     context.attached_deposit = 5000000000000000000000000;
     testing_env!(context);
 
-    contract.deposit_and_stake();
+    contract.deposit_and_stake_direct_stake();
 }
 
 #[test]
-fn test_stake_pool_deposit_and_stake_callback_fail() {
+fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.predecessor_account_id = owner_account();
@@ -471,8 +471,12 @@ fn test_stake_pool_deposit_and_stake_callback_fail() {
 
     contract.contract_lock = true;
 
-    let res =
-        contract.on_stake_pool_deposit_and_stake(validator1, ntoy(100), ntoy(100), user.clone());
+    let res = contract.on_stake_pool_deposit_and_stake_direct(
+        validator1,
+        ntoy(100),
+        ntoy(100),
+        user.clone(),
+    );
     assert!(matches!(res, PromiseOrValue::Promise(..)));
 
     assert!(!contract.contract_lock);
@@ -482,7 +486,7 @@ fn test_stake_pool_deposit_and_stake_callback_fail() {
 }
 
 #[test]
-fn test_stake_pool_deposit_and_stake_callback_success() {
+fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
     context.predecessor_account_id = owner_account();
@@ -517,8 +521,12 @@ fn test_stake_pool_deposit_and_stake_callback_success() {
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
     contract.contract_lock = true;
 
-    let res =
-        contract.on_stake_pool_deposit_and_stake(validator1, ntoy(100), ntoy(100), user.clone());
+    let res = contract.on_stake_pool_deposit_and_stake_direct(
+        validator1,
+        ntoy(100),
+        ntoy(100),
+        user.clone(),
+    );
     assert!(matches!(res, PromiseOrValue::Value(..)));
 
     assert_eq!(contract.total_stake_shares, ntoy(300));
@@ -749,4 +757,132 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     assert_eq!(contract.total_staked, ntoy(150));
     assert_eq!(contract.total_stake_shares, ntoy(100));
     assert_eq!(contract.accumulated_staked_rewards, ntoy(50));
+}
+
+#[test]
+fn test_epoch_stake_success() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    context.account_balance = ntoy(300);
+    testing_env!(context);
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+    let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
+
+    contract.add_validator(validator1.clone());
+    contract.add_validator(validator2.clone());
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(100);
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    let mut val2_info = get_validator(&contract, validator2.clone());
+    val2_info.staked = ntoy(200);
+    update_validator(&mut contract, validator2.clone(), &val2_info);
+
+    contract.user_amount_to_stake_in_epoch = ntoy(150);
+
+    contract.epoch_stake();
+
+    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(0));
+}
+
+#[test]
+fn test_on_validator_deposit_and_stake_failed() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone());
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(100);
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.user_amount_to_stake_in_epoch = ntoy(10);
+
+    testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
+
+    contract.on_stake_pool_deposit_and_stake(validator1.clone(), ntoy(10));
+
+    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(20));
+}
+
+#[test]
+fn test_on_validator_deposit_and_stake_success() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone());
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(100);
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    testing_env_with_promise_results(context.clone(), PromiseResult::Successful(Vec::default()));
+
+    contract.on_stake_pool_deposit_and_stake(validator1.clone(), ntoy(10));
+
+    let val1_info = get_validator(&contract, validator1.clone());
+    assert_eq!(val1_info.staked, ntoy(110));
+}
+
+#[test]
+#[should_panic]
+fn test_deposit_and_stake_fail_min_deposit() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = 100;
+    testing_env!(context);
+
+    contract.min_deposit_amount = 200;
+
+    contract.deposit_and_stake();
+}
+
+#[test]
+#[should_panic]
+fn test_deposit_and_stake_fail_zero_amount() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = 0;
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+}
+
+#[test]
+fn test_deposit_and_stake_success() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    context.attached_deposit = ntoy(100);
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context);
+
+    contract.min_deposit_amount = ntoy(1);
+    contract.total_staked = ntoy(10);
+    contract.total_stake_shares = ntoy(10);
+    contract.user_amount_to_stake_in_epoch = ntoy(10);
+
+    contract.deposit_and_stake();
+
+    let user1_account = contract.get_account(user1.clone());
+
+    assert_eq!(user1_account.staked_balance, U128(ntoy(100)));
+    assert_eq!(contract.total_staked, ntoy(110));
+    assert_eq!(contract.total_stake_shares, ntoy(110));
+    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(110));
 }
