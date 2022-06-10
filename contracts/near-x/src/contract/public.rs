@@ -67,7 +67,7 @@ impl ExtStakingPool for NearxPool {
     }
 
     #[payable]
-    pub fn deposit_and_stake_direct_stake(&mut self) {
+    fn deposit_and_stake_direct_stake(&mut self) {
         self.internal_deposit_and_stake_direct_stake(env::attached_deposit());
     }
 

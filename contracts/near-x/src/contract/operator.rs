@@ -66,20 +66,7 @@ impl NearxPool {
         true
     }
 
-    #[private]
-    pub fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
-        let mut validator_info = self.internal_get_validator(&validator);
-        if is_promise_success() {
-            validator_info.staked += amount;
-            // reconcile total staked amount to the actual total staked amount
-        } else {
-            self.user_amount_to_stake_in_epoch += amount;
-        }
-
-        self.internal_update_validator(&validator_info);
-    }
-
-    pub fn autocompound_rewards(&mut self, validator: AccountId) {
+    pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_not_busy();
 
         let mut validator_info = self.internal_get_validator(&validator);

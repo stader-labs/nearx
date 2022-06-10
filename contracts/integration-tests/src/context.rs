@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use workspaces::prelude::DevAccountDeployer;
 use workspaces::result::CallExecutionDetails;
-use workspaces::{network::Sandbox, prelude::*, Account, AccountId, Contract, Worker};
+use workspaces::{network::Sandbox, Account, AccountId, Contract, Worker};
 // TODO - bchain - Use generic paths
 const NEARX_WASM_FILEPATH: &str =
     "/Users/bharath12345/stader-work/near-liquid-token/res/near_x.wasm";
