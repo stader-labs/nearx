@@ -193,8 +193,9 @@ impl NearxPool {
 
     pub fn get_nearx_price(&self) -> U128 {
         let amount = self.amount_from_stake_shares(ONE_E24);
+
         if amount == 0 {
-            return U128(ONE_E24);
+            U128(ONE_E24)
         } else {
             U128(amount)
         }

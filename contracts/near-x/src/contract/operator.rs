@@ -57,7 +57,7 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake(validator.account_id.clone(), amount_to_stake),
+                    .on_stake_pool_deposit_and_stake(validator.account_id, amount_to_stake),
             );
 
         true

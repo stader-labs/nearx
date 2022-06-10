@@ -8,10 +8,8 @@ use workspaces::prelude::DevAccountDeployer;
 use workspaces::result::CallExecutionDetails;
 use workspaces::{network::Sandbox, Account, AccountId, Contract, Worker};
 // TODO - bchain - Use generic paths
-const NEARX_WASM_FILEPATH: &str =
-    "./../../res/near_x.wasm";
-const STAKE_POOL_WASM: &str =
-    "./../../res/mock_stake_pool.wasm";
+const NEARX_WASM_FILEPATH: &str = "./../../res/near_x.wasm";
+const STAKE_POOL_WASM: &str = "./../../res/mock_stake_pool.wasm";
 
 pub fn get_validator_account_id(validator_idx: u32) -> AccountId {
     AccountId::from_str(format!("stake_public_key_{}", validator_idx).as_str()).unwrap()
@@ -54,8 +52,8 @@ impl IntegrationTestContext<Sandbox> {
         nearx_contract
             .call(&worker, "new")
             .args_json(json!({
-                    "owner_account_id": nearx_owner.id().clone(),
-                    "operator_account_id": nearx_operator.id().clone(),
+                    "owner_account_id": nearx_owner.id(),
+                    "operator_account_id": nearx_operator.id(),
             }))?
             .transact()
             .await?;
@@ -152,7 +150,7 @@ impl IntegrationTestContext<Sandbox> {
         self.nearx_contract
             .call(&self.worker, "epoch_autocompound_rewards")
             .max_gas()
-            .args_json(json!({ "validator": validator.clone() }))?
+            .args_json(json!({ "validator": validator }))?
             .transact()
             .await
     }
@@ -180,7 +178,7 @@ impl IntegrationTestContext<Sandbox> {
         stake_pool_contract
             .call(&self.worker, "add_reward_for")
             .max_gas()
-            .args_json(json!({ "amount": amount, "account_id": self.nearx_contract.id().clone() }))?
+            .args_json(json!({ "amount": amount, "account_id": self.nearx_contract.id() }))?
             .transact()
             .await
     }
@@ -199,20 +197,11 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    #[deprecated]
-    pub async fn get_user_deposit(&self, user: AccountId) -> anyhow::Result<U128> {
-        let result = self
-            .nearx_contract
-            .call(&self.worker, "get_account")
-            .args_json(json!({ "account_id": user }))?
-            .view()
-            .await?
-            .json::<AccountResponse>()?;
-
-        Ok(result.staked_balance)
+    pub async fn get_user_deposit(&self, user: &AccountId) -> anyhow::Result<U128> {
+        Ok(self.get_user_account(user).await?.staked_balance)
     }
 
-    pub async fn get_user_account(&self, user: AccountId) -> anyhow::Result<AccountResponse> {
+    pub async fn get_user_account(&self, user: &AccountId) -> anyhow::Result<AccountResponse> {
         self.nearx_contract
             .call(&self.worker, "get_account")
             .args_json(json!({ "account_id": user }))?
@@ -223,7 +212,7 @@ impl IntegrationTestContext<Sandbox> {
 
     pub async fn get_validator_info(
         &self,
-        validator: AccountId,
+        validator: &AccountId,
     ) -> anyhow::Result<ValidatorInfoResponse> {
         self.nearx_contract
             .call(&self.worker, "get_validator_info")
@@ -233,7 +222,7 @@ impl IntegrationTestContext<Sandbox> {
             .json::<ValidatorInfoResponse>()
     }
 
-    pub async fn get_user_token_balance(&self, user: AccountId) -> anyhow::Result<U128> {
+    pub async fn get_user_token_balance(&self, user: &AccountId) -> anyhow::Result<U128> {
         self.nearx_contract
             .call(&self.worker, "ft_balance_of")
             .args_json(json!({ "account_id": user }))?
@@ -272,23 +261,25 @@ impl IntegrationTestContext<Sandbox> {
     ) -> anyhow::Result<U128> {
         stake_pool_contract
             .call(&self.worker, "get_account_staked_balance")
-            .args_json(json!({ "account_id": self.nearx_contract.id().clone() }))?
+            .args_json(json!({ "account_id": self.nearx_contract.id() }))?
             .view()
             .await?
             .json::<U128>()
     }
 
+    /*
     pub async fn get_stake_pool_total_unstaked_amount(
         &self,
         stake_pool_contract: &Contract,
     ) -> anyhow::Result<U128> {
         stake_pool_contract
             .call(&self.worker, "get_account_unstaked_balance")
-            .args_json(json!({ "account_id": self.nearx_contract.id().clone() }))?
+            .args_json(json!({ "account_id": self.nearx_contract.id() }))?
             .view()
             .await?
             .json::<U128>()
     }
+    */
 
     pub async fn get_total_tokens_supply(&self) -> anyhow::Result<U128> {
         self.nearx_contract

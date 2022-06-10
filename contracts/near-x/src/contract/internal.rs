@@ -139,7 +139,7 @@ impl NearxPool {
                 .then(
                     ext_staking_pool_callback::ext(env::current_account_id())
                         .with_static_gas(gas::ON_STAKING_POOL_UNSTAKE)
-                        .on_stake_pool_epoch_unstake(validator_info, to_unstake.into()),
+                        .on_stake_pool_epoch_unstake(validator_info, to_unstake),
                 )
                 .into()
         } else {

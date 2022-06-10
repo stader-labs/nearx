@@ -1,12 +1,12 @@
+#![cfg(test)]
+
 mod context;
 mod helpers;
 
 use crate::helpers::ntoy;
 use context::IntegrationTestContext;
 use near_sdk::json_types::{U128, U64};
-use near_units::*;
-use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
-use serde_json::json;
+use near_x::state::{Fraction, ValidatorInfoResponse};
 
 /// Happy flows of testing
 
@@ -44,36 +44,30 @@ async fn test_deposit_and_stake_with_multiple_epochs() -> anyhow::Result<()> {
     context.deposit(&context.user3).await?;
     println!("User 3 successfully deposited");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(10)));
     assert_eq!(user2_staked_amount, U128(ntoy(10)));
     assert_eq!(user3_staked_amount, U128(ntoy(10)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(10)));
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(0)));
     assert_eq!(validator2_info.staked, U128(ntoy(0)));
@@ -102,7 +96,7 @@ async fn test_deposit_and_stake_with_multiple_epochs() -> anyhow::Result<()> {
     context.epoch_stake().await?;
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(30)));
 
@@ -136,23 +130,17 @@ async fn test_deposit_and_stake_with_multiple_epochs() -> anyhow::Result<()> {
     context.deposit(&context.user3).await?;
     println!("User 3 successfully deposited");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(20)));
     assert_eq!(user2_staked_amount, U128(ntoy(20)));
     assert_eq!(user3_staked_amount, U128(ntoy(20)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(20)));
     assert_eq!(user2_token_balance, U128(ntoy(20)));
@@ -182,12 +170,12 @@ async fn test_deposit_and_stake_with_multiple_epochs() -> anyhow::Result<()> {
     assert_eq!(stake_pool_contract_balance_2, U128(ntoy(0)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(30)));
 
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     assert_eq!(validator2_info.staked, U128(ntoy(30)));
 
@@ -213,36 +201,30 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
     context.deposit(&context.user3).await?;
     println!("User 3 successfully deposited");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(10)));
     assert_eq!(user2_staked_amount, U128(ntoy(10)));
     assert_eq!(user3_staked_amount, U128(ntoy(10)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(10)));
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(0)));
     assert_eq!(validator2_info.staked, U128(ntoy(0)));
@@ -271,7 +253,7 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
     context.epoch_stake().await?;
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(30)));
 
@@ -301,13 +283,13 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator2_info.staked, U128(0));
@@ -326,36 +308,30 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     context.deposit_direct_stake(&context.user3).await?;
     println!("User 3 successfully deposited");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(10)));
     assert_eq!(user2_staked_amount, U128(ntoy(10)));
     assert_eq!(user3_staked_amount, U128(ntoy(10)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(10)));
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
     assert_eq!(validator2_info.staked, U128(ntoy(10)));
@@ -402,7 +378,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     assert_eq!(nearx_price, U128(ntoy(2)));
 
     let validator = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
@@ -431,23 +407,17 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         ntoy(3)
     );
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(10)));
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(20)));
     assert_eq!(user2_staked_amount, U128(ntoy(20)));
@@ -466,36 +436,30 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     context.deposit_direct_stake(&context.user3).await?;
     println!("User 3 successfully deposited");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(30)));
     assert_eq!(user2_staked_amount, U128(ntoy(30)));
     assert_eq!(user3_staked_amount, U128(ntoy(30)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(15)));
     assert_eq!(user2_token_balance, U128(ntoy(15)));
     assert_eq!(user3_token_balance, U128(ntoy(15)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(40)));
     assert_eq!(validator2_info.staked, U128(ntoy(30)));
@@ -527,7 +491,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let current_operator_balance = operator_account.balance;
 
     let validator = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
@@ -572,7 +536,7 @@ async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
     assert_eq!(nearx_state.total_stake_shares, U128(0));
 
     let validator_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     assert_eq!(validator_info.staked, U128(0));
     assert_eq!(validator_info.last_asked_rewards_epoch_height, U64(0));
@@ -591,9 +555,9 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("**** Step 2: User deposit test ****");
     println!("Checking initial user deposits");
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
     assert_eq!(user1_staked_amount, U128(0));
     assert_eq!(user2_staked_amount, U128(0));
     assert_eq!(user3_staked_amount, U128(0));
@@ -601,13 +565,13 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("Successfully checked initial user deposits");
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator2_info.staked, U128(0));
@@ -627,36 +591,30 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("User 3 successfully deposited");
 
     println!("Checking user deposits after users have deposited");
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(10)));
     assert_eq!(user2_staked_amount, U128(ntoy(10)));
     assert_eq!(user3_staked_amount, U128(ntoy(10)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(10)));
     assert_eq!(user2_token_balance, U128(ntoy(10)));
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let validator1_info = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     let validator2_info = context
-        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(1).id())
         .await?;
     let validator3_info = context
-        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(2).id())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
     assert_eq!(validator2_info.staked, U128(ntoy(10)));
@@ -693,23 +651,17 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
         .await?;
 
     println!("Checking user deposits after users have deposited");
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(6)));
     assert_eq!(user2_staked_amount, U128(ntoy(12)));
     assert_eq!(user3_staked_amount, U128(ntoy(12)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(6)));
     assert_eq!(user2_token_balance, U128(ntoy(12)));
@@ -752,30 +704,24 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     let total_tokens_minted = context.get_total_tokens_supply().await?;
     assert_eq!(total_tokens_minted, U128(ntoy(30)));
 
-    let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
-    let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
-    let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
+    let user1_staked_amount = context.get_user_deposit(context.user1.id()).await?;
+    let user2_staked_amount = context.get_user_deposit(context.user2.id()).await?;
+    let user3_staked_amount = context.get_user_deposit(context.user3.id()).await?;
 
     assert_eq!(user1_staked_amount, U128(ntoy(12)));
     assert_eq!(user2_staked_amount, U128(ntoy(24)));
     assert_eq!(user3_staked_amount, U128(ntoy(24)));
 
-    let user1_token_balance = context
-        .get_user_token_balance(context.user1.id().clone())
-        .await?;
-    let user2_token_balance = context
-        .get_user_token_balance(context.user2.id().clone())
-        .await?;
-    let user3_token_balance = context
-        .get_user_token_balance(context.user3.id().clone())
-        .await?;
+    let user1_token_balance = context.get_user_token_balance(context.user1.id()).await?;
+    let user2_token_balance = context.get_user_token_balance(context.user2.id()).await?;
+    let user3_token_balance = context.get_user_token_balance(context.user3.id()).await?;
 
     assert_eq!(user1_token_balance, U128(ntoy(6)));
     assert_eq!(user2_token_balance, U128(ntoy(12)));
     assert_eq!(user3_token_balance, U128(ntoy(12)));
 
     let validator = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .get_validator_info(context.get_stake_pool_contract(0).id())
         .await?;
     println!("validator is {:?}", validator);
     assert_eq!(
