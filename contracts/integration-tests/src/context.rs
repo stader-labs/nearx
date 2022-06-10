@@ -9,9 +9,9 @@ use workspaces::result::CallExecutionDetails;
 use workspaces::{network::Sandbox, Account, AccountId, Contract, Worker};
 // TODO - bchain - Use generic paths
 const NEARX_WASM_FILEPATH: &str =
-    "/Users/bharath12345/stader-work/near-liquid-token/res/near_x.wasm";
+    "./../../res/near_x.wasm";
 const STAKE_POOL_WASM: &str =
-    "/Users/bharath12345/stader-work/near-liquid-token/res/mock_stake_pool.wasm";
+    "./../../res/mock_stake_pool.wasm";
 
 pub fn get_validator_account_id(validator_idx: u32) -> AccountId {
     AccountId::from_str(format!("stake_public_key_{}", validator_idx).as_str()).unwrap()
