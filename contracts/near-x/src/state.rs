@@ -142,10 +142,6 @@ impl Account {
         self.stake_shares -= num_shares;
     }
 
-    pub fn reset_withdraw_cooldown(&mut self) {
-        self.withdrawable_epoch = env::epoch_height() + 8;
-    }
-
     pub fn cooldown_finished(&self) -> bool {
         env::epoch_height() > self.withdrawable_epoch
     }

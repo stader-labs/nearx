@@ -1,11 +1,13 @@
 use crate::errors::*;
 use crate::{
-    constants::{gas, MIN_BALANCE_FOR_STORAGE, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
+    constants::{
+        gas, MIN_BALANCE_FOR_STORAGE, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT, UNSTAKE_COOLDOWN_EPOCH,
+    },
     contract::*,
     errors,
     state::*,
 };
-use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{log, require, AccountId, Balance, EpochHeight, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
@@ -98,9 +100,16 @@ impl NearxPool {
         // User account update:
         account.stake_shares -= nearx_amount;
         account.unstaked += near_amount;
-        account.reset_withdraw_cooldown();
+        // Reset the withdraw cooldown:
+        account.withdrawable_epoch =
+            env::epoch_height() + self.num_epoch_to_unstake(account.unstaked);
+
         // Pool update:
-        self.to_unstake += near_amount;
+        if near_amount < self.user_amount_to_stake_in_epoch {
+            self.to_unstake += near_amount;
+        } else {
+            self.user_amount_to_stake_in_epoch -= self.user_amount_to_stake_in_epoch;
+        }
         self.total_stake_shares -= nearx_amount;
         self.total_staked -= near_amount;
 
@@ -238,5 +247,32 @@ impl NearxPool {
             .values()
             .filter(|v| v.unlocked())
             .min_by_key(|v| v.staked)
+    }
+
+    pub(crate) fn num_epoch_to_unstake(&self, amount: u128) -> EpochHeight {
+        let mut available_amount: Balance = 0;
+        let mut total_staked_amount: Balance = 0;
+        for validator in self.validator_info_map.values() {
+            total_staked_amount += validator.staked;
+
+            if validator.available() == false && validator.staked > 0 {
+                available_amount += validator.staked;
+            }
+
+            // found enough balance to unstake from available validators
+            if available_amount >= amount {
+                return UNSTAKE_COOLDOWN_EPOCH;
+            }
+        }
+
+        if total_staked_amount == 0 {
+            // nothing is actually staked, all balance should be available now
+            // still leave a buffer for the user
+            UNSTAKE_COOLDOWN_EPOCH
+        } else {
+            // no enough available validators to unstake
+            // double the unstake waiting time
+            2 * UNSTAKE_COOLDOWN_EPOCH
+        }
     }
 }
