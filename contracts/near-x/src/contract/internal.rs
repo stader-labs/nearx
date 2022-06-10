@@ -1,45 +1,15 @@
-use crate::errors::*;
 use crate::{
     constants::{gas, MIN_BALANCE_FOR_STORAGE, MIN_UNSTAKE_AMOUNT, NO_DEPOSIT},
     contract::*,
     errors,
     state::*,
 };
-use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
-    pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
-        self.assert_staking_not_paused();
-
-        self.assert_min_deposit_amount(amount);
-
-        let account_id = env::predecessor_account_id();
-        let mut account = self.internal_get_account(&account_id);
-
-        // Calculate the number of "stake" shares that the account will receive for staking the
-        // given amount.
-        let num_shares = self.stake_shares_from_amount(amount);
-        require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
-
-        account.stake_shares += num_shares;
-        self.internal_update_account(&account_id, &account);
-
-        self.total_staked += amount;
-        self.total_stake_shares += num_shares;
-
-        // Increase requested stake amount within the current epoch
-        self.user_amount_to_stake_in_epoch += amount;
-
-        log!(
-            "Total NEAR staked is {}. Total NEARX supply is {}",
-            self.total_staked,
-            self.total_stake_shares
-        );
-    }
-
     /// mints NearX based on user's deposited amount and current NearX price
-    pub(crate) fn internal_deposit_and_stake_direct_stake(&mut self, user_amount: Balance) {
+    pub(crate) fn internal_deposit_and_stake(&mut self, user_amount: Balance) {
         log!("User deposited amount is {}", user_amount);
         self.assert_not_busy();
 
@@ -51,7 +21,7 @@ impl NearxPool {
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
         let num_shares = self.stake_shares_from_amount(user_amount);
-        require!(num_shares > 0);
+        assert!(num_shares > 0);
 
         let selected_validator = self
             .validator_with_min_stake()
@@ -66,8 +36,8 @@ impl NearxPool {
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake_direct(
+                    .with_static_gas(gas::ON_STAKING_POOL_DEPOSIT_AND_STAKE)
+                    .on_stake_pool_deposit_and_stake(
                         selected_validator,
                         user_amount,
                         num_shares,
@@ -231,12 +201,5 @@ impl NearxPool {
         } else {
             self.accounts.insert(account_id, account); //insert_or_update
         }
-    }
-
-    pub fn get_validator_with_min_stake(&self) -> Option<ValidatorInfo> {
-        self.validator_info_map
-            .values()
-            .filter(|v| v.unlocked())
-            .min_by_key(|v| v.staked)
     }
 }

@@ -23,7 +23,6 @@ impl NearxPool {
             to_withdraw: 0,
             to_unstake: 0,
             accumulated_staked_rewards: 0,
-            user_amount_to_stake_in_epoch: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: ONE_NEAR,
@@ -64,11 +63,6 @@ impl ExtStakingPool for NearxPool {
     #[payable]
     fn deposit(&mut self) {
         unimplemented!();
-    }
-
-    #[payable]
-    pub fn deposit_and_stake_direct_stake(&mut self) {
-        self.internal_deposit_and_stake_direct_stake(env::attached_deposit());
     }
 
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
@@ -155,6 +149,7 @@ impl NearxPool {
 
     pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
         let account = self.internal_get_account(&account_id);
+        println!("account is {:?}", account);
         AccountResponse {
             account_id,
             unstaked_balance: U128::from(0), // TODO - implement unstake//
@@ -184,7 +179,6 @@ impl NearxPool {
             total_staked: U128::from(self.total_staked),
             total_stake_shares: U128::from(self.total_stake_shares),
             accumulated_staked_rewards: U128::from(self.accumulated_staked_rewards),
-            user_amount_to_stake_in_epoch: U128::from(self.user_amount_to_stake_in_epoch),
             min_deposit_amount: U128::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
             rewards_fee_pct: self.rewards_fee,
