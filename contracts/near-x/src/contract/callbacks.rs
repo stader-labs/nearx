@@ -14,8 +14,12 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
         todo!()
     }
 
+    fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
+        todo!()
+    }
+
     #[private]
-    fn on_stake_pool_deposit_and_stake(
+    fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,

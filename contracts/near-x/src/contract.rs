@@ -9,7 +9,8 @@ use near_sdk::Balance;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
-    env, ext_contract, near_bindgen, AccountId, PanicOnDefault, Promise, PromiseOrValue, PublicKey,
+    env, ext_contract, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseOrValue,
+    PublicKey,
 };
 
 #[near_bindgen]
@@ -36,6 +37,8 @@ pub struct NearxPool {
 
     pub accumulated_staked_rewards: u128,
 
+    pub user_amount_to_stake_in_epoch: Balance,
+
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
@@ -54,7 +57,9 @@ pub struct NearxPool {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
-    fn on_stake_pool_deposit_and_stake(
+    fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance);
+
+    fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,
