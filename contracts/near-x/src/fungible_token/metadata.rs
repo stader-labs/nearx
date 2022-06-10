@@ -1,4 +1,4 @@
-use crate::contract::*;
+use crate::state::*;
 use near_contract_standards::fungible_token::metadata::{
     FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC,
 };

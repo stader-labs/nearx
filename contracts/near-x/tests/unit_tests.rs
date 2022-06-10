@@ -7,8 +7,8 @@ use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{testing_env, AccountId, Gas, PromiseOrValue, PromiseResult, PublicKey, VMContext};
 use near_x::{
-    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
-    state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse},
+    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool},
+    state::{AccountResponse, Fraction, NearxPool, ValidatorInfo, ValidatorInfoResponse},
 };
 use std::{convert::TryFrom, str::FromStr};
 
@@ -540,7 +540,7 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
             unstaked_balance: U128(0),
             staked_balance: U128(ntoy(100)),
             stake_shares: U128(ntoy(100)),
-            allowed_to_unstake: U64(0)
+            withdrawable_epoch: U64(0)
         }
     );
 

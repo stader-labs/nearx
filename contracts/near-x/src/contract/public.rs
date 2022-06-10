@@ -160,7 +160,7 @@ impl NearxPool {
             unstaked_balance: U128::from(0), // TODO - implement unstake//
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
             stake_shares: account.stake_shares.into(),
-            allowed_to_unstake: account.allowed_to_unstake.into(),
+            withdrawable_epoch: account.withdrawable_epoch.into(),
         }
     }
 

@@ -6,50 +6,9 @@ mod public;
 use crate::state::*;
 use near_sdk::json_types::U128;
 use near_sdk::{
-    borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::UnorderedMap,
-    env, ext_contract, near_bindgen, AccountId, Balance, PanicOnDefault, Promise, PromiseOrValue,
-    PublicKey,
+    collections::UnorderedMap, env, ext_contract, near_bindgen, AccountId, Balance, Promise,
+    PromiseOrValue, PublicKey,
 };
-
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct NearxPool {
-    pub owner_account_id: AccountId,
-
-    pub contract_lock: bool,
-
-    pub staking_paused: bool,
-
-    /// The total amount of tokens actually staked (the tokens are in the staking pools)
-    // nearx_price = (total_staked) / (total_stake_shares)
-    pub total_staked: u128,
-
-    /// how many "NearX" were minted.
-    pub total_stake_shares: u128, //total NearX minted
-
-    /// The amount of tokens to unstake in epoch_unstake.
-    pub to_unstake: u128,
-
-    /// The amount of unstaked tokens that will be withdrawn by users.
-    pub to_withdraw: u128,
-
-    pub accumulated_staked_rewards: u128,
-
-    pub user_amount_to_stake_in_epoch: Balance,
-
-    // User account map
-    pub accounts: UnorderedMap<AccountId, Account>,
-
-    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
-
-    /// min amount accepted as deposit or stake
-    pub min_deposit_amount: u128,
-
-    pub operator_account_id: AccountId,
-
-    pub rewards_fee: Fraction,
-}
 
 //self-callbacks
 #[ext_contract(ext_staking_pool_callback)]

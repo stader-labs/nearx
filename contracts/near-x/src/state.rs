@@ -1,33 +1,19 @@
 use crate::constants::UNSTAKE_COOLDOWN_EPOCH;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
+    collections::UnorderedMap,
     env,
     json_types::{U128, U64},
+    near_bindgen,
     serde::{Deserialize, Serialize},
-    AccountId, EpochHeight,
+    AccountId, Balance, EpochHeight, PanicOnDefault,
 };
 
-/// Rewards fee fraction structure for the staking pool contract.
-#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Fraction {
-    pub numerator: u32,
-    pub denominator: u32,
-}
+pub use response::*;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[serde(crate = "near_sdk::serde")]
-pub struct AccountResponse {
-    pub account_id: AccountId,
-    pub unstaked_balance: U128,
-    pub staked_balance: U128,
-    pub stake_shares: U128,
-    pub allowed_to_unstake: U64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct NearxPoolStateResponse {
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct NearxPool {
     pub owner_account_id: AccountId,
 
     pub contract_lock: bool,
@@ -35,34 +21,33 @@ pub struct NearxPoolStateResponse {
     pub staking_paused: bool,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
-    pub total_staked: U128,
+    // nearx_price = (total_staked) / (total_stake_shares)
+    pub total_staked: u128,
 
-    /// how many "shares" were minted. Every time someone "stakes" he "buys pool shares" with the staked amount
-    // the buy share price is computed so if she "sells" the shares on that moment she recovers the same near amount
-    // staking produces rewards, rewards are added to total_for_staking so share_price will increase with rewards
-    // share_price = total_for_staking/total_shares
-    pub total_stake_shares: U128, //total NearX minted
+    /// how many "NearX" were minted.
+    pub total_stake_shares: u128, //total NearX minted
 
-    pub accumulated_staked_rewards: U128,
+    /// The amount of tokens to unstake in epoch_unstake.
+    pub to_unstake: u128,
 
-    pub user_amount_to_stake_in_epoch: U128,
+    /// The amount of unstaked tokens that will be withdrawn by users.
+    pub to_withdraw: u128,
+
+    pub accumulated_staked_rewards: u128,
+
+    pub user_amount_to_stake_in_epoch: Balance,
+
+    // User account map
+    pub accounts: UnorderedMap<AccountId, Account>,
+
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
 
     /// min amount accepted as deposit or stake
-    pub min_deposit_amount: U128,
+    pub min_deposit_amount: u128,
 
     pub operator_account_id: AccountId,
 
-    /// pct of rewards which will go to the operator
-    pub rewards_fee_pct: Fraction,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-#[serde(crate = "near_sdk::serde")]
-pub struct ValidatorInfoResponse {
-    pub account_id: AccountId,
-    pub staked: U128,
-    pub last_asked_rewards_epoch_height: U64,
-    pub lock: bool,
+    pub rewards_fee: Fraction,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -83,6 +68,25 @@ pub struct ValidatorInfo {
 
     /// The epoch when we can run the unstake instruction again.
     available_for_unstake: EpochHeight,
+}
+
+#[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Account {
+    /// NearX this account owns.
+    pub stake_shares: u128,
+    /// How many NEAR this account can withdraw.
+    pub unstaked: u128,
+    /// When the user is allowed to withdraw.
+    pub withdrawable_epoch: EpochHeight,
+}
+
+/// Rewards fee fraction structure for the staking pool contract.
+#[derive(Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Fraction {
+    pub numerator: u32,
+    pub denominator: u32,
 }
 
 impl ValidatorInfo {
@@ -119,17 +123,6 @@ impl ValidatorInfo {
     }
 }
 
-#[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Account {
-    /// NearX this account owns.
-    pub stake_shares: u128,
-    /// How many NEAR this account can withdraw.
-    pub unstaked: u128,
-    /// When the user is allowed to withdraw.
-    pub allowed_to_unstake: EpochHeight,
-}
-
 impl Account {
     pub fn is_empty(&self) -> bool {
         self.stake_shares == 0 && self.unstaked == 0
@@ -150,11 +143,11 @@ impl Account {
     }
 
     pub fn reset_withdraw_cooldown(&mut self) {
-        self.allowed_to_unstake = env::epoch_height() + 8;
+        self.withdrawable_epoch = env::epoch_height() + 8;
     }
 
-    pub fn cooldown_finished(&mut self) -> bool {
-        env::epoch_height() > self.allowed_to_unstake
+    pub fn cooldown_finished(&self) -> bool {
+        env::epoch_height() > self.withdrawable_epoch
     }
 }
 
@@ -172,5 +165,59 @@ impl std::ops::Mul<Fraction> for u128 {
 
     fn mul(self, rhs: Fraction) -> Self::Output {
         crate::utils::proportional(self, rhs.numerator.into(), rhs.denominator.into())
+    }
+}
+
+mod response {
+    use super::*;
+
+    #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    #[serde(crate = "near_sdk::serde")]
+    pub struct AccountResponse {
+        pub account_id: AccountId,
+        pub unstaked_balance: U128,
+        pub staked_balance: U128,
+        pub stake_shares: U128,
+        pub withdrawable_epoch: U64,
+    }
+
+    #[derive(Debug, Serialize, Deserialize)]
+    #[serde(crate = "near_sdk::serde")]
+    pub struct NearxPoolStateResponse {
+        pub owner_account_id: AccountId,
+
+        pub contract_lock: bool,
+
+        pub staking_paused: bool,
+
+        /// The total amount of tokens actually staked (the tokens are in the staking pools)
+        pub total_staked: U128,
+
+        /// how many "shares" were minted. Every time someone "stakes" he "buys pool shares" with the staked amount
+        // the buy share price is computed so if she "sells" the shares on that moment she recovers the same near amount
+        // staking produces rewards, rewards are added to total_for_staking so share_price will increase with rewards
+        // share_price = total_for_staking/total_shares
+        pub total_stake_shares: U128, //total NearX minted
+
+        pub accumulated_staked_rewards: U128,
+
+        pub user_amount_to_stake_in_epoch: U128,
+
+        /// min amount accepted as deposit or stake
+        pub min_deposit_amount: U128,
+
+        pub operator_account_id: AccountId,
+
+        /// pct of rewards which will go to the operator
+        pub rewards_fee_pct: Fraction,
+    }
+
+    #[derive(Debug, Serialize, Deserialize, PartialEq)]
+    #[serde(crate = "near_sdk::serde")]
+    pub struct ValidatorInfoResponse {
+        pub account_id: AccountId,
+        pub staked: U128,
+        pub last_asked_rewards_epoch_height: U64,
+        pub lock: bool,
     }
 }
