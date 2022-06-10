@@ -1,84 +1,12 @@
-use crate::constants::gas::*;
-use crate::errors::ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE;
 use crate::{
-    constants::{gas, MIN_BALANCE_FOR_STORAGE, NO_DEPOSIT},
+    constants::{gas, NO_DEPOSIT},
     contract::*,
-    errors::*,
-    state::*,
-    utils::assert_callback_calling,
+    errors::ERROR_VALIDATOR_IS_BUSY,
 };
-use near_sdk::{is_promise_success, log, near_bindgen, require, ONE_NEAR};
+use near_sdk::{log, near_bindgen};
 
 #[near_bindgen]
 impl NearxPool {
-    // keep calling this method until false is return
-    pub fn epoch_stake(&mut self) -> bool {
-        // make sure enough gas was given
-        // TODO - bchain - scope the gas into a module to make these constants more readable
-        let min_gas =
-            STAKE_EPOCH + ON_STAKE_POOL_DEPOSIT_AND_STAKE + ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
-        require!(
-            env::prepaid_gas() >= min_gas,
-            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
-        );
-
-        // after cleanup, there might be no need to stake
-        if self.user_amount_to_stake_in_epoch == 0 {
-            log!("no need to stake, amount to settle is zero");
-            return false;
-        }
-
-        // TODO - bchain we might have to change the validator staking logic
-        let validator = self.get_validator_with_min_stake();
-        require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
-
-        let mut validator = validator.unwrap();
-
-        let amount_to_stake = self.user_amount_to_stake_in_epoch;
-
-        if self.user_amount_to_stake_in_epoch < ONE_NEAR {
-            log!("stake amount too low: {}", amount_to_stake);
-            return false;
-        }
-
-        require!(
-            env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
-            ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
-        );
-
-        // update internal state
-        self.user_amount_to_stake_in_epoch = self
-            .user_amount_to_stake_in_epoch
-            .saturating_sub(amount_to_stake);
-
-        // do staking on selected validator
-        ext_staking_pool::ext(validator.account_id.clone())
-            .with_attached_deposit(amount_to_stake)
-            .with_static_gas(gas::DEPOSIT_AND_STAKE)
-            .deposit_and_stake()
-            .then(
-                ext_staking_pool_callback::ext(env::current_account_id())
-                    .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake(validator.account_id.clone(), amount_to_stake),
-            );
-
-        true
-    }
-
-    #[private]
-    pub fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
-        let mut validator_info = self.internal_get_validator(&validator);
-        if is_promise_success() {
-            validator_info.staked += amount;
-            // reconcile total staked amount to the actual total staked amount
-        } else {
-            self.user_amount_to_stake_in_epoch += amount;
-        }
-
-        self.internal_update_validator(&validator_info);
-    }
-
     pub fn autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_not_busy();
 

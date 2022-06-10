@@ -12,9 +12,7 @@ pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on c
 pub const ERROR_VALIDATOR_IS_ALREADY_PRESENT: &str = "Validator is already present in list";
 pub const ERROR_NO_STAKING_KEY: &str = "Staking key not present";
 pub const ERROR_CONTRACT_ALREADY_INITIALIZED: &str = "Contract has already been initialized";
-pub const ERROR_NOT_ENOUGH_GAS: &str = "Contract does not have enough gas";
-pub const ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE: &str = "Validator not available to stake";
-pub const ERROR_NON_POSITIVE_STAKE_SHARES: &str = "Non positive stake shares";
+
 pub const VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
 pub const NOT_ENOUGH_SHARES: &str = "User has not enough shares to unstake";
 pub const UNSTAKE_AMOUNT_ZERO: &str = "Unstake amount should not be 0";

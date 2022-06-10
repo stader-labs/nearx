@@ -24,6 +24,17 @@ pub fn assert_one_yocto() {
     );
 }
 
+pub fn is_promise_success() -> bool {
+    assert_eq!(
+        env::promise_results_count(),
+        1,
+        "{}",
+        ERROR_EXPECT_RESULT_ON_CALLBACK
+    );
+
+    matches!(env::promise_result(0), PromiseResult::Successful(_))
+}
+
 /// Returns amount * numerator/denominator
 #[allow(clippy::all)]
 pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {

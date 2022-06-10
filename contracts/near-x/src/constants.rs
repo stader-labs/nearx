@@ -62,12 +62,6 @@ pub mod gas {
     /// TODO - bchain - see if we can refactor this
     pub const ON_GET_SP_STAKED_BALANCE_TO_RECONCILE: Gas = tera(5);
 
-    pub const STAKE_EPOCH: Gas = base_gas(3);
-
-    pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE: Gas = base_gas(1);
-
-    pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB: Gas = base_gas(1);
-
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
     }
