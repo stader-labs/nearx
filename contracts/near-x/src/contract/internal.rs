@@ -5,7 +5,7 @@ use crate::{
     errors,
     state::*,
 };
-use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
