@@ -4,10 +4,8 @@ use crate::{
     constants::{gas, MIN_BALANCE_FOR_STORAGE, NO_DEPOSIT},
     contract::*,
     errors::*,
-    state::*,
-    utils::assert_callback_calling,
 };
-use near_sdk::{is_promise_success, log, near_bindgen, require, ONE_NEAR};
+use near_sdk::{log, near_bindgen, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -29,10 +27,9 @@ impl NearxPool {
         }
 
         // TODO - bchain we might have to change the validator staking logic
-        let validator = self.get_validator_with_min_stake();
-        require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
-
-        let mut validator = validator.unwrap();
+        let validator = self
+            .get_validator_with_min_stake()
+            .expect(ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
 
         let amount_to_stake = self.user_amount_to_stake_in_epoch;
 

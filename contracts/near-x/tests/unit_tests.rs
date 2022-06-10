@@ -1,17 +1,15 @@
+#![allow(deprecated)]
+
 mod helpers;
 
 use helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
-use near_sdk::{
-    testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
-    RuntimeFeesConfig, VMConfig, VMContext,
-};
+use near_sdk::{testing_env, AccountId, Gas, PromiseOrValue, PromiseResult, PublicKey, VMContext};
 use near_x::{
     contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
     state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse},
 };
-use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
 pub fn owner_account() -> AccountId {
@@ -611,7 +609,7 @@ fn test_autocompound_rewards_contract_busy() {
 
     contract.contract_lock = true;
 
-    contract.autocompound_rewards(AccountId::from_str("random_validator").unwrap());
+    contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
 }
 
 #[test]
@@ -619,7 +617,7 @@ fn test_autocompound_rewards_contract_busy() {
 fn test_autocompound_rewards_invalid_stake_pool() {
     let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
 
-    contract.autocompound_rewards(AccountId::from_str("invalid_stake_pool").unwrap());
+    contract.epoch_autocompound_rewards(AccountId::from_str("invalid_stake_pool").unwrap());
 }
 
 #[test]
@@ -651,7 +649,7 @@ fn test_autocompound_rewards_stake_pool_busy() {
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     validator1.lock = true;
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
-    contract.autocompound_rewards(stake_public_key_1);
+    contract.epoch_autocompound_rewards(stake_public_key_1);
 }
 
 #[test]
@@ -680,7 +678,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     ));
 
     // Redeeming rewards with no stake amount with validators
-    contract.autocompound_rewards(stake_public_key_1.clone());
+    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert!(!contract.contract_lock);
@@ -694,7 +692,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     validator1.staked = ntoy(100);
 
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
-    contract.autocompound_rewards(stake_public_key_1.clone());
+    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert!(!contract.contract_lock);
@@ -709,7 +707,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     validator1.staked = ntoy(100);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
-    contract.autocompound_rewards(stake_public_key_1.clone());
+    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
 
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert!(contract.contract_lock);
