@@ -5,7 +5,6 @@ mod public;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
-use near_sdk::Balance;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
@@ -112,6 +111,7 @@ pub trait ExtStakingPool {
     fn get_account_total_balance(&self, account_id: AccountId) -> U128;
 
     fn deposit(&mut self);
+    fn deposit_and_stake_direct_stake(&mut self);
     fn deposit_and_stake(&mut self);
     fn stake(&mut self, amount: U128);
 

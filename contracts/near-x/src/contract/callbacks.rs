@@ -14,8 +14,17 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
         todo!()
     }
 
+    #[private]
     fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
-        todo!()
+        let mut validator_info = self.internal_get_validator(&validator);
+        if is_promise_success() {
+            validator_info.staked += amount;
+            // reconcile total staked amount to the actual total staked amount
+        } else {
+            self.user_amount_to_stake_in_epoch += amount;
+        }
+
+        self.internal_update_validator(&validator_info);
     }
 
     #[private]
@@ -186,7 +195,9 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
         self.internal_update_validator(&validator_info);
 
         if operator_fee > 0 {
-            PromiseOrValue::Promise(Promise::new(env::current_account_id()).transfer(operator_fee))
+            PromiseOrValue::Promise(
+                Promise::new(self.operator_account_id.clone()).transfer(operator_fee),
+            )
         } else {
             PromiseOrValue::Value(true)
         }

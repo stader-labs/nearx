@@ -5,7 +5,6 @@ use crate::helpers::ntoy;
 use context::IntegrationTestContext;
 use near_sdk::json_types::{U128, U64};
 use near_units::*;
-use near_x::constants::ONE_NEAR;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 
@@ -393,6 +392,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         .await?;
     let previous_operator_balance = operator_account.balance;
 
+    context.worker.fast_forward(10000).await?;
     // auto compound the rewards
     context
         .auto_compound_rewards(context.get_stake_pool_contract(0).id())
