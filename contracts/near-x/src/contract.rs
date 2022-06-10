@@ -1,9 +1,11 @@
+mod callbacks;
 mod internal;
 mod operator;
 mod public;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
+use near_sdk::Balance;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
@@ -26,6 +28,12 @@ pub struct NearxPool {
 
     /// how many "NearX" were minted.
     pub total_stake_shares: u128, //total NearX minted
+
+    /// The amount of tokens to unstake in epoch_unstake.
+    pub to_unstake: u128,
+
+    /// The amount of unstaked tokens that will be withdrawn by users.
+    pub to_withdraw: u128,
 
     pub accumulated_staked_rewards: u128,
 
@@ -59,6 +67,17 @@ pub trait ExtNearxStakingPoolCallbacks {
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
+    fn on_stake_pool_epoch_unstake(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: Balance,
+    ) -> PromiseOrValue<bool>;
+
+    fn on_stake_pool_epoch_withdraw(
+        &mut self,
+        validator_info: ValidatorInfo,
+    ) -> PromiseOrValue<bool>;
+
     fn on_get_sp_total_balance(
         &mut self,
         validator_info: ValidatorInfo,
@@ -85,24 +104,20 @@ pub trait ExtNearxStakingPoolCallbacks {
     );
 }
 
+/// The validators staking pool contract.
 #[ext_contract(ext_staking_pool)]
 pub trait ExtStakingPool {
     fn get_account_staked_balance(&self, account_id: AccountId) -> U128;
-
     fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128;
-
     fn get_account_total_balance(&self, account_id: AccountId) -> U128;
 
     fn deposit(&mut self);
-
     fn deposit_and_stake(&mut self);
+    fn stake(&mut self, amount: U128);
 
     fn withdraw(&mut self, amount: U128);
     fn withdraw_all(&mut self);
 
-    fn stake(&mut self, amount: U128);
-
     fn unstake(&mut self, amount: U128);
-
     fn unstake_all(&mut self);
 }

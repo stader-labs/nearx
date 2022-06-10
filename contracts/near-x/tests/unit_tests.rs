@@ -7,8 +7,10 @@ use near_sdk::{
     testing_env, AccountId, Gas, MockedBlockchain, PromiseOrValue, PromiseResult, PublicKey,
     RuntimeFeesConfig, VMConfig, VMContext,
 };
-use near_x::contract::NearxPool;
-use near_x::state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
+use near_x::{
+    contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool, NearxPool},
+    state::{AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse},
+};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
@@ -539,7 +541,8 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
             account_id: user,
             unstaked_balance: U128(0),
             staked_balance: U128(ntoy(100)),
-            can_withdraw: false
+            stake_shares: U128(ntoy(100)),
+            allowed_to_unstake: U64(0)
         }
     );
 

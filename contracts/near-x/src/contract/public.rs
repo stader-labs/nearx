@@ -1,90 +1,68 @@
-use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::{
-    ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT,
-    ERROR_VALIDATOR_IS_NOT_PRESENT,
+    self, ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY,
+    ERROR_VALIDATOR_IS_ALREADY_PRESENT,
 };
 use crate::{
-    constants::{NEAR, ONE_E24},
+    constants::{ACCOUNTS_MAP, MIN_STAKE_AMOUNT, ONE_E24, VALIDATOR_MAP},
     contract::*,
-    errors,
     state::*,
 };
-use near_sdk::json_types::U64;
-use near_sdk::log;
-use near_sdk::near_bindgen;
+use near_sdk::{json_types::U64, log, near_bindgen, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
     #[init]
     pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
-        assert!(
-            !env::state_exists(),
-            "{}",
-            ERROR_CONTRACT_ALREADY_INITIALIZED
-        );
+        require!(!env::state_exists(), ERROR_CONTRACT_ALREADY_INITIALIZED);
 
         Self {
             owner_account_id,
             contract_lock: false,
             operator_account_id,
             staking_paused: false,
+            to_withdraw: 0,
+            to_unstake: 0,
             accumulated_staked_rewards: 0,
             user_amount_to_stake_in_epoch: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
-            min_deposit_amount: NEAR,
+            min_deposit_amount: ONE_NEAR,
             validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
         }
     }
 
-    /*
-       Utility stuff
-    */
-    /// Asserts that the method was called by the owner.
-    pub fn assert_owner_calling(&self) {
-        assert_eq!(
-            &env::predecessor_account_id(),
-            &self.owner_account_id,
-            "{}",
-            errors::ERROR_UNAUTHORIZED
-        )
-    }
-    pub fn assert_operator_or_owner(&self) {
-        assert!(
-            env::predecessor_account_id() == self.owner_account_id
-                || env::predecessor_account_id() == self.operator_account_id,
-            "{}",
-            errors::ERROR_UNAUTHORIZED
-        );
-    }
-
-    pub fn assert_not_busy(&self) {
-        assert!(!self.contract_lock, "{}", errors::ERROR_CONTRACT_BUSY);
-    }
-
-    pub fn assert_min_deposit_amount(&self, amount: u128) {
-        assert!(
-            amount >= self.min_deposit_amount,
-            "{}",
-            errors::ERROR_MIN_DEPOSIT
-        );
-    }
-
-    pub fn assert_staking_not_paused(&self) {
-        assert!(!self.staking_paused, "{}", errors::ERROR_STAKING_PAUSED);
-    }
-
-    /*
-       Main staking pool api
-    */
-
     /// Rewards claiming
     pub fn ping(&mut self) {}
 
+    pub fn epoch_unstake(&mut self) -> PromiseOrValue<bool> {
+        self.internal_epoch_unstake()
+    }
+
+    pub fn epoch_withdraw(&mut self, account_id: AccountId) -> PromiseOrValue<bool> {
+        self.internal_epoch_withdraw(account_id)
+    }
+}
+
+#[near_bindgen]
+impl ExtStakingPool for NearxPool {
+    fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
+        self.get_account(account_id).staked_balance
+    }
+
+    fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128 {
+        self.internal_get_account(&account_id).unstaked.into()
+    }
+
+    fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
+        (self.get_account_staked_balance(account_id.clone()).0
+            + self.get_account_unstaked_balance(account_id).0)
+            .into()
+    }
+
     #[payable]
-    pub fn deposit(&mut self) {
+    fn deposit(&mut self) {
         unimplemented!();
     }
 
@@ -95,13 +73,35 @@ impl NearxPool {
 
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
     #[payable]
-    pub fn deposit_and_stake(&mut self) {
+    fn deposit_and_stake(&mut self) {
         self.internal_deposit_and_stake(env::attached_deposit());
     }
 
-    /*
-       Staking pool addition and deletion
-    */
+    fn stake(&mut self, amount: U128) {
+        let _ = amount;
+        unimplemented!();
+    }
+
+    fn withdraw(&mut self, near_amount: U128) {
+        self.internal_withdraw(Some(near_amount.0))
+    }
+
+    fn withdraw_all(&mut self) {
+        self.internal_withdraw(None)
+    }
+
+    fn unstake(&mut self, near_amount: U128) {
+        self.internal_unstake(Some(near_amount.0))
+    }
+
+    fn unstake_all(&mut self) {
+        self.internal_unstake(None)
+    }
+}
+
+/// Staking pool addition and deletion.
+#[near_bindgen]
+impl NearxPool {
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
         log!(format!("Removing validator {}", validator));
@@ -122,22 +122,11 @@ impl NearxPool {
         self.assert_operator_or_owner();
         self.staking_paused = !self.staking_paused;
     }
+}
 
-    // View methods
-
-    pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
-        self.get_account(account_id).staked_balance
-    }
-
-    pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
-        let acc = self.internal_get_account(&account_id);
-        self.amount_from_stake_shares(acc.stake_shares).into()
-    }
-
-    pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
-        self.get_account(account_id).can_withdraw
-    }
-
+/// View methods.
+#[near_bindgen]
+impl NearxPool {
     pub fn get_owner_id(&self) -> AccountId {
         self.owner_account_id.clone()
     }
@@ -148,7 +137,7 @@ impl NearxPool {
 
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
-        assert!((numerator * 100 / denominator) < 20); // less than 20%
+        require!((numerator * 100 / denominator) < 20); // less than 20%
         self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
@@ -168,9 +157,10 @@ impl NearxPool {
         let account = self.internal_get_account(&account_id);
         AccountResponse {
             account_id,
-            unstaked_balance: U128::from(0), // TODO - implement unstake
+            unstaked_balance: U128::from(0), // TODO - implement unstake//
             staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
-            can_withdraw: false,
+            stake_shares: account.stake_shares.into(),
+            allowed_to_unstake: account.allowed_to_unstake.into(),
         }
     }
 
@@ -214,7 +204,7 @@ impl NearxPool {
         let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
             val_info
         } else {
-            panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
+            panic!("{}", errors::VALIDATOR_IS_NOT_PRESENT);
         };
 
         ValidatorInfoResponse {
@@ -235,6 +225,51 @@ impl NearxPool {
                 lock: pool.1.lock,
             })
             .collect()
+    }
+
+    pub fn validator_with_min_stake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked())
+            .min_by_key(|v| v.staked)
+    }
+
+    pub fn validator_available_for_unstake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| v.unlocked() && v.available() && v.staked > MIN_STAKE_AMOUNT + ONE_NEAR)
+            .max_by_key(|v| v.staked)
+    }
+}
+
+/// Utility stuff.
+#[near_bindgen]
+impl NearxPool {
+    /// Asserts that the method was called by the owner.
+    pub fn assert_owner_calling(&self) {
+        require!(
+            env::predecessor_account_id() == self.owner_account_id,
+            errors::ERROR_UNAUTHORIZED
+        );
+    }
+    pub fn assert_operator_or_owner(&self) {
+        require!(
+            env::predecessor_account_id() == self.owner_account_id
+                || env::predecessor_account_id() == self.operator_account_id,
+            errors::ERROR_UNAUTHORIZED
+        );
+    }
+
+    pub fn assert_not_busy(&self) {
+        require!(!self.contract_lock, errors::ERROR_CONTRACT_BUSY);
+    }
+
+    pub fn assert_min_deposit_amount(&self, amount: u128) {
+        require!(amount >= self.min_deposit_amount, errors::ERROR_MIN_DEPOSIT);
+    }
+
+    pub fn assert_staking_not_paused(&self) {
+        require!(!self.staking_paused, errors::ERROR_STAKING_PAUSED);
     }
 
     pub fn get_current_epoch(&self) -> U64 {
