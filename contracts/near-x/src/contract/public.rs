@@ -276,3 +276,13 @@ impl NearxPool {
         U64(env::epoch_height())
     }
 }
+
+#[near_bindgen]
+impl ExtSourceMetadata for NearxPool {
+    fn contract_source_metadata() -> ContractSourceMetadata {
+        ContractSourceMetadata {
+            version: "0.1".into(),
+            link: None,
+        }
+    }
+}

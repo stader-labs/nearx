@@ -94,6 +94,7 @@ impl Event {
 
 pub(crate) fn emit_event<T: ?Sized + Serialize>(data: &T) {
     let result = json!(data);
+    // NEP-297 interface:
     let event_json = json!({
         "standard": EVENT_STANDARD,
         "version": EVENT_STANDARD_VERSION,
