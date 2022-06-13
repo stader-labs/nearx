@@ -140,8 +140,10 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
         let withdraw_succeeded = is_promise_success();
         println!("withdraw_succeeded {:?}", withdraw_succeeded);
 
-        validator_info.to_withdraw = 0;
-        self.internal_update_validator(&validator_info);
+        if withdraw_succeeded {
+            validator_info.to_withdraw = 0;
+            self.internal_update_validator(&validator_info);
+        }
 
         PromiseOrValue::Value(withdraw_succeeded)
     }
