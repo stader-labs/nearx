@@ -887,3 +887,93 @@ fn test_deposit_and_stake_success() {
     assert_eq!(contract.total_stake_shares, ntoy(110));
     assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(110));
 }
+
+// Unstaking
+
+#[test]
+#[should_panic]
+fn it_fails_when_unstaking_a_zero_amount() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.unstake(0.into());
+}
+
+#[test]
+#[should_panic]
+fn it_fails_when_unstaking_more_than_staked() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.unstake(ntoy(101).into());
+}
+
+#[test]
+fn it_succeeds_when_unstaking_the_original_amount() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.unstake(ntoy(50).into());
+    assert_eq!(contract.total_staked, ntoy(50));
+    assert_eq!(contract.total_stake_shares, ntoy(50));
+    assert_eq!(contract.to_unstake, ntoy(50));
+
+    contract.unstake(ntoy(20).into());
+    assert_eq!(contract.total_staked, ntoy(30));
+    assert_eq!(contract.total_stake_shares, ntoy(30));
+    assert_eq!(contract.to_unstake, ntoy(70));
+
+    contract.unstake(ntoy(30).into());
+    assert_eq!(contract.total_staked, 0);
+    assert_eq!(contract.total_stake_shares, 0);
+    assert_eq!(contract.to_unstake, ntoy(100));
+}
+
+// Withdrawal
+
+#[test]
+#[should_panic]
+fn it_fails_when_withdrawing_without_unstaking_first() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.withdraw(100.into());
+}
+
+/*
+#[test]
+#[should_panic]
+fn it_fails_when_withdrawing_a_zero_amount() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.unstake(0.into());
+}
+
+#[test]
+#[should_panic]
+fn it_fails_when_withdrawing_more_than_staked() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context);
+
+    contract.deposit_and_stake();
+    contract.unstake(ntoy(101).into());
+}
+*/
