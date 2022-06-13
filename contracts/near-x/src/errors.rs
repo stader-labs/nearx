@@ -1,5 +1,6 @@
 // TODO - refactor this to a module
 pub const ERROR_VALIDATOR_IS_BUSY: &str = "Validator is busy";
+pub const ERROR_ALL_VALIDATORS_ARE_BUSY: &str = "All validators are busy";
 pub const ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO: &str = "Deposit should be greater than 0";
 pub const ERROR_UNAUTHORIZED: &str = "Unauthorized";
 pub const ERROR_CONTRACT_BUSY: &str = "Contract is busy";
@@ -37,3 +38,4 @@ pub const ERROR_NO_VALIDATOR_AVAILABLE_FOR_UNSTAKE: &str =
 pub const ERROR_NON_POSITIVE_STAKE_AMOUNT: &str = "Amount to stake must be greater than 0";
 pub const ERROR_NON_POSITIVE_STAKE_SHARES: &str = "nearx to be minted must be greater than 0";
 pub const ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE: &str = "No validator available to stake";
+pub const ERROR_TEMP_OWNER_NOT_SET: &str = "Temp owner has not been set to any account";

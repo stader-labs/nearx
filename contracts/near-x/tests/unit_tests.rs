@@ -923,6 +923,9 @@ fn test_on_validator_deposit_and_stake_failed() {
 
     contract.add_validator(validator1.clone());
 
+    context.predecessor_account_id = contract_account();
+    testing_env!(context.clone());
+
     let mut val1_info = get_validator(&contract, validator1.clone());
     val1_info.staked = ntoy(100);
     update_validator(&mut contract, validator1.clone(), &val1_info);
@@ -947,6 +950,9 @@ fn test_on_validator_deposit_and_stake_success() {
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
 
     contract.add_validator(validator1.clone());
+
+    context.predecessor_account_id = contract_account();
+    testing_env!(context.clone());
 
     let mut val1_info = get_validator(&contract, validator1.clone());
     val1_info.staked = ntoy(100);
@@ -1157,6 +1163,9 @@ fn test_on_stake_pool_withdraw_all_fail() {
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
 
     contract.add_validator(validator1.clone());
+
+    context.predecessor_account_id = contract_account();
+    testing_env!(context.clone());
 
     let mut val1_info = get_validator(&contract, validator1.clone());
     val1_info.staked = ntoy(50);

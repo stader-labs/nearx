@@ -1,4 +1,4 @@
-use crate::{constants::MIN_BALANCE_FOR_STORAGE, errors::*};
+use crate::{constants::*, errors::*};
 use near_sdk::{env, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
@@ -15,15 +15,6 @@ pub fn assert_callback_calling() {
     assert_eq!(env::predecessor_account_id(), env::current_account_id());
 }
 
-pub fn assert_one_yocto() {
-    assert_eq!(
-        env::attached_deposit(),
-        1,
-        "{}",
-        ERROR_REQUIRE_ONE_YOCTO_NEAR
-    );
-}
-
 pub fn is_promise_success() -> bool {
     assert_eq!(
         env::promise_results_count(),
@@ -38,11 +29,6 @@ pub fn is_promise_success() -> bool {
 /// Returns amount * numerator/denominator
 #[allow(clippy::all)]
 pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {
-    uint::construct_uint! {
-        /// 256-bit unsigned integer.
-        pub struct U256(4);
-    }
-
     (U256::from(amount) * U256::from(numerator) / U256::from(denominator)).as_u128()
 }
 

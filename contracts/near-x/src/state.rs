@@ -13,7 +13,7 @@ pub struct AccountResponse {
     pub account_id: AccountId,
     pub unstaked_balance: U128,
     pub staked_balance: U128,
-    pub withdrawable_epoch: U64
+    pub withdrawable_epoch: U64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

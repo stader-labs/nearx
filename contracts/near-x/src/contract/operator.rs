@@ -1,6 +1,7 @@
 use crate::constants::gas::*;
 use crate::constants::{MIN_BALANCE_FOR_STORAGE, ONE_NEAR};
 use crate::errors::*;
+use crate::events::*;
 use crate::utils::is_promise_success;
 use crate::{
     constants::{gas, NO_DEPOSIT},
@@ -66,11 +67,18 @@ impl NearxPool {
                     .on_stake_pool_deposit_and_stake(validator.account_id.clone(), amount_to_stake),
             );
 
+        Event::EpochStakeAttempt {
+            validator_id: validator.account_id,
+            amount: U128(amount_to_stake),
+        }
+        .emit();
+
         true
     }
 
-    #[private]
     pub fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
+        assert_callback_calling();
+
         let mut validator_info = self.internal_get_validator(&validator);
         if is_promise_success() {
             validator_info.staked += amount;
@@ -85,7 +93,9 @@ impl NearxPool {
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_not_busy();
 
-        let min_gas = AUTOCOMPOUND_EPOCH + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
+        let min_gas = AUTOCOMPOUND_EPOCH
+            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
+            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -184,7 +194,10 @@ impl NearxPool {
 
         self.epoch_reconcilation();
 
-        println!("reconciled epoch unstake amount is {:?}", self.reconciled_epoch_unstake_amount / ONE_NEAR);
+        println!(
+            "reconciled epoch unstake amount is {:?}",
+            self.reconciled_epoch_unstake_amount / ONE_NEAR
+        );
         // after cleanup, there might be no need to unstake
 
         if self.reconciled_epoch_unstake_amount == 0 {
@@ -216,7 +229,6 @@ impl NearxPool {
 
         self.internal_update_validator(&validator.account_id, &validator);
 
-        // TODO - bchain - log event
         ext_staking_pool::ext(validator.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
             .with_attached_deposit(NO_DEPOSIT)
@@ -225,14 +237,21 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
-                    .on_stake_pool_unstake(validator.account_id, amount_to_unstake),
+                    .on_stake_pool_unstake(validator.account_id.clone(), amount_to_unstake),
             );
+
+        Event::EpochUnstakeAttempt {
+            validator_id: validator.account_id,
+            amount: U128(amount_to_unstake),
+        }
+        .emit();
 
         true
     }
 
-    #[private]
     pub fn on_stake_pool_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128) {
+        assert_callback_calling();
+
         let mut validator = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
@@ -254,6 +273,7 @@ impl NearxPool {
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
+        log!("validator is {:?}", validator);
         let mut validator_info = self.internal_get_validator(&validator);
 
         require!(
@@ -286,6 +306,7 @@ impl NearxPool {
 
     #[private]
     pub fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128) {
+        assert_callback_calling();
         if !is_promise_success() {
             let mut validator_info =
                 self.internal_get_validator(&validator_info.account_id.clone());
@@ -309,12 +330,20 @@ impl NearxPool {
         self.user_amount_to_stake_in_epoch = 0;
         self.user_amount_to_unstake_in_epoch = 0;
 
-        if self.reconciled_epoch_stake_amount > self.reconciled_epoch_unstake_amount {
-            self.reconciled_epoch_stake_amount -= self.reconciled_epoch_unstake_amount;
-            self.reconciled_epoch_unstake_amount = 0;
-        } else {
-            self.reconciled_epoch_unstake_amount -= self.reconciled_epoch_stake_amount;
-            self.reconciled_epoch_stake_amount = 0;
+        let reconciled_stake_amount = self
+            .reconciled_epoch_stake_amount
+            .saturating_sub(self.reconciled_epoch_unstake_amount);
+        let reconciled_unstake_amount = self
+            .reconciled_epoch_unstake_amount
+            .saturating_sub(self.reconciled_epoch_stake_amount);
+
+        self.reconciled_epoch_stake_amount = reconciled_stake_amount;
+        self.reconciled_epoch_unstake_amount = reconciled_unstake_amount;
+
+        Event::EpochReconcile {
+            user_stake_amount: U128(self.reconciled_epoch_stake_amount),
+            user_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
         }
+        .emit();
     }
 }

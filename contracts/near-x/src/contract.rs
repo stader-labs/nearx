@@ -1,4 +1,5 @@
 mod internal;
+mod metadata;
 mod operator;
 mod public;
 
@@ -17,8 +18,6 @@ pub struct NearxPool {
     pub owner_account_id: AccountId,
 
     pub contract_lock: bool,
-
-    pub staking_paused: bool,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     // nearx_price = (total_staked) / (total_stake_shares)
@@ -52,6 +51,13 @@ pub struct NearxPool {
     pub operator_account_id: AccountId,
 
     pub rewards_fee: Fraction,
+
+    // Temp owner for owner update
+    // This is to have 2 commit owner update
+    pub temp_owner: Option<AccountId>,
+
+    // Operations control
+    pub stake_paused: bool,
 }
 
 //self-callbacks

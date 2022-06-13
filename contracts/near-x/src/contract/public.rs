@@ -1,8 +1,6 @@
-use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
-use crate::errors::{
-    ERROR_CONTRACT_ALREADY_INITIALIZED, ERROR_NO_STAKING_KEY, ERROR_VALIDATOR_IS_ALREADY_PRESENT,
-    ERROR_VALIDATOR_IS_NOT_PRESENT,
-};
+use crate::constants::{ACCOUNTS_MAP, ONE_NEAR, VALIDATOR_MAP};
+use crate::errors::*;
+use crate::events::Event;
 use crate::{
     constants::{NEAR, ONE_E24},
     contract::*,
@@ -10,25 +8,22 @@ use crate::{
     state::*,
 };
 use near_sdk::json_types::U64;
-use near_sdk::{log, require};
 use near_sdk::near_bindgen;
+use near_sdk::{assert_one_yocto, log, require};
 
 #[near_bindgen]
 impl NearxPool {
     #[init]
     pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
-        require!(
-            !env::state_exists(),
-            ERROR_CONTRACT_ALREADY_INITIALIZED
-        );
+        require!(!env::state_exists(), ERROR_CONTRACT_ALREADY_INITIALIZED);
 
         Self {
             owner_account_id,
             contract_lock: false,
             operator_account_id,
-            staking_paused: false,
+            stake_paused: false,
             accumulated_staked_rewards: 0,
-            user_amount_to_stake_in_epoch: 0, // TODO - we can init with some seed amount
+            user_amount_to_stake_in_epoch: 0,
             user_amount_to_unstake_in_epoch: 0,
             reconciled_epoch_stake_amount: 0,
             reconciled_epoch_unstake_amount: 0,
@@ -39,6 +34,7 @@ impl NearxPool {
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
             last_reconcilation_epoch: 0,
+            temp_owner: None,
         }
     }
 
@@ -65,14 +61,11 @@ impl NearxPool {
     }
 
     pub fn assert_min_deposit_amount(&self, amount: u128) {
-        require!(
-            amount >= self.min_deposit_amount,
-            errors::ERROR_MIN_DEPOSIT
-        );
+        require!(amount >= self.min_deposit_amount, errors::ERROR_MIN_DEPOSIT);
     }
 
     pub fn assert_staking_not_paused(&self) {
-        require!(!self.staking_paused, errors::ERROR_STAKING_PAUSED);
+        require!(!self.stake_paused, errors::ERROR_STAKING_PAUSED);
     }
 
     /*
@@ -103,7 +96,7 @@ impl NearxPool {
     pub fn unstake_all(&mut self) {
         let account_id = env::predecessor_account_id();
         let account = self.internal_get_account(&account_id);
-        let amount = self.amount_from_stake_shares(account.stake_shares);
+        let amount = self.staked_amount_from_num_shares_rounded_down(account.stake_shares);
         self.internal_unstake(amount);
     }
 
@@ -135,8 +128,12 @@ impl NearxPool {
     */
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
-        log!(format!("Removing validator {}", validator));
         self.validator_info_map.remove(&validator);
+
+        Event::ValidatorRemoved {
+            account_id: validator,
+        }
+        .emit();
     }
 
     pub fn add_validator(&mut self, validator: AccountId) {
@@ -144,14 +141,43 @@ impl NearxPool {
         if self.validator_info_map.get(&validator).is_some() {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
-        log!(format!("Adding validator {}", validator));
         self.validator_info_map
-            .insert(&validator.clone(), &ValidatorInfo::new(validator));
+            .insert(&validator.clone(), &ValidatorInfo::new(validator.clone()));
+
+        Event::ValidatorAdded {
+            account_id: validator,
+        }
+        .emit();
     }
 
     pub fn toggle_staking_pause(&mut self) {
         self.assert_operator_or_owner();
-        self.staking_paused = !self.staking_paused;
+        self.stake_paused = !self.stake_paused;
+    }
+
+    // Owner update methods
+    #[payable]
+    pub fn set_owner(&mut self, new_owner: AccountId) {
+        assert_one_yocto();
+        require!(
+            env::predecessor_account_id() == self.owner_account_id,
+            ERROR_UNAUTHORIZED
+        );
+        self.temp_owner = Some(new_owner)
+    }
+
+    #[payable]
+    pub fn commit_owner(&mut self) {
+        assert_one_yocto();
+
+        if let Some(temp_owner) = self.temp_owner.clone() {
+            require!(
+                env::predecessor_account_id() == temp_owner,
+                ERROR_UNAUTHORIZED
+            )
+        } else {
+            panic!(ERROR_TEMP_OWNER_NOT_SET);
+        }
     }
 
     // View methods
@@ -162,7 +188,8 @@ impl NearxPool {
 
     pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
         let acc = self.internal_get_account(&account_id);
-        self.amount_from_stake_shares(acc.stake_shares).into()
+        self.staked_amount_from_num_shares_rounded_down(acc.stake_shares)
+            .into()
     }
 
     pub fn get_owner_id(&self) -> AccountId {
@@ -188,15 +215,17 @@ impl NearxPool {
     }
 
     pub fn is_staking_paused(&self) -> bool {
-        self.staking_paused
+        self.stake_paused
     }
 
     pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
         let account = self.internal_get_account(&account_id);
         AccountResponse {
             account_id,
-            unstaked_balance: U128(account.unstaked_amount), // TODO - implement unstake
-            staked_balance: self.amount_from_stake_shares(account.stake_shares).into(),
+            unstaked_balance: U128(account.unstaked_amount),
+            staked_balance: self
+                .staked_amount_from_num_shares_rounded_down(account.stake_shares)
+                .into(),
             withdrawable_epoch: U64(account.withdrawable_epoch_height),
         }
     }
@@ -217,7 +246,7 @@ impl NearxPool {
         NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
-            staking_paused: self.staking_paused,
+            staking_paused: self.stake_paused,
             total_staked: U128::from(self.total_staked),
             total_stake_shares: U128::from(self.total_stake_shares),
             accumulated_staked_rewards: U128::from(self.accumulated_staked_rewards),
@@ -228,14 +257,18 @@ impl NearxPool {
             user_amount_to_unstake_in_epoch: U128(self.user_amount_to_unstake_in_epoch),
             reconciled_epoch_stake_amount: U128(self.reconciled_epoch_stake_amount),
             reconciled_epoch_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
-            last_reconcilation_epoch: U64(self.last_reconcilation_epoch)
+            last_reconcilation_epoch: U64(self.last_reconcilation_epoch),
         }
     }
 
     pub fn get_nearx_price(&self) -> U128 {
-        let amount = self.amount_from_stake_shares(ONE_E24);
+        if self.total_staked == 0 || self.total_stake_shares == 0 {
+            return U128(ONE_NEAR);
+        }
+
+        let amount = self.staked_amount_from_num_shares_rounded_down(ONE_NEAR);
         if amount == 0 {
-            return U128(ONE_E24);
+            return U128(ONE_NEAR);
         } else {
             U128(amount)
         }
@@ -245,7 +278,7 @@ impl NearxPool {
         let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
             val_info
         } else {
-            panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
+            ValidatorInfo::new(validator)
         };
 
         ValidatorInfoResponse {

@@ -1,3 +1,4 @@
+use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
@@ -80,6 +81,7 @@ impl IntegrationTestContext<Sandbox> {
                 .await?;
             println!("Initializing the stake pool contract");
 
+            println!("Adding validator {:?}", stake_pool_contract.id());
             // Add the stake pool
             println!("Adding validator");
             nearx_operator
@@ -92,8 +94,8 @@ impl IntegrationTestContext<Sandbox> {
             validator_to_stake_pool_contract.insert(validator_account_id, stake_pool_contract);
         }
 
-        println!("Fast forward to around 122 epochs");
-        worker.fast_forward(61400).await?;
+        println!("Fast forward to around 10 epochs");
+        worker.fast_forward(10000).await?;
 
         Ok(IntegrationTestContext {
             worker,
@@ -118,6 +120,7 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn deposit_direct_stake(
         &self,
         user: &Account,
+        amount: u128,
     ) -> anyhow::Result<CallExecutionDetails> {
         user.call(
             &self.worker,
@@ -125,15 +128,19 @@ impl IntegrationTestContext<Sandbox> {
             "deposit_and_stake_direct_stake",
         )
         .max_gas()
-        .deposit(parse_near!("10 N"))
+        .deposit(amount)
         .transact()
         .await
     }
 
-    pub async fn deposit(&self, user: &Account) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn deposit(
+        &self,
+        user: &Account,
+        amount: u128,
+    ) -> anyhow::Result<CallExecutionDetails> {
         user.call(&self.worker, self.nearx_contract.id(), "deposit_and_stake")
             .max_gas()
-            .deposit(parse_near!("10 N"))
+            .deposit(amount)
             .transact()
             .await
     }
@@ -187,12 +194,12 @@ impl IntegrationTestContext<Sandbox> {
 
     pub async fn epoch_withdraw(
         &self,
-        validator: &AccountId,
+        validator: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
             .call(&self.worker, "epoch_withdraw")
             .max_gas()
-            .args_json(json!({ "validator": validator.clone() }))?
+            .args_json(json!({ "validator": validator }))?
             .transact()
             .await
     }
