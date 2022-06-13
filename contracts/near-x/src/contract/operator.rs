@@ -99,8 +99,6 @@ impl NearxPool {
     }
 
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
-        self.assert_not_busy();
-
         let min_gas = AUTOCOMPOUND_EPOCH
             + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
             + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
@@ -111,7 +109,7 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator);
 
-        require!(!validator_info.lock, ERROR_VALIDATOR_IS_BUSY);
+        require!(!validator_info.paused(), ERROR_VALIDATOR_IS_BUSY);
 
         let epoch_height = env::epoch_height();
 
@@ -130,7 +128,6 @@ impl NearxPool {
         );
 
         self.contract_lock = true;
-        validator_info.lock = true;
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
@@ -152,7 +149,6 @@ impl NearxPool {
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool> {
-        validator_info.lock = false;
         self.contract_lock = false;
 
         validator_info.last_redeemed_rewards_epoch = env::epoch_height();
@@ -429,5 +425,127 @@ impl NearxPool {
             user_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
         }
         .emit();
+    }
+
+    pub fn drain_unstake(&mut self, validator_id: AccountId) {
+        self.assert_owner_calling();
+
+        let min_gas = DRAIN_UNSTAKE + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let mut validator_info = self.internal_get_validator(&validator_id);
+
+        // make sure the validator:
+        // 1. has been paused
+        // 2. not in pending release
+        // 3. has not unstaked balance (because this part is from user's unstake request)
+        require!(validator_info.paused(), ERROR_VALIDATOR_NOT_PAUSED);
+        require!(
+            !validator_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
+        require!(validator_info.unstaked_amount == 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
+
+        let amount_to_unstake = validator_info.staked;
+
+        validator_info.staked -= amount_to_unstake;
+        validator_info.last_unstake_start_epoch = validator_info.unstake_start_epoch;
+        validator_info.unstake_start_epoch = env::epoch_height();
+
+        self.internal_update_validator(&validator_id, &validator_info);
+
+        // TODO - setup events
+
+        ext_staking_pool::ext(validator_info.account_id.clone())
+            .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
+            .with_attached_deposit(NO_DEPOSIT)
+            .unstake(U128(amount_to_unstake))
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
+                    .on_stake_pool_drain_unstake(validator_info.account_id.clone(), amount_to_unstake),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_drain_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128) {
+        let mut validator = self.internal_get_validator(&validator_id);
+
+        if is_promise_success() {
+            validator.unstaked_amount += amount_to_unstake;
+
+            Event::EpochUnstakeCallbackSuccess {
+                validator_id: validator_id.clone(),
+                amount: U128(amount_to_unstake)
+            }.emit();
+        } else {
+            validator.staked += amount_to_unstake;
+            validator.unstake_start_epoch = validator.last_unstake_start_epoch;
+
+            Event::EpochUnstakeCallbackFailed {
+                validator_id: validator_id.clone(),
+                amount: U128(amount_to_unstake)
+            }.emit();
+        }
+
+        self.internal_update_validator(&validator_id, &validator);
+    }
+
+    /// Withdraw from a drained validator
+    pub fn drain_withdraw(&mut self, validator_id: AccountId) {
+        self.assert_owner_calling();
+
+        // make sure enough gas was given
+        let min_gas = DRAIN_WITHDRAW + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let mut validator_info = self.internal_get_validator(&validator_id);
+
+        // make sure the validator:
+        // 1. has weight set to 0
+        // 2. has no staked balance
+        // 3. not pending release
+        require!(validator_info.paused(), ERROR_VALIDATOR_NOT_PAUSED);
+        require!(validator_info.staked == 0, ERROR_NON_POSITIVE_STAKE_AMOUNT);
+        require!(
+            !validator_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
+
+        let amount = validator_info.unstaked_amount;
+        validator_info.unstaked_amount = 0;
+
+        self.internal_update_validator(&validator_id, &validator_info);
+
+        ext_staking_pool::ext(validator_info.account_id.clone())
+            .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
+            .with_attached_deposit(NO_DEPOSIT)
+            .withdraw_all()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL_CB)
+                    .on_stake_pool_drain_withdraw(validator_info.account_id, amount),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_drain_withdraw(&mut self, validator_id: AccountId, amount: u128) {
+        let mut validator_info = self.internal_get_validator(&validator_id);
+
+        if is_promise_success() {
+            // stake the drained amount into the next epoch
+            self.user_amount_to_stake_in_epoch += amount;
+        } else {
+            validator_info.unstaked_amount += amount;
+            self.internal_update_validator(&validator_id, &validator_info);
+        }
     }
 }

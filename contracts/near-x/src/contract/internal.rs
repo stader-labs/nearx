@@ -13,8 +13,6 @@ use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, Pr
 impl NearxPool {
     /// mints NearX based on user's deposited amount and current NearX price
     pub(crate) fn internal_deposit_and_stake_direct_stake(&mut self, user_amount: Balance) {
-        self.assert_not_busy();
-
         self.assert_min_deposit_amount(user_amount);
 
         self.assert_staking_not_paused();
@@ -194,7 +192,6 @@ impl NearxPool {
                 validator_info.account_id
             );
             transfer_funds = true;
-            validator_info.lock = false;
             self.contract_lock = false;
         }
 
@@ -241,7 +238,6 @@ impl NearxPool {
 
         // Reconcile the stake pools total staked with the total staked balance
         validator_info.staked = total_staked_balance.0;
-        validator_info.lock = false;
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
     }
@@ -327,7 +323,7 @@ impl NearxPool {
     pub fn get_validator_to_stake(&self) -> Option<ValidatorInfo> {
         self.validator_info_map
             .values()
-            .filter(|v| v.unlocked())
+            .filter(|v| !v.paused())
             .min_by_key(|v| v.staked)
     }
 
@@ -337,7 +333,7 @@ impl NearxPool {
         let mut current_validator: Option<ValidatorInfo> = None;
 
         for validator in self.validator_info_map.values() {
-            if !validator.pending_unstake_release()
+            if !validator.pending_unstake_release() && !validator.paused()
                 && validator.staked.gt(&max_validator_stake_amount)
             {
                 max_validator_stake_amount = validator.staked;

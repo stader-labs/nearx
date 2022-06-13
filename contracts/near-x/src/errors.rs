@@ -39,3 +39,4 @@ pub const ERROR_NON_POSITIVE_STAKE_AMOUNT: &str = "Amount to stake must be great
 pub const ERROR_NON_POSITIVE_STAKE_SHARES: &str = "nearx to be minted must be greater than 0";
 pub const ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE: &str = "No validator available to stake";
 pub const ERROR_TEMP_OWNER_NOT_SET: &str = "Temp owner has not been set to any account";
+pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
