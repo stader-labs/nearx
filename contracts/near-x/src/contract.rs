@@ -103,6 +103,12 @@ pub trait ExtNearxStakingPoolCallbacks {
         validator_info: ValidatorInfo,
         #[callback] unstaked_balance: U128,
     );
+
+    fn on_stake_pool_get_account(
+        &mut self,
+        validator_info: ValidatorInfo,
+        #[callback] account: HumanReadableAccount
+    );
 }
 
 #[ext_contract(ext_staking_pool)]
@@ -112,6 +118,8 @@ pub trait ExtStakingPool {
     fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128;
 
     fn get_account_total_balance(&self, account_id: AccountId) -> U128;
+
+    fn get_account(&self, account_id: AccountId) -> HumanReadableAccount;
 
     fn deposit(&mut self);
 

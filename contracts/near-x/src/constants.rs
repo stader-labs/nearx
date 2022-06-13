@@ -56,6 +56,10 @@ pub mod gas {
 
     pub const ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB: Gas = base_gas(1);
 
+    pub const ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE: Gas = base_gas(1);
+
+    pub const ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB: Gas = base_gas(1);
+
     /// Gas attached to the inner callback for processing result of the call to get the current total balance from the staking pool.
     /// TODO - bchain - see if we can refactor this
     pub const ON_GET_SP_STAKED_BALANCE_TO_RECONCILE: Gas = tera(5);
@@ -75,6 +79,8 @@ pub mod gas {
     pub const STAKE_EPOCH: Gas = base_gas(3);
 
     pub const AUTOCOMPOUND_EPOCH: Gas = base_gas(3);
+
+    pub const SYNC_VALIDATOR_EPOCH: Gas = base_gas(3);
 
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
