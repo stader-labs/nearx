@@ -88,7 +88,10 @@ pub struct ValidatorInfo {
 
 impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
-        self.paused() && self.pending_unstake_release() && self.staked == 0 && self.unstaked_amount == 0
+        self.paused()
+            && self.pending_unstake_release()
+            && self.staked == 0
+            && self.unstaked_amount == 0
     }
 
     pub fn new(account_id: AccountId) -> Self {

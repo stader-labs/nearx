@@ -176,6 +176,30 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn pause_validator(
+        &self,
+        validator: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "pause_validator")
+            .max_gas()
+            .args_json(json!({ "validator": validator }))?
+            .transact()
+            .await
+    }
+
+    pub async fn remove_validator(
+        &self,
+        validator: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "remove_validator")
+            .max_gas()
+            .args_json(json!({ "validator": validator }))?
+            .transact()
+            .await
+    }
+
     pub async fn epoch_stake(&self) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
             .call(&self.worker, "epoch_stake")
@@ -192,12 +216,36 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn drain_unstake(
+        &self,
+        validator: AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "drain_unstake")
+            .max_gas()
+            .args_json(json!({ "validator": validator }))?
+            .transact()
+            .await
+    }
+
     pub async fn epoch_withdraw(
         &self,
         validator: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
             .call(&self.worker, "epoch_withdraw")
+            .max_gas()
+            .args_json(json!({ "validator": validator }))?
+            .transact()
+            .await
+    }
+
+    pub async fn drain_withdraw(
+        &self,
+        validator: AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "drain_withdraw")
             .max_gas()
             .args_json(json!({ "validator": validator }))?
             .transact()
@@ -371,5 +419,22 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<Fraction>()
+    }
+
+    pub async fn is_validator_unstake_pending(&self, validator: AccountId) -> anyhow::Result<bool> {
+        self.nearx_contract
+            .call(&self.worker, "is_validator_unstake_pending")
+            .args_json(json!({ "validator": validator }))?
+            .view()
+            .await?
+            .json::<bool>()
+    }
+
+    pub async fn get_validators(&self) -> anyhow::Result<Vec<ValidatorInfoResponse>> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "get_validators")
+            .view()
+            .await?
+            .json::<Vec<ValidatorInfoResponse>>()
     }
 }

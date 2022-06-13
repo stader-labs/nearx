@@ -83,16 +83,18 @@ impl NearxPool {
 
             Event::EpochStakeCallbackSuccess {
                 validator_id: validator.clone(),
-                amount: U128(amount)
-            }.emit();
+                amount: U128(amount),
+            }
+            .emit();
             // reconcile total staked amount to the actual total staked amount
         } else {
             self.reconciled_epoch_stake_amount += amount;
 
             Event::EpochStakeCallbackFailed {
                 validator_id: validator.clone(),
-                amount: U128(amount)
-            }.emit();
+                amount: U128(amount),
+            }
+            .emit();
         }
 
         self.internal_update_validator(&validator, &validator_info);
@@ -260,8 +262,9 @@ impl NearxPool {
 
             Event::EpochUnstakeCallbackSuccess {
                 validator_id: validator_id.clone(),
-                amount: U128(amount_to_unstake)
-            }.emit();
+                amount: U128(amount_to_unstake),
+            }
+            .emit();
         } else {
             self.reconciled_epoch_unstake_amount += amount_to_unstake;
             validator.staked += amount_to_unstake;
@@ -269,8 +272,9 @@ impl NearxPool {
 
             Event::EpochUnstakeCallbackFailed {
                 validator_id: validator_id.clone(),
-                amount: U128(amount_to_unstake)
-            }.emit();
+                amount: U128(amount_to_unstake),
+            }
+            .emit();
         }
 
         self.internal_update_validator(&validator_id, &validator);
@@ -315,8 +319,9 @@ impl NearxPool {
 
         Event::EpochWithdrawAttempt {
             validator_id: validator,
-            amount: U128(amount)
-        }.emit();
+            amount: U128(amount),
+        }
+        .emit();
     }
 
     #[private]
@@ -330,12 +335,13 @@ impl NearxPool {
 
             Event::EpochWithdrawCallbackSuccess {
                 validator_id: validator_info.account_id,
-                amount: U128(amount)
-            }.emit();
+                amount: U128(amount),
+            }
+            .emit();
         } else {
             Event::EpochWithdrawCallbackFailed {
                 validator_id: validator_info.account_id,
-                amount: U128(amount)
+                amount: U128(amount),
             }
             .emit();
         }
@@ -394,7 +400,7 @@ impl NearxPool {
             staked_balance: account.staked_balance,
             unstaked_balance: account.unstaked_balance,
         }
-            .emit();
+        .emit();
     }
 
     #[private]
@@ -427,7 +433,7 @@ impl NearxPool {
         .emit();
     }
 
-    pub fn drain_unstake(&mut self, validator_id: AccountId) {
+    pub fn drain_unstake(&mut self, validator: AccountId) {
         self.assert_owner_calling();
 
         let min_gas = DRAIN_UNSTAKE + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
@@ -436,7 +442,7 @@ impl NearxPool {
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
-        let mut validator_info = self.internal_get_validator(&validator_id);
+        let mut validator_info = self.internal_get_validator(&validator);
 
         // make sure the validator:
         // 1. has been paused
@@ -447,7 +453,10 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        require!(validator_info.unstaked_amount == 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
+        require!(
+            validator_info.unstaked_amount == 0,
+            ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
+        );
 
         let amount_to_unstake = validator_info.staked;
 
@@ -455,7 +464,7 @@ impl NearxPool {
         validator_info.last_unstake_start_epoch = validator_info.unstake_start_epoch;
         validator_info.unstake_start_epoch = env::epoch_height();
 
-        self.internal_update_validator(&validator_id, &validator_info);
+        self.internal_update_validator(&validator, &validator_info);
 
         // TODO - setup events
 
@@ -467,12 +476,19 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
-                    .on_stake_pool_drain_unstake(validator_info.account_id.clone(), amount_to_unstake),
+                    .on_stake_pool_drain_unstake(
+                        validator_info.account_id.clone(),
+                        amount_to_unstake,
+                    ),
             );
     }
 
     #[private]
-    pub fn on_stake_pool_drain_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128) {
+    pub fn on_stake_pool_drain_unstake(
+        &mut self,
+        validator_id: AccountId,
+        amount_to_unstake: u128,
+    ) {
         let mut validator = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
@@ -480,23 +496,25 @@ impl NearxPool {
 
             Event::EpochUnstakeCallbackSuccess {
                 validator_id: validator_id.clone(),
-                amount: U128(amount_to_unstake)
-            }.emit();
+                amount: U128(amount_to_unstake),
+            }
+            .emit();
         } else {
             validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
 
             Event::EpochUnstakeCallbackFailed {
                 validator_id: validator_id.clone(),
-                amount: U128(amount_to_unstake)
-            }.emit();
+                amount: U128(amount_to_unstake),
+            }
+            .emit();
         }
 
         self.internal_update_validator(&validator_id, &validator);
     }
 
     /// Withdraw from a drained validator
-    pub fn drain_withdraw(&mut self, validator_id: AccountId) {
+    pub fn drain_withdraw(&mut self, validator: AccountId) {
         self.assert_owner_calling();
 
         // make sure enough gas was given
@@ -506,7 +524,7 @@ impl NearxPool {
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
-        let mut validator_info = self.internal_get_validator(&validator_id);
+        let mut validator_info = self.internal_get_validator(&validator);
 
         // make sure the validator:
         // 1. has weight set to 0
@@ -522,7 +540,7 @@ impl NearxPool {
         let amount = validator_info.unstaked_amount;
         validator_info.unstaked_amount = 0;
 
-        self.internal_update_validator(&validator_id, &validator_info);
+        self.internal_update_validator(&validator, &validator_info);
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
