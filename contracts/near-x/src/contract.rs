@@ -1,9 +1,9 @@
 mod callbacks;
 mod internal;
+mod metadata;
 mod operator;
 mod public;
 mod storage_management;
-mod metadata;
 
 use crate::state::*;
 use near_sdk::json_types::U128;

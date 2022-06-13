@@ -46,10 +46,13 @@ impl StorageManagement for NearxPool {
     }
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {
-        todo!()
+        StorageBalanceBounds {
+            min: U128 { 0: 0 },
+            max: Some(U128 { 0: 0 }),
+        }
     }
 
     fn storage_balance_of(&self, account_id: AccountId) -> Option<StorageBalance> {
-        todo!()
+        Some(EMPTY_STORAGE_BALANCE)
     }
 }
