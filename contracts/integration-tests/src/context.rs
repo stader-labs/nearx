@@ -1,4 +1,5 @@
 use near_sdk::json_types::{U128, U64};
+use near_sdk::Balance;
 use near_units::parse_near;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
@@ -115,6 +116,7 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn deposit_direct_stake(
         &self,
         user: &Account,
+        amount: Balance,
     ) -> anyhow::Result<CallExecutionDetails> {
         user.call(
             &self.worker,
@@ -122,17 +124,29 @@ impl IntegrationTestContext<Sandbox> {
             "deposit_and_stake_direct_stake",
         )
         .max_gas()
-        .deposit(parse_near!("10 N"))
+        .deposit(amount)
         .transact()
         .await
     }
 
-    pub async fn deposit(&self, user: &Account) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn deposit(
+        &self,
+        user: &Account,
+        amount: Balance,
+    ) -> anyhow::Result<CallExecutionDetails> {
         user.call(&self.worker, self.nearx_contract.id(), "deposit_and_stake")
             .max_gas()
-            .deposit(parse_near!("10 N"))
+            .deposit(amount)
             .transact()
             .await
+    }
+
+    pub async fn unstake(
+        &self,
+        user: &Account,
+        amount: Balance,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        todo!()
     }
 
     pub async fn epoch_stake(&self) -> anyhow::Result<CallExecutionDetails> {

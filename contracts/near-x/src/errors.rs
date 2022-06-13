@@ -15,9 +15,11 @@ pub const ERROR_CONTRACT_ALREADY_INITIALIZED: &str = "Contract has already been 
 pub const ERROR_NOT_ENOUGH_GAS: &str = "Contract does not have enough gas";
 pub const ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE: &str = "Validator not available to stake";
 pub const ERROR_NON_POSITIVE_STAKE_SHARES: &str = "Non positive stake shares";
+
 pub const VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
 pub const NOT_ENOUGH_SHARES: &str = "User has not enough shares to unstake";
 pub const UNSTAKE_AMOUNT_ZERO: &str = "Unstake amount should not be 0";
 pub const VALIDATORS_ARE_BUSY: &str = "Not a single validator is available";
 pub const NOT_ENOUGH_TOKEN_TO_WITHDRAW: &str = "User has not enough tokens to withdraw";
 pub const TOKENS_ARE_NOT_READY_FOR_WITHDRAWAL: &str = "The cooldown has not be elapsed yet";
+pub const CANNOT_RECONCILE_TWICE: &str = "Stake or Unstake can only be called once per epoch";

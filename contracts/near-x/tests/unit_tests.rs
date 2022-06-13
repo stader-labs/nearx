@@ -160,7 +160,9 @@ fn test_add_validator_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -179,13 +181,17 @@ fn test_add_validator_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1,
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2,
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             }
         ]
@@ -219,19 +225,25 @@ fn test_remove_staking_pool_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             }
         ]
@@ -250,13 +262,17 @@ fn test_remove_staking_pool_success() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(0),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             }
         ]
@@ -274,7 +290,9 @@ fn test_remove_staking_pool_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_3.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -333,19 +351,25 @@ fn test_get_stake_pool_with_min_stake() {
             ValidatorInfoResponse {
                 account_id: stake_public_key_1.clone(),
                 staked: U128(100),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
                 staked: U128(200),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
                 staked: U128(300),
+                unstaked: U128(0),
                 last_asked_rewards_epoch_height: U64(0),
+                available_for_unstake: U64(0),
                 lock: false
             }
         ]
@@ -424,7 +448,9 @@ fn test_deposit_and_stake_direct_stake_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1,
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -452,7 +478,9 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -502,7 +530,9 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -566,7 +596,9 @@ fn test_on_get_sp_staked_balance_reconcile() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -641,7 +673,9 @@ fn test_autocompound_rewards_stake_pool_busy() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -672,7 +706,9 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -731,7 +767,9 @@ fn test_on_get_sp_staked_balance_for_rewards() {
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
             staked: U128(0),
+            unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
+            available_for_unstake: U64(0),
             lock: false
         }]
     ));
@@ -925,17 +963,17 @@ fn it_succeeds_when_unstaking_the_original_amount() {
     contract.unstake(ntoy(50).into());
     assert_eq!(contract.total_staked, ntoy(50));
     assert_eq!(contract.total_stake_shares, ntoy(50));
-    assert_eq!(contract.to_unstake, ntoy(50));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(50));
 
     contract.unstake(ntoy(20).into());
     assert_eq!(contract.total_staked, ntoy(30));
     assert_eq!(contract.total_stake_shares, ntoy(30));
-    assert_eq!(contract.to_unstake, ntoy(70));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(70));
 
     contract.unstake(ntoy(30).into());
     assert_eq!(contract.total_staked, 0);
     assert_eq!(contract.total_stake_shares, 0);
-    assert_eq!(contract.to_unstake, ntoy(100));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(100));
 }
 
 // Withdrawal

@@ -105,7 +105,7 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
                 validator_info.account_id,
             );
 
-            validator_info.to_withdraw += near_amount;
+            validator_info.unstaked += near_amount;
         } else {
             log!(
                 "Failed to unstake {} from {}",
@@ -117,8 +117,7 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
             // Validator update:
             validator_info.staked += near_amount;
             // Pool update:
-            //self.total_staked += near_amount;
-            self.to_unstake += near_amount;
+            self.user_amount_to_unstake_in_epoch += near_amount;
             self.to_withdraw -= near_amount;
 
             validator_info.lock = false;
@@ -133,15 +132,17 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
     #[private]
     fn on_stake_pool_epoch_withdraw(
         &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
+        #[allow(unused_mut)] mut old_validator_info: ValidatorInfo,
     ) -> PromiseOrValue<bool> {
         assert_callback_calling();
 
         let withdraw_succeeded = is_promise_success();
         println!("withdraw_succeeded {:?}", withdraw_succeeded);
 
-        if withdraw_succeeded {
-            validator_info.to_withdraw = 0;
+        if withdraw_succeeded == false {
+            // Rollback:
+            let mut validator_info = self.internal_get_validator(&old_validator_info.account_id);
+            validator_info.unstaked += old_validator_info.unstaked;
             self.internal_update_validator(&validator_info);
         }
 

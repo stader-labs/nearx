@@ -22,8 +22,6 @@ pub const MIN_UNSTAKE_AMOUNT: u128 = ONE_NEAR;
 
 /// How many epochs we wait for the stake to be inactive.
 pub const UNSTAKE_COOLDOWN_EPOCH: EpochHeight = 4;
-/// How many epochs the user must wait for unstaking the tokens.
-pub const WITHDRAW_COOLDOWN_EPOCH: EpochHeight = 8;
 
 /// Storage keys
 pub const ACCOUNTS_MAP: &str = "A";

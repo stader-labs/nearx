@@ -21,14 +21,11 @@ pub struct NearxPool {
     pub staking_paused: bool,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
-    // nearx_price = (total_staked) / (total_stake_shares)
+    /// nearx_price = (total_staked) / (total_stake_shares)
     pub total_staked: u128,
 
-    /// how many "NearX" were minted.
-    pub total_stake_shares: u128, //total NearX minted
-
-    /// The amount of tokens to unstake in epoch_unstake.
-    pub to_unstake: u128,
+    /// How many "NearX" were minted.
+    pub total_stake_shares: u128,
 
     /// The amount of unstaked tokens that will be withdrawn by users.
     pub to_withdraw: u128,
@@ -36,6 +33,7 @@ pub struct NearxPool {
     pub accumulated_staked_rewards: u128,
 
     pub user_amount_to_stake_in_epoch: Balance,
+    pub user_amount_to_unstake_in_epoch: Balance,
 
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
@@ -48,6 +46,9 @@ pub struct NearxPool {
     pub operator_account_id: AccountId,
 
     pub rewards_fee: Fraction,
+
+    /// Last epoch height stake/unstake amount were reconciled
+    pub last_reconcilation_epoch: EpochHeight,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -62,12 +63,13 @@ pub struct ValidatorInfo {
 
     /// Amount of unstaked tokens that are ready for withdrawal
     /// when the current epoch is at `available_for_unstake`.
-    pub to_withdraw: u128,
+    pub unstaked: u128,
 
+    /// Last epoch where we have redeemed rewards.
     pub last_redeemed_rewards_epoch: EpochHeight,
 
     /// The epoch when we can run the unstake instruction again.
-    available_for_unstake: EpochHeight,
+    pub available_for_unstake: EpochHeight,
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]
@@ -99,7 +101,7 @@ impl ValidatorInfo {
             account_id,
             lock: false,
             staked: 0,
-            to_withdraw: 0,
+            unstaked: 0,
             last_redeemed_rewards_epoch: 0,
             available_for_unstake: 0,
         }
@@ -206,14 +208,19 @@ mod response {
 
         /// pct of rewards which will go to the operator
         pub rewards_fee_pct: Fraction,
+
+        /// Last epoch height stake/unstake amount were reconciled
+        pub last_reconcilation_epoch: U64,
     }
 
     #[derive(Debug, Serialize, Deserialize, PartialEq)]
     #[serde(crate = "near_sdk::serde")]
     pub struct ValidatorInfoResponse {
         pub account_id: AccountId,
-        pub staked: U128,
-        pub last_asked_rewards_epoch_height: U64,
         pub lock: bool,
+        pub staked: U128,
+        pub unstaked: U128,
+        pub last_asked_rewards_epoch_height: U64,
+        pub available_for_unstake: U64,
     }
 }

@@ -21,28 +21,21 @@ impl NearxPool {
             operator_account_id,
             staking_paused: false,
             to_withdraw: 0,
-            to_unstake: 0,
             accumulated_staked_rewards: 0,
             user_amount_to_stake_in_epoch: 0,
+            user_amount_to_unstake_in_epoch: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: ONE_NEAR,
             validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
+            last_reconcilation_epoch: 0,
         }
     }
 
     /// Rewards claiming
     pub fn ping(&mut self) {}
-
-    pub fn epoch_unstake(&mut self) -> PromiseOrValue<bool> {
-        self.internal_epoch_unstake()
-    }
-
-    pub fn epoch_withdraw(&mut self, account_id: AccountId) -> PromiseOrValue<bool> {
-        self.internal_epoch_withdraw(account_id)
-    }
 }
 
 #[near_bindgen]
@@ -188,6 +181,7 @@ impl NearxPool {
             min_deposit_amount: U128::from(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
             rewards_fee_pct: self.rewards_fee,
+            last_reconcilation_epoch: U64(self.last_reconcilation_epoch),
         }
     }
 
@@ -211,19 +205,23 @@ impl NearxPool {
         ValidatorInfoResponse {
             account_id: validator_info.account_id.clone(),
             staked: validator_info.staked.into(),
+            unstaked: validator_info.unstaked.into(),
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
+            available_for_unstake: validator_info.available_for_unstake.into(),
             lock: validator_info.lock,
         }
     }
 
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {
         self.validator_info_map
-            .iter()
-            .map(|pool| ValidatorInfoResponse {
-                account_id: pool.1.account_id.clone(),
-                staked: U128::from(pool.1.staked),
-                last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
-                lock: pool.1.lock,
+            .values()
+            .map(|validator_info| ValidatorInfoResponse {
+                account_id: validator_info.account_id.clone(),
+                staked: validator_info.staked.into(),
+                unstaked: validator_info.unstaked.into(),
+                last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
+                available_for_unstake: validator_info.available_for_unstake.into(),
+                lock: validator_info.lock,
             })
             .collect()
     }

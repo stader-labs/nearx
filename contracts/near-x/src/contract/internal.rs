@@ -103,35 +103,31 @@ impl NearxPool {
         // Reset the withdraw cooldown:
         account.withdrawable_epoch =
             env::epoch_height() + self.num_epoch_to_unstake(account.unstaked);
+        self.internal_update_account(&account_id, &account);
 
         // Pool update:
-        if near_amount < self.user_amount_to_stake_in_epoch {
-            self.to_unstake += near_amount;
-        } else {
-            self.user_amount_to_stake_in_epoch -= self.user_amount_to_stake_in_epoch;
-        }
+        self.user_amount_to_unstake_in_epoch += near_amount;
         self.total_stake_shares -= nearx_amount;
         self.total_staked -= near_amount;
-
-        self.internal_update_account(&account_id, &account);
 
         log!("Successfully unstaked {}", near_amount);
     }
 
     pub(crate) fn internal_epoch_unstake(&mut self) -> PromiseOrValue<bool> {
-        if self.to_unstake == 0 {
+        if self.user_amount_to_unstake_in_epoch == 0 {
             log!("Nothing to unstake");
             PromiseOrValue::Value(false)
-        } else if self.to_unstake < MIN_UNSTAKE_AMOUNT {
+        } else if self.user_amount_to_unstake_in_epoch < MIN_UNSTAKE_AMOUNT {
+            // We will not lock a validator only to unstake a small amount:
             log!("Not enough to unstake");
             PromiseOrValue::Value(false)
         } else if let Some(mut validator_info) = self.validator_available_for_unstake() {
-            let to_unstake = self.to_unstake;
+            let to_unstake = self.user_amount_to_unstake_in_epoch;
 
             // Validator update:
             validator_info.staked -= to_unstake;
             // Pool update:
-            self.to_unstake -= to_unstake;
+            self.user_amount_to_unstake_in_epoch = 0;
             self.to_withdraw += to_unstake;
             ext_staking_pool::ext(validator_info.account_id.clone())
                 .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -153,6 +149,10 @@ impl NearxPool {
         account_id: AccountId,
     ) -> PromiseOrValue<bool> {
         let validator_info = self.internal_get_validator(&account_id);
+        self.internal_update_validator(&ValidatorInfo {
+            unstaked: 0,
+            ..validator_info.clone()
+        });
 
         ext_staking_pool::ext(account_id)
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
