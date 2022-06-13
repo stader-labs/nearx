@@ -1,3 +1,4 @@
+use crate::constants::NO_DEPOSIT;
 use crate::contract::*;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore,
@@ -12,7 +13,6 @@ use near_sdk::{
     log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult,
     StorageUsage,
 };
-use crate::constants::NO_DEPOSIT;
 
 #[ext_contract(ext_ft_receiver)]
 pub trait FungibleTokenReceiver {
@@ -141,8 +141,8 @@ impl NearxPool {
             sender_acc.stake_shares
         );
 
-        sender_acc.sub_stake_shares(amount);
-        receiver_acc.add_stake_shares(amount);
+        sender_acc.stake_shares -= amount;
+        receiver_acc.stake_shares += amount;
 
         self.internal_update_account(sender_id, &sender_acc);
         self.internal_update_account(receiver_id, &receiver_acc);
@@ -175,11 +175,11 @@ impl NearxPool {
             let receiver_balance = receiver_acc.stake_shares;
             if receiver_balance > 0 {
                 let refund_amount = std::cmp::min(receiver_balance, unused_amount);
-                receiver_acc.sub_stake_shares(refund_amount);
+                receiver_acc.stake_shares += refund_amount;
                 self.internal_update_account(&receiver_id, &receiver_acc);
 
                 let mut sender_acc = self.internal_get_account(sender_id);
-                sender_acc.add_stake_shares(refund_amount);
+                sender_acc.stake_shares += refund_amount;
                 self.internal_update_account(sender_id, &sender_acc);
 
                 log!(

@@ -22,7 +22,7 @@ near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --ac
 
 # 10 deposits
 for i in {1..10};
-do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
+do near call $CONTRACT_NAME deposit_and_stake_direct_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
 
 # get contract state
@@ -35,14 +35,14 @@ near view $CONTRACT_NAME get_total_staked
 near view $CONTRACT_NAME get_validators
 
 # get staking pool
-near view $CONTRACT_NAME get_val_info '{"validator": "'"$STAKE_POOL_0"'"}'
-near view $CONTRACT_NAME get_val_info '{"validator": "'"$STAKE_POOL_1"'"}'
+near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
+near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_1"'"}'
 
 # get user state
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
 
 # Reward distribution
-near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
 

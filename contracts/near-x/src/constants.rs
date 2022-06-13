@@ -22,6 +22,11 @@ pub const NUM_EPOCHS_TO_UNLOCK: EpochHeight = 4;
 pub const ACCOUNTS_MAP: &str = "A";
 pub const VALIDATOR_MAP: &str = "B";
 
+uint::construct_uint! {
+        /// 256-bit unsigned integer.
+        pub struct U256(4);
+}
+
 pub mod gas {
     use near_sdk::Gas;
 
