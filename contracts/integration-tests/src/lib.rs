@@ -1188,8 +1188,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(20)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(0)));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
     let nearx_price = context.get_nearx_price().await?;
@@ -1256,8 +1256,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         nearx_state.user_amount_to_unstake_in_epoch,
         U128(5000000000000000000000001)
     );
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(0)));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
     let nearx_price = context.get_nearx_price().await?;
@@ -1294,8 +1294,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         nearx_state.user_amount_to_unstake_in_epoch,
         U128(5000000000000000000000001)
     );
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
     let stake_pool_1_unstaked_balance = context
@@ -1362,8 +1362,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
 
     let nearx_price = context.get_nearx_price().await?;
@@ -1393,8 +1393,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(30)));
 
@@ -1454,7 +1454,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user1_account,
         AccountResponse {
-            account_id: user1_account.account_id,
+            account_id: user1_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
             staked_balance: U128(35768096953815918768424500),
             stake_shares: U128(ntoy(0)),
@@ -1464,7 +1464,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user2_account,
         AccountResponse {
-            account_id: user2_account.account_id,
+            account_id: user2_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
             staked_balance: U128(35768096953815918768424500),
             stake_shares: U128(ntoy(0)),
@@ -1474,7 +1474,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user3_account,
         AccountResponse {
-            account_id: user3_account.account_id,
+            account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(14000000000000000000000001),
             staked_balance: U128(24463806092368162463150998),
             stake_shares: U128(ntoy(0)),
@@ -1503,22 +1503,22 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
 
     if validator1_info.unstaked.0 != 0 {
         context
-            .epoch_withdraw(context.get_stake_pool_contract(0).id(), ntoy(10))
+            .epoch_withdraw(context.get_stake_pool_contract(0).id())
             .await?;
     }
     if validator2_info.unstaked.0 != 0 {
         context
-            .epoch_withdraw(context.get_stake_pool_contract(1).id(), ntoy(10))
+            .epoch_withdraw(context.get_stake_pool_contract(1).id())
             .await?;
     }
     if validator3_info.unstaked.0 != 0 {
         context
-            .epoch_withdraw(context.get_stake_pool_contract(2).id(), ntoy(10))
+            .epoch_withdraw(context.get_stake_pool_contract(2).id())
             .await?;
     }
 
     // user 1 unstakes 1N
-    context.unstake(&context.user1, U128(ntoy(1))).await?;
+    context.unstake(&context.user1, ntoy(1)).await?;
 
     // user 2 withdraws
     let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
@@ -1547,7 +1547,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     );
 
     // User 3 unstakes 5N
-    context.unstake(&context.user3, U128(ntoy(5))).await?;
+    context.unstake(&context.user3, ntoy(5)).await?;
 
     let user1_account = context.get_user_account(context.user1.id()).await?;
     let user2_account = context.get_user_account(context.user2.id()).await?;
@@ -1560,7 +1560,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user1_account,
         AccountResponse {
-            account_id: user1_account.account_id,
+            account_id: user1_account.account_id.clone(),
             unstaked_balance: U128(6000000000000000000000001),
             staked_balance: U128(34768096953815918768424499),
             stake_shares: U128(ntoy(0)),
@@ -1570,7 +1570,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user2_account,
         AccountResponse {
-            account_id: user2_account.account_id,
+            account_id: user2_account.account_id.clone(),
             unstaked_balance: U128(ntoy(0)),
             staked_balance: U128(35768096953815918768424499),
             stake_shares: U128(ntoy(0)),
@@ -1580,7 +1580,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(
         user3_account,
         AccountResponse {
-            account_id: user3_account.account_id,
+            account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(5000000000000000000000001),
             staked_balance: U128(19463806092368162463150997),
             stake_shares: U128(ntoy(0)),
@@ -1641,8 +1641,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(22)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(28)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let current_epoch = context.get_current_epoch().await?;
     println!("current epoch is {:?}", current_epoch);
@@ -1879,11 +1879,11 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         context.get_stake_pool_contract(0).id()
     );
     context
-        .epoch_withdraw(context.get_stake_pool_contract(0).id().clone())
+        .epoch_withdraw(context.get_stake_pool_contract(0).id())
         .await?;
     println!("epoch_withdraw for val 1");
     context
-        .epoch_withdraw(context.get_stake_pool_contract(1).id().clone())
+        .epoch_withdraw(context.get_stake_pool_contract(1).id())
         .await?;
 
     let user1_call = context.withdraw_all(&context.user1).await?;
@@ -1986,8 +1986,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(52)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     context.epoch_stake().await?;
 
@@ -2002,8 +2002,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(52)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -2108,16 +2108,16 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
     context.deposit(&context.user2, ntoy(10)).await?;
 
     // User 1 unstakes 3 N
-    context.unstake(&context.user1, U128(ntoy(3))).await?;
+    context.unstake(&context.user1, ntoy(3)).await?;
     // User 3 deposits
     context.deposit(&context.user3, ntoy(10)).await?;
 
     // User 3 unstakes 5N
-    context.unstake(&context.user3, U128(ntoy(5))).await?;
+    context.unstake(&context.user3, ntoy(5)).await?;
     // User 1 deposits again
     context.deposit(&context.user1, ntoy(10)).await?;
     context.deposit(&context.user2, ntoy(10)).await?;
-    context.unstake(&context.user2, U128(ntoy(10))).await?;
+    context.unstake(&context.user2, ntoy(10)).await?;
 
     let current_epoch = context.get_current_epoch().await?;
 
@@ -2173,8 +2173,8 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(32)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(50)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(18)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -2256,8 +2256,8 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch);
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id())
@@ -2557,7 +2557,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         context.get_current_epoch().await?
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -2574,8 +2574,8 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     assert_eq!(stake_pool_contract_balance_2, U128(ntoy(0)));
 
     // User 1 and User 2 unstake 5 NEAR each
-    context.unstake(&context.user1, U128(ntoy(5))).await?;
-    context.unstake(&context.user2, U128(ntoy(5))).await?;
+    context.unstake(&context.user1, ntoy(5)).await?;
+    context.unstake(&context.user2, ntoy(5)).await?;
 
     let user1_account = context.get_user_account(context.user1.id()).await?;
     let user2_account = context.get_user_account(context.user2.id()).await?;
@@ -2649,7 +2649,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(20)));
     assert_eq!(nearx_state.total_staked, U128(ntoy(20)));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    //assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let current_epoch = context.get_current_epoch().await?;
 
@@ -2681,7 +2681,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         .balance;
     println!("initial contract balance is {:?}", initial_contract_balance);
     let res = context
-        .epoch_withdraw(context.get_stake_pool_contract(0).id().clone())
+        .epoch_withdraw(context.get_stake_pool_contract(0).id())
         .await?;
     let balance_after_withdraw = context
         .nearx_contract

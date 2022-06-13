@@ -200,6 +200,7 @@ mod response {
         pub accumulated_staked_rewards: U128,
 
         pub user_amount_to_stake_in_epoch: U128,
+        pub user_amount_to_unstake_in_epoch: U128,
 
         /// min amount accepted as deposit or stake
         pub min_deposit_amount: U128,

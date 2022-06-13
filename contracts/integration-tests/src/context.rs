@@ -144,15 +144,46 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn unstake(
         &self,
         user: &Account,
-        amount: Balance,
+        amount: u128,
     ) -> anyhow::Result<CallExecutionDetails> {
-        todo!()
+        user.call(&self.worker, self.nearx_contract.id(), "unstake")
+            .max_gas()
+            .args_json(json!({ "amount": U128(amount) }))?
+            .transact()
+            .await
+    }
+
+    pub async fn withdraw_all(&self, user: &Account) -> anyhow::Result<CallExecutionDetails> {
+        user.call(&self.worker, self.nearx_contract.id(), "withdraw_all")
+            .max_gas()
+            .transact()
+            .await
     }
 
     pub async fn epoch_stake(&self) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
             .call(&self.worker, "epoch_stake")
             .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn epoch_unstake(&self) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_contract
+            .call(&self.worker, "epoch_unstake")
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn epoch_withdraw(
+        &self,
+        validator: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_contract
+            .call(&self.worker, "epoch_withdraw")
+            .max_gas()
+            .args_json(json!({ "validator": validator }))?
             .transact()
             .await
     }
@@ -275,6 +306,18 @@ impl IntegrationTestContext<Sandbox> {
     ) -> anyhow::Result<U128> {
         stake_pool_contract
             .call(&self.worker, "get_account_staked_balance")
+            .args_json(json!({ "account_id": self.nearx_contract.id() }))?
+            .view()
+            .await?
+            .json::<U128>()
+    }
+
+    pub async fn get_stake_pool_total_unstaked_amount(
+        &self,
+        stake_pool_contract: &Contract,
+    ) -> anyhow::Result<U128> {
+        stake_pool_contract
+            .call(&self.worker, "get_account_unstaked_balance")
             .args_json(json!({ "account_id": self.nearx_contract.id() }))?
             .view()
             .await?

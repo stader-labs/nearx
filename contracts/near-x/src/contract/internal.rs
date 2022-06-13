@@ -193,7 +193,7 @@ impl NearxPool {
 }
 
 // Data manipulation
-#[near_bindgen]
+#[near_bindgen] //TODO: remove?
 impl NearxPool {
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
         if self.total_stake_shares == 0 {
