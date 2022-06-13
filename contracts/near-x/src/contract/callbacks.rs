@@ -21,7 +21,7 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
             validator_info.staked += amount;
             // reconcile total staked amount to the actual total staked amount
         } else {
-            self.user_amount_to_stake_in_epoch += amount;
+            self.user_amount_to_stake_unstake += Direction::Stake(amount);
         }
 
         self.internal_update_validator(&validator_info);
@@ -117,7 +117,7 @@ impl ExtNearxStakingPoolCallbacks for NearxPool {
             // Validator update:
             validator_info.staked += near_amount;
             // Pool update:
-            self.user_amount_to_unstake_in_epoch += near_amount;
+            self.user_amount_to_stake_unstake += Direction::Unstake(near_amount);
             self.to_withdraw -= near_amount;
 
             validator_info.lock = false;

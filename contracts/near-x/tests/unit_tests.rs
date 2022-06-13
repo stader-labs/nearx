@@ -8,7 +8,9 @@ use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{testing_env, AccountId, Gas, PromiseOrValue, PromiseResult, PublicKey, VMContext};
 use near_x::{
     contract::{ExtNearxStakingPoolCallbacks, ExtStakingPool},
-    state::{AccountResponse, Fraction, NearxPool, ValidatorInfo, ValidatorInfoResponse},
+    state::{
+        AccountResponse, Direction, Fraction, NearxPool, ValidatorInfo, ValidatorInfoResponse,
+    },
 };
 use std::{convert::TryFrom, str::FromStr};
 
@@ -821,11 +823,12 @@ fn test_epoch_stake_success() {
     val2_info.staked = ntoy(200);
     update_validator(&mut contract, validator2.clone(), &val2_info);
 
-    contract.user_amount_to_stake_in_epoch = ntoy(150);
+    contract.user_amount_to_stake_unstake = Direction::Stake(ntoy(150));
 
-    contract.epoch_stake();
+    contract.epoch_stake_unstake();
 
-    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(0));
+    assert!(dbg!(contract.user_amount_to_stake_unstake).is_zero());
+    assert!(contract.stake_unstake_locked_in_epoch.is_zero());
 }
 
 #[test]
@@ -844,13 +847,16 @@ fn test_on_validator_deposit_and_stake_failed() {
     val1_info.staked = ntoy(100);
     update_validator(&mut contract, validator1.clone(), &val1_info);
 
-    contract.user_amount_to_stake_in_epoch = ntoy(10);
+    contract.user_amount_to_stake_unstake = Direction::Stake(ntoy(10));
 
     testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
 
     contract.on_stake_pool_deposit_and_stake(validator1.clone(), ntoy(10));
 
-    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(20));
+    assert_eq!(
+        contract.user_amount_to_stake_unstake,
+        Direction::Stake(ntoy(20))
+    );
 }
 
 #[test]
@@ -914,7 +920,7 @@ fn test_deposit_and_stake_success() {
     contract.min_deposit_amount = ntoy(1);
     contract.total_staked = ntoy(10);
     contract.total_stake_shares = ntoy(10);
-    contract.user_amount_to_stake_in_epoch = ntoy(10);
+    contract.user_amount_to_stake_unstake = Direction::Stake(ntoy(10));
 
     contract.deposit_and_stake();
 
@@ -923,7 +929,10 @@ fn test_deposit_and_stake_success() {
     assert_eq!(user1_account.staked_balance, U128(ntoy(100)));
     assert_eq!(contract.total_staked, ntoy(110));
     assert_eq!(contract.total_stake_shares, ntoy(110));
-    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(110));
+    assert_eq!(
+        contract.user_amount_to_stake_unstake,
+        Direction::Stake(ntoy(110))
+    );
 }
 
 // Unstaking
@@ -963,17 +972,23 @@ fn it_succeeds_when_unstaking_the_original_amount() {
     contract.unstake(ntoy(50).into());
     assert_eq!(contract.total_staked, ntoy(50));
     assert_eq!(contract.total_stake_shares, ntoy(50));
-    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(50));
+    assert_eq!(
+        contract.user_amount_to_stake_unstake,
+        Direction::Stake(ntoy(50))
+    );
 
     contract.unstake(ntoy(20).into());
     assert_eq!(contract.total_staked, ntoy(30));
     assert_eq!(contract.total_stake_shares, ntoy(30));
-    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(70));
+    assert_eq!(
+        contract.user_amount_to_stake_unstake,
+        Direction::Stake(ntoy(30))
+    );
 
     contract.unstake(ntoy(30).into());
     assert_eq!(contract.total_staked, 0);
     assert_eq!(contract.total_stake_shares, 0);
-    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(100));
+    assert!(contract.user_amount_to_stake_unstake.is_zero());
 }
 
 // Withdrawal

@@ -8,6 +8,7 @@ use near_sdk::{
     serde::{Deserialize, Serialize},
     AccountId, Balance, EpochHeight, PanicOnDefault,
 };
+use std::ops::{Add, AddAssign};
 
 pub use response::*;
 
@@ -32,9 +33,6 @@ pub struct NearxPool {
 
     pub accumulated_staked_rewards: u128,
 
-    pub user_amount_to_stake_in_epoch: Balance,
-    pub user_amount_to_unstake_in_epoch: Balance,
-
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
@@ -49,6 +47,10 @@ pub struct NearxPool {
 
     /// Last epoch height stake/unstake amount were reconciled
     pub last_reconcilation_epoch: EpochHeight,
+
+    pub user_amount_to_stake_unstake: Direction,
+    /// Tell what operation is remaining in `epoch_stake_unstake` in the current epoch.
+    pub stake_unstake_locked_in_epoch: Direction,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -89,6 +91,15 @@ pub struct Account {
 pub struct Fraction {
     pub numerator: u32,
     pub denominator: u32,
+}
+
+#[derive(
+    Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy, PartialEq, Eq,
+)]
+#[serde(crate = "near_sdk::serde")]
+pub enum Direction {
+    Stake(u128),
+    Unstake(u128),
 }
 
 impl ValidatorInfo {
@@ -158,6 +169,66 @@ impl Fraction {
     }
 }
 
+impl Direction {
+    pub fn stake(&mut self, staking_amount: Balance) {
+        match self {
+            Direction::Stake(amount) => *amount += staking_amount,
+            Direction::Unstake(amount) if *amount >= staking_amount => *amount -= staking_amount,
+            &mut Direction::Unstake(amount) => *self = Direction::Stake(staking_amount - amount),
+        }
+    }
+
+    pub fn unstake(&mut self, unstaking_amount: Balance) {
+        match self {
+            Direction::Unstake(amount) => *amount += unstaking_amount,
+            Direction::Stake(amount) if *amount >= unstaking_amount => *amount -= unstaking_amount,
+            &mut Direction::Stake(amount) => *self = Direction::Unstake(unstaking_amount - amount),
+        }
+    }
+}
+
+impl Add for Direction {
+    type Output = Direction;
+
+    fn add(self, rhs: Direction) -> Direction {
+        use Direction::*;
+
+        match (self, rhs) {
+            (Stake(staking1), Stake(staking2)) => Stake(staking1 + staking2),
+            (Unstake(unstaking1), Unstake(unstaking2)) => Unstake(unstaking1 + unstaking2),
+            (Stake(staking), Unstake(unstaking)) | (Unstake(unstaking), Stake(staking)) => {
+                if unstaking > staking {
+                    Unstake(unstaking - staking)
+                } else {
+                    Stake(staking - unstaking)
+                }
+            }
+        }
+    }
+}
+
+impl AddAssign for Direction {
+    fn add_assign(&mut self, rhs: Direction) {
+        *self = *self + rhs;
+    }
+}
+
+impl Direction {
+    pub fn decrease(&mut self, amount: Balance) {
+        match self {
+            Direction::Stake(stake) => *stake = stake.saturating_sub(amount),
+            Direction::Unstake(stake) => *stake = stake.saturating_sub(amount),
+        }
+    }
+
+    pub fn is_zero(&self) -> bool {
+        match *self {
+            Direction::Stake(0) | Direction::Unstake(0) => true,
+            _ => false,
+        }
+    }
+}
+
 impl std::ops::Mul<Fraction> for u128 {
     type Output = u128;
 
@@ -198,9 +269,6 @@ mod response {
         pub total_stake_shares: U128, //total NearX minted
 
         pub accumulated_staked_rewards: U128,
-
-        pub user_amount_to_stake_in_epoch: U128,
-        pub user_amount_to_unstake_in_epoch: U128,
 
         /// min amount accepted as deposit or stake
         pub min_deposit_amount: U128,

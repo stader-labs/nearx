@@ -7,7 +7,7 @@ use crate::{
     errors,
     state::*,
 };
-use near_sdk::{log, require, AccountId, Balance, EpochHeight, Promise, PromiseOrValue};
+use near_sdk::{log, require, AccountId, Balance, EpochHeight, Promise, PromiseOrValue, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -31,7 +31,7 @@ impl NearxPool {
         self.total_stake_shares += num_shares;
 
         // Increase requested stake amount within the current epoch
-        self.user_amount_to_stake_in_epoch += amount;
+        self.user_amount_to_stake_unstake += Direction::Stake(amount);
 
         log!(
             "Total NEAR staked is {}. Total NEARX supply is {}",
@@ -106,28 +106,118 @@ impl NearxPool {
         self.internal_update_account(&account_id, &account);
 
         // Pool update:
-        self.user_amount_to_unstake_in_epoch += near_amount;
+        self.user_amount_to_stake_unstake += Direction::Unstake(near_amount);
         self.total_stake_shares -= nearx_amount;
         self.total_staked -= near_amount;
 
         log!("Successfully unstaked {}", near_amount);
     }
 
+    pub(crate) fn internal_withdraw(&mut self, near_amount: Option<Balance>) {
+        let account_id = env::predecessor_account_id();
+        let mut account = self.internal_get_account(&account_id);
+        let near_amount = near_amount.unwrap_or(account.unstaked);
+
+        log!("User withdrawn amount is {}", near_amount);
+
+        require!(
+            account.cooldown_finished(),
+            errors::TOKENS_ARE_NOT_READY_FOR_WITHDRAWAL,
+        );
+        require!(
+            near_amount <= account.unstaked,
+            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
+        );
+        require!(
+            env::account_balance() - near_amount > MIN_BALANCE_FOR_STORAGE,
+            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
+        );
+
+        account.unstaked -= near_amount;
+        self.internal_update_account(&account_id, &account);
+
+        Promise::new(account_id).transfer(near_amount);
+    }
+}
+
+// Epoch stuff:
+#[near_bindgen]
+impl NearxPool {
+    pub(crate) fn internal_epoch_stake(&mut self) -> bool {
+        // make sure enough gas was given
+        // TODO - bchain - scope the gas into a module to make these constants more readable
+        let min_gas = gas::STAKE_EPOCH
+            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE
+            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let amount_to_stake = match self.stake_unstake_locked_in_epoch {
+            Direction::Stake(stake) => stake,
+            Direction::Unstake(_) => panic!("Invalid state"),
+        };
+
+        // after cleanup, there might be no need to stake
+        if amount_to_stake == 0 {
+            log!("no need to stake, amount to settle is zero");
+            return false;
+        }
+
+        // TODO - bchain we might have to change the validator staking logic
+        let validator = self
+            .get_validator_with_min_stake()
+            .expect(ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
+
+        if amount_to_stake < ONE_NEAR {
+            log!("stake amount too low: {}", amount_to_stake);
+            return false;
+        }
+
+        require!(
+            env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
+            ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
+        );
+
+        // update internal state
+        self.stake_unstake_locked_in_epoch = Direction::Stake(0);
+
+        // do staking on selected validator
+        ext_staking_pool::ext(validator.account_id.clone())
+            .with_attached_deposit(amount_to_stake)
+            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .deposit_and_stake()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
+                    .on_stake_pool_deposit_and_stake(validator.account_id, amount_to_stake),
+            );
+
+        true
+    }
+
     pub(crate) fn internal_epoch_unstake(&mut self) -> PromiseOrValue<bool> {
-        if self.user_amount_to_unstake_in_epoch == 0 {
+        let amount_to_unstake = match self.stake_unstake_locked_in_epoch {
+            Direction::Stake(_) => panic!("Invalid state"),
+            Direction::Unstake(amount) => amount,
+        };
+
+        if amount_to_unstake == 0 {
             log!("Nothing to unstake");
             PromiseOrValue::Value(false)
-        } else if self.user_amount_to_unstake_in_epoch < MIN_UNSTAKE_AMOUNT {
+        } else if amount_to_unstake < MIN_UNSTAKE_AMOUNT {
             // We will not lock a validator only to unstake a small amount:
             log!("Not enough to unstake");
             PromiseOrValue::Value(false)
         } else if let Some(mut validator_info) = self.validator_available_for_unstake() {
-            let to_unstake = self.user_amount_to_unstake_in_epoch;
+            let to_unstake = amount_to_unstake;
 
             // Validator update:
             validator_info.staked -= to_unstake;
             // Pool update:
-            self.user_amount_to_unstake_in_epoch = 0;
+            self.stake_unstake_locked_in_epoch.decrease(to_unstake);
             self.to_withdraw += to_unstake;
             ext_staking_pool::ext(validator_info.account_id.clone())
                 .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -165,35 +255,24 @@ impl NearxPool {
             .into()
     }
 
-    pub(crate) fn internal_withdraw(&mut self, near_amount: Option<Balance>) {
-        let account_id = env::predecessor_account_id();
-        let mut account = self.internal_get_account(&account_id);
-        let near_amount = near_amount.unwrap_or(account.unstaked);
+    /// Reconcile the amounts to stake and unstake in this epoch.
+    /// After the reconciliation, one of those amounts is set to zero.
+    pub(crate) fn internal_epoch_lock_stake_unstake(&mut self) {
+        let current_epoch = env::epoch_height();
 
-        log!("User withdrawn amount is {}", near_amount);
+        if current_epoch != self.last_reconcilation_epoch {
+            // First time we run the lock this epoch:
 
-        require!(
-            account.cooldown_finished(),
-            errors::TOKENS_ARE_NOT_READY_FOR_WITHDRAWAL,
-        );
-        require!(
-            near_amount <= account.unstaked,
-            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
-        );
-        require!(
-            env::account_balance() - near_amount > MIN_BALANCE_FOR_STORAGE,
-            errors::NOT_ENOUGH_TOKEN_TO_WITHDRAW,
-        );
+            self.stake_unstake_locked_in_epoch += self.user_amount_to_stake_unstake;
+            self.user_amount_to_stake_unstake = Direction::Stake(0);
 
-        account.unstaked -= near_amount;
-        self.internal_update_account(&account_id, &account);
-
-        Promise::new(account_id).transfer(near_amount);
+            self.last_reconcilation_epoch = current_epoch;
+        }
     }
 }
 
 // Data manipulation
-#[near_bindgen] //TODO: remove?
+#[near_bindgen] //TODO: remove the attribute?
 impl NearxPool {
     pub(crate) fn stake_shares_from_amount(&self, amount: Balance) -> u128 {
         if self.total_stake_shares == 0 {

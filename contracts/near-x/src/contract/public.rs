@@ -22,8 +22,6 @@ impl NearxPool {
             staking_paused: false,
             to_withdraw: 0,
             accumulated_staked_rewards: 0,
-            user_amount_to_stake_in_epoch: 0,
-            user_amount_to_unstake_in_epoch: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
             min_deposit_amount: ONE_NEAR,
@@ -31,6 +29,8 @@ impl NearxPool {
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
             last_reconcilation_epoch: 0,
+            user_amount_to_stake_unstake: Direction::Stake(0),
+            stake_unstake_locked_in_epoch: Direction::Stake(0),
         }
     }
 
@@ -177,8 +177,6 @@ impl NearxPool {
             total_staked: U128(self.total_staked),
             total_stake_shares: U128(self.total_stake_shares),
             accumulated_staked_rewards: U128(self.accumulated_staked_rewards),
-            user_amount_to_stake_in_epoch: U128(self.user_amount_to_stake_in_epoch),
-            user_amount_to_unstake_in_epoch: U128(self.user_amount_to_unstake_in_epoch),
             min_deposit_amount: U128(self.min_deposit_amount),
             operator_account_id: self.operator_account_id.clone(),
             rewards_fee_pct: self.rewards_fee,
