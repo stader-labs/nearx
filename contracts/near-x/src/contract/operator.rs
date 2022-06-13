@@ -133,7 +133,7 @@ impl NearxPool {
         let mut validator = self.internal_get_validator(&validator_id);
 
         validator.staked = account.staked_balance.0;
-        // TODO - add unstake
+        validator.to_withdraw = account.unstaked_balance.0;
 
         self.internal_update_validator(&validator);
     }
