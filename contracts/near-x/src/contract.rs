@@ -65,6 +65,7 @@ pub struct NearxPool {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
+    // TODO - refactor codebase to use accountid instead of validator info
     fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         validator_info: ValidatorInfo,
@@ -78,6 +79,10 @@ pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128);
 
     fn on_stake_pool_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128);
+
+    fn on_stake_pool_drain_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128);
+
+    fn on_stake_pool_drain_withdraw(&mut self, validator_id: AccountId, amount_to_withdraw: u128);
 
     fn on_get_sp_total_balance(
         &mut self,

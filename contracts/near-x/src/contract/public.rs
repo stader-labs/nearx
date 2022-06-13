@@ -126,8 +126,32 @@ impl NearxPool {
     /*
        Staking pool addition and deletion
     */
+    pub fn pause_validator(&mut self, validator: AccountId) {
+        self.assert_owner_calling();
+
+        let mut validator_info = self.internal_get_validator(&validator);
+
+        require!(!validator_info.pending_unstake_release(), ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING);
+
+        validator_info.paused = true;
+        self.internal_update_validator(&validator, &validator_info);
+    }
+
+    pub fn un_pause_validator(&mut self, validator: AccountId) {
+        self.assert_owner_calling();
+
+        let mut validator_info = self.internal_get_validator(&validator);
+        validator_info.paused = false;
+        self.internal_update_validator(&validator, &validator_info);
+    }
+
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+
+        let validator_info = self.internal_get_validator(&validator);
+
+        require!(validator_info.is_empty());
+
         self.validator_info_map.remove(&validator);
 
         Event::ValidatorRemoved {
@@ -287,7 +311,7 @@ impl NearxPool {
             unstaked: U128(validator_info.unstaked_amount),
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
-            lock: validator_info.lock,
+            paused: validator_info.paused,
         }
     }
 
@@ -299,10 +323,16 @@ impl NearxPool {
                 staked: U128::from(pool.1.staked),
                 last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
                 last_unstake_start_epoch: U64(pool.1.unstake_start_epoch),
-                lock: pool.1.lock,
+                paused: pool.1.paused,
                 unstaked: U128(pool.1.unstaked_amount),
             })
             .collect()
+    }
+
+    pub fn is_validator_unstake_pending(&self, validator: AccountId) -> bool {
+        let validator_info = self.internal_get_validator(&validator);
+
+        validator_info.pending_unstake_release()
     }
 
     pub fn get_current_epoch(&self) -> U64 {

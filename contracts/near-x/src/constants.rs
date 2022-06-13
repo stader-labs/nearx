@@ -82,6 +82,10 @@ pub mod gas {
 
     pub const SYNC_VALIDATOR_EPOCH: Gas = base_gas(3);
 
+    pub const DRAIN_UNSTAKE: Gas = base_gas(3);
+
+    pub const DRAIN_WITHDRAW: Gas = base_gas(3);
+
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
     }
