@@ -2,7 +2,7 @@ use crate::constants::gas::*;
 use crate::constants::{MIN_BALANCE_FOR_STORAGE, ONE_NEAR};
 use crate::errors::*;
 use crate::events::*;
-use crate::utils::is_promise_success;
+use crate::utils::*;
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
@@ -32,7 +32,6 @@ impl NearxPool {
             return false;
         }
 
-        // TODO - bchain we might have to change the validator staking logic
         let validator = self.get_validator_to_stake();
         require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
 
@@ -76,15 +75,24 @@ impl NearxPool {
         true
     }
 
+    #[private]
     pub fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: Balance) {
-        assert_callback_calling();
-
         let mut validator_info = self.internal_get_validator(&validator);
         if is_promise_success() {
             validator_info.staked += amount;
+
+            Event::EpochStakeCallbackSuccess {
+                validator_id: validator.clone(),
+                amount: U128(amount)
+            }.emit();
             // reconcile total staked amount to the actual total staked amount
         } else {
             self.reconciled_epoch_stake_amount += amount;
+
+            Event::EpochStakeCallbackFailed {
+                validator_id: validator.clone(),
+                amount: U128(amount)
+            }.emit();
         }
 
         self.internal_update_validator(&validator, &validator_info);
@@ -144,8 +152,6 @@ impl NearxPool {
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool> {
-        assert_callback_calling();
-
         validator_info.lock = false;
         self.contract_lock = false;
 
@@ -249,17 +255,26 @@ impl NearxPool {
         true
     }
 
+    #[private]
     pub fn on_stake_pool_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128) {
-        assert_callback_calling();
-
         let mut validator = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
+
+            Event::EpochUnstakeCallbackSuccess {
+                validator_id: validator_id.clone(),
+                amount: U128(amount_to_unstake)
+            }.emit();
         } else {
             self.reconciled_epoch_unstake_amount += amount_to_unstake;
             validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
+
+            Event::EpochUnstakeCallbackFailed {
+                validator_id: validator_id.clone(),
+                amount: U128(amount_to_unstake)
+            }.emit();
         }
 
         self.internal_update_validator(&validator_id, &validator);
@@ -273,7 +288,6 @@ impl NearxPool {
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
-        log!("validator is {:?}", validator);
         let mut validator_info = self.internal_get_validator(&validator);
 
         require!(
@@ -302,6 +316,11 @@ impl NearxPool {
                     .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL_CB)
                     .on_stake_pool_withdraw_all(validator_info, amount),
             );
+
+        Event::EpochWithdrawAttempt {
+            validator_id: validator,
+            amount: U128(amount)
+        }.emit();
     }
 
     #[private]
@@ -312,9 +331,74 @@ impl NearxPool {
                 self.internal_get_validator(&validator_info.account_id.clone());
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
+
+            Event::EpochWithdrawCallbackSuccess {
+                validator_id: validator_info.account_id,
+                amount: U128(amount)
+            }.emit();
         } else {
-            // TODO - emit event
+            Event::EpochWithdrawCallbackFailed {
+                validator_id: validator_info.account_id,
+                amount: U128(amount)
+            }
+            .emit();
         }
+    }
+
+    pub fn epoch_reconcile_total_staked(&mut self) {
+        let mut actual_total_staked_amount: u128 = 0;
+        for validator_info in self.validator_info_map.values() {
+            actual_total_staked_amount = actual_total_staked_amount
+                .checked_add(validator_info.staked)
+                .unwrap();
+        }
+
+        self.total_staked = actual_total_staked_amount;
+    }
+
+    pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
+        let min_gas = SYNC_VALIDATOR_EPOCH
+            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
+            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let validator_info = self.internal_get_validator(&validator_id);
+
+        ext_staking_pool::ext(validator_info.account_id.clone())
+            .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE)
+            .with_attached_deposit(NO_DEPOSIT)
+            .get_account(env::current_account_id())
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB)
+                    .on_stake_pool_get_account(validator_info),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_get_account(
+        &mut self,
+        validator_id: AccountId,
+        #[callback] account: HumanReadableAccount,
+    ) {
+        let mut validator = self.internal_get_validator(&validator_id);
+
+        // update balance
+        validator.staked = account.staked_balance.0;
+        validator.unstaked_amount = account.unstaked_balance.0;
+
+        self.internal_update_validator(&validator_id, &validator);
+
+        Event::BalanceSyncedFromValidator {
+            validator_id,
+            staked_balance: account.staked_balance,
+            unstaked_balance: account.unstaked_balance,
+        }
+            .emit();
     }
 
     #[private]
