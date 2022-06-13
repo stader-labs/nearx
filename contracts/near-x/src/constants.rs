@@ -68,6 +68,12 @@ pub mod gas {
 
     pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB: Gas = base_gas(1);
 
+    pub const SYNC_BALANCE_EPOCH: Gas = base_gas(1);
+
+    pub const ON_STAKE_POOL_GET_ACCOUNT_BALANCE: Gas = base_gas(1);
+
+    pub const ON_STAKE_POOL_GET_ACCOUNT_BALANCE_CB: Gas = base_gas(1);
+
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
     }

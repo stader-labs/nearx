@@ -102,4 +102,39 @@ impl NearxPool {
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
     }
+
+    pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
+        let min_gas = SYNC_BALANCE_EPOCH + ON_STAKE_POOL_GET_ACCOUNT_BALANCE + ON_STAKE_POOL_GET_ACCOUNT_BALANCE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let validator_info = self.internal_get_validator(&validator_id);
+
+        ext_staking_pool::ext(validator_info.account_id.clone())
+            .with_attached_deposit(NO_DEPOSIT)
+            .with_static_gas(gas::GET_ACCOUNT_TOTAL_BALANCE)
+            .get_account_total_balance(env::current_account_id())
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
+                    .on_get_sp_staked_balance_for_rewards(validator_info),
+            );
+    }
+
+    #[private]
+    pub fn validator_get_account_callback(
+        &mut self,
+        validator_id: AccountId,
+        #[callback] account: HumanReadableAccount,
+    ) {
+        let mut validator = self.internal_get_validator(&validator_id);
+
+        validator.staked = account.staked_balance.0;
+        // TODO - add unstake
+
+        self.internal_update_validator(&validator);
+    }
 }

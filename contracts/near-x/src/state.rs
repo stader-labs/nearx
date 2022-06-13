@@ -174,3 +174,16 @@ impl std::ops::Mul<Fraction> for u128 {
         crate::utils::proportional(self, rhs.numerator.into(), rhs.denominator.into())
     }
 }
+
+// Stake pool total balance
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct HumanReadableAccount {
+    pub account_id: AccountId,
+    /// The unstaked balance that can be withdrawn or staked.
+    pub unstaked_balance: U128,
+    /// The amount balance staked at the current "stake" share price.
+    pub staked_balance: U128,
+    /// Whether the unstaked balance is available for withdrawal now.
+    pub can_withdraw: bool,
+}
