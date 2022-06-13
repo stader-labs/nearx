@@ -131,7 +131,10 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator);
 
-        require!(!validator_info.pending_unstake_release(), ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING);
+        require!(
+            !validator_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
 
         validator_info.paused = true;
         self.internal_update_validator(&validator, &validator_info);
@@ -150,7 +153,7 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
-        require!(validator_info.is_empty());
+        require!(validator_info.is_empty(), ERROR_INVALID_VALIDATOR_REMOVAL);
 
         self.validator_info_map.remove(&validator);
 

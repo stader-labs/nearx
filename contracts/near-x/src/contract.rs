@@ -112,7 +112,7 @@ pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_get_account(
         &mut self,
         validator_info: ValidatorInfo,
-        #[callback] account: HumanReadableAccount
+        #[callback] account: HumanReadableAccount,
     );
 }
 

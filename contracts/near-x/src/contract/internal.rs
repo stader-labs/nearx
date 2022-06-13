@@ -333,7 +333,8 @@ impl NearxPool {
         let mut current_validator: Option<ValidatorInfo> = None;
 
         for validator in self.validator_info_map.values() {
-            if !validator.pending_unstake_release() && !validator.paused()
+            if !validator.pending_unstake_release()
+                && !validator.paused()
                 && validator.staked.gt(&max_validator_stake_amount)
             {
                 max_validator_stake_amount = validator.staked;
