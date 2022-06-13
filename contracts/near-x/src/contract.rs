@@ -3,6 +3,7 @@ mod internal;
 mod operator;
 mod public;
 mod storage_management;
+mod metadata;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
@@ -121,19 +122,4 @@ pub trait ExtStakingPool {
 
     fn unstake(&mut self, amount: U128);
     fn unstake_all(&mut self);
-}
-
-pub struct ContractSourceMetadata {
-    /// Commit hash being used for the currently deployed wasm.
-    /// If the contract is not open-sourced, this could also be a numbering system
-    /// for internal organization / tracking such as "1.0.0" and "2.1.0".
-    pub version: String,
-    /// Link to open source code such as a Github repository or a CID to somewhere on IPFS.
-    pub link: Option<String>,
-}
-
-/// Contract for NEP-330.
-#[ext_contract(ext_source_metadata)]
-pub trait ExtSourceMetadata {
-    fn contract_source_metadata() -> ContractSourceMetadata;
 }

@@ -10,6 +10,11 @@ use near_contract_standards::storage_management::{
 };
 use near_sdk::{log, require, AccountId, Balance, Promise, PromiseOrValue};
 
+const EMPTY_STORAGE_BALANCE: StorageBalance = StorageBalance {
+    total: U128 { 0: 0 },
+    available: U128 { 0: 0 },
+};
+
 #[near_bindgen]
 impl StorageManagement for NearxPool {
     #[payable]
@@ -18,17 +23,26 @@ impl StorageManagement for NearxPool {
         account_id: Option<AccountId>,
         registration_only: Option<bool>,
     ) -> StorageBalance {
-        todo!()
+        if env::attached_deposit() > 0 {
+            Promise::new(env::predecessor_account_id()).transfer(env::attached_deposit())
+        }
+        EMPTY_STORAGE_BALANCE
     }
 
     #[payable]
     fn storage_withdraw(&mut self, amount: Option<U128>) -> StorageBalance {
-        todo!()
+        if env::attached_deposit() > 0 {
+            Promise::new(env::predecessor_account_id()).transfer(env::attached_deposit())
+        }
+        EMPTY_STORAGE_BALANCE
     }
 
     #[payable]
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
-        todo!()
+        if env::attached_deposit() > 0 {
+            Promise::new(env::predecessor_account_id()).transfer(env::attached_deposit())
+        }
+        true
     }
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {
