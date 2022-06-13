@@ -1,5 +1,4 @@
 mod internal;
-mod metadata;
 mod operator;
 mod public;
 
