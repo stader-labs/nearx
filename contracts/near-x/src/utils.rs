@@ -1,25 +1,22 @@
 use crate::{constants::*, errors::*};
-use near_sdk::{env, PromiseResult};
+use near_sdk::{env, require, PromiseResult};
 
 pub fn assert_min_balance(amount: u128) {
-    assert!(amount > 0, "{}", ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO);
-    assert!(
+    require!(amount > 0, ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO);
+    require!(
         env::account_balance() >= MIN_BALANCE_FOR_STORAGE
             && env::account_balance() - MIN_BALANCE_FOR_STORAGE > amount,
-        "{}",
         ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
     );
 }
 
 pub fn assert_callback_calling() {
-    assert_eq!(env::predecessor_account_id(), env::current_account_id());
+    require!(env::predecessor_account_id() == env::current_account_id());
 }
 
 pub fn is_promise_success() -> bool {
-    assert_eq!(
-        env::promise_results_count(),
-        1,
-        "{}",
+    require!(
+        env::promise_results_count() == 1,
         ERROR_EXPECT_RESULT_ON_CALLBACK
     );
 
