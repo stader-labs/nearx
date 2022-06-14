@@ -3,6 +3,7 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
     json_types::{U128, U64},
+    log,
     serde::{Deserialize, Serialize},
     AccountId, Balance, EpochHeight,
 };
@@ -89,7 +90,7 @@ pub struct ValidatorInfo {
 impl ValidatorInfo {
     pub fn is_empty(&self) -> bool {
         self.paused()
-            && self.pending_unstake_release()
+            && !self.pending_unstake_release()
             && self.staked == 0
             && self.unstaked_amount == 0
     }
@@ -117,6 +118,7 @@ impl ValidatorInfo {
     /// whether the validator is in unstake releasing period.
     pub fn pending_unstake_release(&self) -> bool {
         let current_epoch = env::epoch_height();
+        log!("unstake_start_epoch is {:?}", self.unstake_start_epoch);
         current_epoch >= self.unstake_start_epoch
             && current_epoch < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
     }

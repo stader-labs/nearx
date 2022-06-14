@@ -239,6 +239,7 @@ fn test_remove_validator_success() {
     let stake_public_key_3 = AccountId::from_str("stake_public_key_3").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.epoch_height = 40;
     testing_env!(context); // this updates the context
 
     contract.add_validator(stake_public_key_1.clone());
@@ -283,6 +284,7 @@ fn test_remove_validator_success() {
     */
     let mut val1 = get_validator(&contract, stake_public_key_1.clone());
     val1.paused = true;
+    val1.unstake_start_epoch = 10;
     update_validator(&mut contract, stake_public_key_1.clone(), &val1);
 
     contract.remove_validator(stake_public_key_1.clone());
@@ -316,6 +318,7 @@ fn test_remove_validator_success() {
     */
     let mut val2 = get_validator(&contract, stake_public_key_2.clone());
     val2.paused = true;
+    val1.unstake_start_epoch = 10;
     update_validator(&mut contract, stake_public_key_2.clone(), &val2);
 
     contract.remove_validator(stake_public_key_2.clone());
@@ -339,6 +342,7 @@ fn test_remove_validator_success() {
     */
     let mut val3 = get_validator(&contract, stake_public_key_3.clone());
     val3.paused = true;
+    val1.unstake_start_epoch = 10;
     update_validator(&mut contract, stake_public_key_3.clone(), &val3);
 
     contract.remove_validator(stake_public_key_3);

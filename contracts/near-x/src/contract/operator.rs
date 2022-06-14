@@ -555,14 +555,20 @@ impl NearxPool {
     }
 
     #[private]
-    pub fn on_stake_pool_drain_withdraw(&mut self, validator_id: AccountId, amount: u128) {
+    pub fn on_stake_pool_drain_withdraw(
+        &mut self,
+        validator_id: AccountId,
+        amount_to_withdraw: u128,
+    ) {
         let mut validator_info = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
+            log!("Success!");
             // stake the drained amount into the next epoch
-            self.user_amount_to_stake_in_epoch += amount;
+            self.user_amount_to_stake_in_epoch += amount_to_withdraw;
         } else {
-            validator_info.unstaked_amount += amount;
+            log!("Failure: bchain!");
+            validator_info.unstaked_amount += amount_to_withdraw;
             self.internal_update_validator(&validator_id, &validator_info);
         }
     }

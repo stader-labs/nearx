@@ -103,9 +103,11 @@ async fn test_validator_removal() -> anyhow::Result<()> {
         .view_account(&context.worker)
         .await?
         .balance;
-    context
+    let res = context
         .drain_withdraw(context.get_stake_pool_contract(0).id().clone())
         .await?;
+    println!("logs are {:?}", res.failures());
+    // println!("res is {:?}", res);
     let contract_balance_after_drain_withdraw = context
         .nearx_contract
         .view_account(&context.worker)
@@ -129,16 +131,18 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_1);
+    assert_eq!(validator1_info.paused, true);
 
-    // let nearx_state = context.get_nearx_state().await?;
-    // assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
 
     // remove validator 1 from set
     let all_validators = context.get_validators().await?;
     assert_eq!(all_validators.len(), 3);
-    context
+    let res = context
         .remove_validator(&context.get_stake_pool_contract(0).id())
         .await?;
+    println!("res logs are {:?}", res.logs());
     let all_validators = context.get_validators().await?;
     assert_eq!(all_validators.len(), 2);
 
