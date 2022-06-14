@@ -153,6 +153,12 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
+        log!("validator is paused {:?}", validator_info.paused());
+        log!(
+            "validator is unbonding {:?}",
+            validator_info.pending_unstake_release()
+        );
+
         require!(validator_info.is_empty(), ERROR_INVALID_VALIDATOR_REMOVAL);
 
         self.validator_info_map.remove(&validator);
