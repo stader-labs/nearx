@@ -1,0 +1,25 @@
+{
+  "name": "nearx",
+  "version": "0.1",
+  "description": "NearX stake pool client",
+  "main": "client/index.ts",
+  "repository": "git@github.com:stader-labs/near-liquid-token",
+  "author": "Félix <felix@staderlabs.com>",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@types/node": "^18.0.0",
+    "near-api-js": "^0.45.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
+    "eslint": "^8.5.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "types-bn": "^0.0.1",
+    "typescript": "^4.3.5"
+  },
+  "scripts": {
+    "build": "yarn tsc --build"
+  }
+}
