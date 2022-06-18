@@ -3,5 +3,5 @@ target/
 .vscode/
 neardev/
 res/
-dist/
+**/dist/
 node_modules/

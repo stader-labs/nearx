@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    //"module": "commonjs",
+    "outDir": "dist",
+    "lib": ["es2015"],
+    "target": "es6",
+    "moduleResolution": "node",
+    "strict": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    //"esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/*"]
+}
