@@ -1,5 +1,5 @@
 Arguments: 
-  /usr/bin/node /usr/bin/yarn build
+  /usr/bin/node /usr/bin/yarn
 
 PATH: 
   /home/felix/.cargo/bin:/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/home/felix/.local/share/solana/install/active_release/bin:/home/felix/.avm/bin:/home/felix/.local/share/solana/install/active_release/bin:/home/felix/.avm/bin
@@ -14,19 +14,24 @@ Platform:
   linux x64
 
 Trace: 
-  SyntaxError: /home/felix/Work/Stader/nearX/package.json: Unexpected token / in JSON at position 308
-      at JSON.parse (<anonymous>)
-      at /usr/lib/node_modules/yarn/lib/util/fs.js:755:57
+  TypeError: Invalid Version: 0.1
+      at new SemVer (/usr/lib/node_modules/yarn/node_modules/semver/semver.js:305:11)
+      at Range.test (/usr/lib/node_modules/yarn/node_modules/semver/semver.js:1112:15)
+      at Function.satisfies (/usr/lib/node_modules/yarn/node_modules/semver/semver.js:1161:16)
+      at WorkspaceLayout.getManifestByPattern (/usr/lib/node_modules/yarn/lib/workspace-layout.js:32:31)
+      at Function.isWorkspace (/usr/lib/node_modules/yarn/lib/resolvers/contextual/workspace-resolver.js:37:51)
+      at /usr/lib/node_modules/yarn/lib/package-request.js:266:76
       at Generator.next (<anonymous>)
       at step (/usr/lib/node_modules/yarn/node_modules/babel-runtime/helpers/asyncToGenerator.js:17:30)
-      at /usr/lib/node_modules/yarn/node_modules/babel-runtime/helpers/asyncToGenerator.js:28:13
+      at /usr/lib/node_modules/yarn/node_modules/babel-runtime/helpers/asyncToGenerator.js:35:14
+      at new Promise (<anonymous>)
 
 npm manifest: 
   {
+    "private": true,
     "workspaces": [
       "cli",
-      "client",
-      "tests"
+      "client"
     ],
     "dependencies": {},
     "devDependencies": {
@@ -35,11 +40,11 @@ npm manifest:
       "eslint": "^8.5.0",
       "eslint-config-prettier": "^8.3.0",
       "eslint-plugin-prettier": "^4.0.0",
-      //"types-bn": "^0.0.1",
       "typescript": "^4.3.5"
     },
     "scripts": {
-      "build": "yarn tsc --build cli/tsconfig.json client/tsconfig.json"
+      "build": "yarn tsc --build cli/tsconfig.json client/tsconfig.json",
+      "nearx": "yarn workspace --silent cli --silent ts-node src/index.ts"
     }
   }
 

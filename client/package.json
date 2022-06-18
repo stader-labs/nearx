@@ -1,6 +1,6 @@
 {
-  "name": "nearx",
-  "version": "0.1",
+  "name": "nearx-js",
+  "version": "0.1.0",
   "description": "NearX stake pool client",
   "main": "client/index.ts",
   "repository": "git@github.com:stader-labs/near-liquid-token",
