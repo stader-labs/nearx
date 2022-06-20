@@ -1,15 +1,14 @@
-use crate::constants::{ACCOUNTS_MAP, ONE_NEAR, VALIDATOR_MAP};
+use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
 use crate::{
-    constants::{NEAR, ONE_E24},
     contract::*,
     errors,
     state::*,
 };
 use near_sdk::json_types::U64;
 use near_sdk::near_bindgen;
-use near_sdk::{assert_one_yocto, log, require};
+use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -29,7 +28,7 @@ impl NearxPool {
             reconciled_epoch_unstake_amount: 0,
             total_stake_shares: 0,
             accounts: UnorderedMap::new(ACCOUNTS_MAP.as_bytes()),
-            min_deposit_amount: NEAR,
+            min_deposit_amount: ONE_NEAR,
             validator_info_map: UnorderedMap::new(VALIDATOR_MAP.as_bytes()),
             total_staked: 0,
             rewards_fee: Fraction::new(0, 1),
@@ -44,7 +43,7 @@ impl NearxPool {
     /// Asserts that the method was called by the owner.
     pub fn assert_owner_calling(&self) {
         require!(
-            &env::predecessor_account_id() == &self.owner_account_id,
+            env::predecessor_account_id() == self.owner_account_id,
             errors::ERROR_UNAUTHORIZED
         )
     }
@@ -175,7 +174,7 @@ impl NearxPool {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
         self.validator_info_map
-            .insert(&validator.clone(), &ValidatorInfo::new(validator.clone()));
+            .insert(&validator, &ValidatorInfo::new(validator.clone()));
 
         Event::ValidatorAdded {
             account_id: validator,
@@ -209,7 +208,7 @@ impl NearxPool {
                 ERROR_UNAUTHORIZED
             )
         } else {
-            panic!(ERROR_TEMP_OWNER_NOT_SET);
+            panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }
     }
 
@@ -301,7 +300,7 @@ impl NearxPool {
 
         let amount = self.staked_amount_from_num_shares_rounded_down(ONE_NEAR);
         if amount == 0 {
-            return U128(ONE_NEAR);
+            U128(ONE_NEAR)
         } else {
             U128(amount)
         }

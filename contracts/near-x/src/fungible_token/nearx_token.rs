@@ -2,7 +2,7 @@ use crate::constants::NO_DEPOSIT;
 use crate::contract::*;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore,
-    metadata::{FungibleTokenMetadata, FungibleTokenMetadataProvider, FT_METADATA_SPEC},
+    metadata::FungibleTokenMetadata,
 };
 use near_sdk::{
     assert_one_yocto,
