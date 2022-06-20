@@ -1,4 +1,5 @@
 use crate::constants::NUM_EPOCHS_TO_UNLOCK;
+use crate::contract::OperationControls;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
@@ -23,8 +24,6 @@ pub struct NearxPoolStateResponse {
     pub owner_account_id: AccountId,
 
     pub contract_lock: bool,
-
-    pub staking_paused: bool,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     pub total_staked: U128,
@@ -189,4 +188,16 @@ pub struct HumanReadableAccount {
     pub staked_balance: U128,
     /// Whether the unstaked balance is available for withdrawal now.
     pub can_withdraw: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OperationsControlUpdateRequest {
+    pub stake_paused: Option<bool>,
+    pub unstake_paused: Option<bool>,
+    pub withdraw_paused: Option<bool>,
+    pub epoch_stake_paused: Option<bool>,
+    pub epoch_unstake_paused: Option<bool>,
+    pub epoch_withdraw_paused: Option<bool>,
+    pub epoch_autocompounding_paused: Option<bool>,
 }

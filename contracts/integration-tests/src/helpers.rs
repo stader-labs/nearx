@@ -1,5 +1,5 @@
 use near_sdk::json_types::U128;
-use near_x::constants::ONE_NEAR;
+use near_sdk::ONE_NEAR;
 
 // const CLOSE_DELTA: u128 = 1_000_000_000_000_000_000_000;
 const CLOSE_DELTA: u128 = 5_000_000_000_000_000_000_000_0; // Delta for now

@@ -4,9 +4,10 @@ mod helpers;
 use crate::helpers::{abs_diff_eq, ntoy};
 use context::IntegrationTestContext;
 use near_sdk::json_types::{U128, U64};
+use near_sdk::ONE_NEAR;
 use near_units::*;
 use near_x::constants::gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
-use near_x::constants::{NUM_EPOCHS_TO_UNLOCK, ONE_NEAR};
+use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 

@@ -1,11 +1,7 @@
 use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
-use crate::{
-    contract::*,
-    errors,
-    state::*,
-};
+use crate::{contract::*, errors, state::*};
 use near_sdk::json_types::U64;
 use near_sdk::near_bindgen;
 use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
@@ -20,7 +16,6 @@ impl NearxPool {
             owner_account_id,
             contract_lock: false,
             operator_account_id,
-            stake_paused: false,
             accumulated_staked_rewards: 0,
             user_amount_to_stake_in_epoch: 0,
             user_amount_to_unstake_in_epoch: 0,
@@ -34,6 +29,15 @@ impl NearxPool {
             rewards_fee: Fraction::new(0, 1),
             last_reconcilation_epoch: 0,
             temp_owner: None,
+            operations_control: OperationControls {
+                stake_paused: false,
+                unstaked_paused: false,
+                withdraw_paused: false,
+                epoch_stake_paused: false,
+                epoch_unstake_paused: false,
+                epoch_withdraw_paused: false,
+                epoch_autocompounding_paused: false,
+            },
         }
     }
 
@@ -64,7 +68,52 @@ impl NearxPool {
     }
 
     pub fn assert_staking_not_paused(&self) {
-        require!(!self.stake_paused, errors::ERROR_STAKING_PAUSED);
+        require!(
+            !self.operations_control.stake_paused,
+            errors::ERROR_STAKING_PAUSED
+        );
+    }
+
+    pub fn assert_unstaking_not_paused(&self) {
+        require!(
+            !self.operations_control.unstaked_paused,
+            errors::ERROR_UNSTAKING_PAUSED
+        );
+    }
+
+    pub fn assert_withdraw_not_paused(&self) {
+        require!(
+            !self.operations_control.withdraw_paused,
+            errors::ERROR_UNSTAKING_PAUSED
+        );
+    }
+
+    pub fn assert_epoch_stake_not_paused(&self) {
+        require!(
+            !self.operations_control.epoch_stake_paused,
+            errors::ERROR_EPOCH_STAKE_PAUSED
+        );
+    }
+
+    pub fn assert_epoch_unstake_not_paused(&self) {
+        require!(
+            !self.operations_control.epoch_unstake_paused,
+            errors::ERROR_EPOCH_UNSTAKE_PAUSED
+        );
+    }
+
+    pub fn assert_epoch_withdraw_not_paused(&self) {
+        require!(
+            !self.operations_control.epoch_withdraw_paused,
+            errors::ERROR_EPOCH_WITHDRAW_PAUSED
+        );
+    }
+
+    pub fn assert_epoch_autocompounding_not_paused(&self) {
+        require!(
+            !self.operations_control.epoch_autocompounding_paused,
+            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
+        );
     }
 
     /*
@@ -184,7 +233,7 @@ impl NearxPool {
 
     pub fn toggle_staking_pause(&mut self) {
         self.assert_operator_or_owner();
-        self.stake_paused = !self.stake_paused;
+        self.operations_control.stake_paused = !self.operations_control.stake_paused;
     }
 
     // Owner update methods
@@ -210,6 +259,37 @@ impl NearxPool {
         } else {
             panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }
+    }
+
+    #[payable]
+    pub fn update_operations_control(
+        &mut self,
+        update_operations_control_request: OperationsControlUpdateRequest,
+    ) {
+        assert_one_yocto();
+        self.assert_owner_calling();
+
+        self.operations_control.stake_paused = update_operations_control_request
+            .stake_paused
+            .unwrap_or(self.operations_control.stake_paused);
+        self.operations_control.unstaked_paused = update_operations_control_request
+            .unstake_paused
+            .unwrap_or(self.operations_control.unstaked_paused);
+        self.operations_control.withdraw_paused = update_operations_control_request
+            .withdraw_paused
+            .unwrap_or(self.operations_control.withdraw_paused);
+        self.operations_control.epoch_stake_paused = update_operations_control_request
+            .epoch_stake_paused
+            .unwrap_or(self.operations_control.epoch_stake_paused);
+        self.operations_control.epoch_unstake_paused = update_operations_control_request
+            .epoch_unstake_paused
+            .unwrap_or(self.operations_control.epoch_unstake_paused);
+        self.operations_control.epoch_withdraw_paused = update_operations_control_request
+            .epoch_withdraw_paused
+            .unwrap_or(self.operations_control.epoch_withdraw_paused);
+        self.operations_control.epoch_autocompounding_paused = update_operations_control_request
+            .epoch_autocompounding_paused
+            .unwrap_or(self.operations_control.epoch_autocompounding_paused);
     }
 
     // View methods
@@ -246,8 +326,8 @@ impl NearxPool {
         panic!("{}", ERROR_NO_STAKING_KEY);
     }
 
-    pub fn is_staking_paused(&self) -> bool {
-        self.stake_paused
+    pub fn get_operations_control(&self) -> OperationControls {
+        self.operations_control
     }
 
     pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
@@ -278,7 +358,6 @@ impl NearxPool {
         NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
             contract_lock: self.contract_lock,
-            staking_paused: self.stake_paused,
             total_staked: U128::from(self.total_staked),
             total_stake_shares: U128::from(self.total_stake_shares),
             accumulated_staked_rewards: U128::from(self.accumulated_staked_rewards),

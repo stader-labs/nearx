@@ -74,7 +74,8 @@ impl NearxPool {
             amount: U128(amount),
             minted_stake_shares: U128(num_shares),
             new_stake_shares: U128(account.stake_shares),
-        }.emit();
+        }
+        .emit();
     }
 
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
@@ -127,7 +128,8 @@ impl NearxPool {
             new_unstaked_balance: U128(account.unstaked_amount),
             new_stake_shares: U128(account.stake_shares),
             unstaked_available_epoch_height: account.withdrawable_epoch_height,
-        }.emit();
+        }
+        .emit();
     }
 
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
@@ -158,7 +160,8 @@ impl NearxPool {
             account_id: account_id.clone(),
             amount: U128(amount),
             new_unstaked_balance: U128(account.unstaked_amount),
-        }.emit();
+        }
+        .emit();
 
         Promise::new(account_id).transfer(amount);
     }
@@ -272,7 +275,6 @@ impl NearxPool {
         if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
         }
-
 
         ((U256::from(self.total_stake_shares) * U256::from(amount)
             + U256::from(self.total_staked - 1))
