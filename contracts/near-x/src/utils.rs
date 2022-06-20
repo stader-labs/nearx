@@ -46,7 +46,3 @@ pub fn amount_from_shares(num_shares: u128, total_amount: u128, total_shares: u1
         proportional(num_shares, total_amount, total_shares)
     }
 }
-
-pub(crate) fn abs_diff_eq(left: u128, right: u128, epsilon: u128) -> bool {
-    left <= right + epsilon && right <= left + epsilon
-}

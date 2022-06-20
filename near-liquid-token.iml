@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/contracts/mock-stake-pool/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/contracts/near-x/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/contracts/near-x/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/contracts/mock-stake-pool-2/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/integration_tests/target" />
     </content>

@@ -1735,3 +1735,4 @@ fn test_on_stake_pool_drain_withdraw_success() {
 
     assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(200));
 }
+

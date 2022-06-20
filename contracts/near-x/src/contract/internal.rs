@@ -5,7 +5,7 @@ use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
     state::*,
-    utils::{amount_from_shares, assert_callback_calling, shares_from_amount},
+    utils::assert_callback_calling,
 };
 use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
@@ -74,7 +74,7 @@ impl NearxPool {
             amount: U128(amount),
             minted_stake_shares: U128(num_shares),
             new_stake_shares: U128(account.stake_shares),
-        };
+        }.emit();
     }
 
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
@@ -127,7 +127,7 @@ impl NearxPool {
             new_unstaked_balance: U128(account.unstaked_amount),
             new_stake_shares: U128(account.stake_shares),
             unstaked_available_epoch_height: account.withdrawable_epoch_height,
-        };
+        }.emit();
     }
 
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
@@ -158,7 +158,7 @@ impl NearxPool {
             account_id: account_id.clone(),
             amount: U128(amount),
             new_unstaked_balance: U128(account.unstaked_amount),
-        };
+        }.emit();
 
         Promise::new(account_id).transfer(amount);
     }
@@ -259,12 +259,9 @@ impl NearxPool {
     }
 
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
-        if self.total_stake_shares == 0 {
+        // At this point the er will be 1
+        if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
-        }
-
-        if amount == 0 || self.total_staked == 0 {
-            return 0;
         }
 
         (U256::from(self.total_stake_shares) * U256::from(amount) / U256::from(self.total_staked))
@@ -272,13 +269,10 @@ impl NearxPool {
     }
 
     pub(crate) fn num_shares_from_staked_amount_rounded_up(&self, amount: Balance) -> u128 {
-        if self.total_stake_shares == 0 {
+        if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
         }
 
-        if amount == 0 || self.total_staked == 0 {
-            return 0;
-        }
 
         ((U256::from(self.total_stake_shares) * U256::from(amount)
             + U256::from(self.total_staked - 1))
@@ -288,7 +282,7 @@ impl NearxPool {
 
     pub(crate) fn staked_amount_from_num_shares_rounded_down(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
-            return 0;
+            return num_shares;
         }
 
         (U256::from(self.total_staked) * U256::from(num_shares)
@@ -298,7 +292,7 @@ impl NearxPool {
 
     pub(crate) fn staked_amount_from_num_shares_rounded_up(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
-            return 0;
+            return num_shares;
         }
 
         ((U256::from(self.total_staked) * U256::from(num_shares)

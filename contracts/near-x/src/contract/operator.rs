@@ -1,5 +1,5 @@
 use crate::constants::gas::*;
-use crate::constants::{MIN_BALANCE_FOR_STORAGE, ONE_NEAR};
+use crate::constants::MIN_BALANCE_FOR_STORAGE;
 use crate::errors::*;
 use crate::events::*;
 use crate::utils::*;
@@ -8,9 +8,8 @@ use crate::{
     contract::*,
     errors::ERROR_VALIDATOR_IS_BUSY,
     state::*,
-    utils::assert_callback_calling,
 };
-use near_sdk::{env, log, near_bindgen, require};
+use near_sdk::{env, log, near_bindgen, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -35,7 +34,7 @@ impl NearxPool {
         let validator = self.get_validator_to_stake();
         require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
 
-        let mut validator = validator.unwrap();
+        let validator = validator.unwrap();
 
         let amount_to_stake = self.reconciled_epoch_stake_amount;
 
@@ -109,7 +108,7 @@ impl NearxPool {
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
-        let mut validator_info = self.internal_get_validator(&validator);
+        let validator_info = self.internal_get_validator(&validator);
 
         require!(!validator_info.paused(), ERROR_VALIDATOR_IS_BUSY);
 
@@ -326,10 +325,9 @@ impl NearxPool {
 
     #[private]
     pub fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128) {
-        assert_callback_calling();
         if !is_promise_success() {
             let mut validator_info =
-                self.internal_get_validator(&validator_info.account_id.clone());
+                self.internal_get_validator(&validator_info.account_id);
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 

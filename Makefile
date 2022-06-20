@@ -13,3 +13,6 @@ mock-stake-pool: contracts/mock-stake-pool
 	RUSTFLAGS=$(RFLAGS) cargo build -p mock-stake-pool --target wasm32-unknown-unknown --release
 	mkdir -p res
 	cp target/wasm32-unknown-unknown/release/mock_stake_pool.wasm ./res/mock_stake_pool.wasm
+
+integration-tests: contracts/integration-tests
+	RUSTFLAGS=$(RFLAGS) cargo test
