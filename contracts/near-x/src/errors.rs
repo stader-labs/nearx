@@ -5,7 +5,6 @@ pub const ERROR_ALL_VALIDATORS_ARE_BUSY: &str = "All validators are busy";
 pub const ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO: &str = "Deposit should be greater than 0";
 pub const ERROR_UNAUTHORIZED: &str = "Unauthorized";
 pub const ERROR_CONTRACT_BUSY: &str = "Contract is busy";
-pub const ERROR_STAKING_PAUSED: &str = "Staking paused";
 pub const ERROR_MIN_DEPOSIT: &str = "Deposit should be greater than min deposit";
 pub const ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE: &str =
     "Contract balance should not go below the required minimum storage balance";
@@ -42,3 +41,12 @@ pub const ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE: &str = "No validator available 
 pub const ERROR_TEMP_OWNER_NOT_SET: &str = "Temp owner has not been set to any account";
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
 pub const ERROR_INVALID_VALIDATOR_REMOVAL: &str = "Cannot remove this validator";
+
+/// Operations controls
+pub const ERROR_STAKING_PAUSED: &str = "Staking paused";
+pub const ERROR_UNSTAKING_PAUSED: &str = "Unstaking paused";
+pub const ERROR_WITHDRAW_PAUSED: &str = "Withdraw paused";
+pub const ERROR_EPOCH_STAKE_PAUSED: &str = "Staking epoch paused";
+pub const ERROR_EPOCH_UNSTAKE_PAUSED: &str = "Unstaking epoch paused";
+pub const ERROR_EPOCH_WITHDRAW_PAUSED: &str = "Withdraw epoch paused";
+pub const ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED: &str = "Autocompounding epoch paused";

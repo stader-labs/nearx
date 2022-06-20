@@ -8,8 +8,11 @@ use near_sdk::{
     PublicKey, RuntimeFeesConfig, VMConfig, VMContext,
 };
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
-use near_x::contract::NearxPool;
-use near_x::state::{Account, AccountResponse, Fraction, ValidatorInfo, ValidatorInfoResponse};
+use near_x::contract::{NearxPool, OperationControls};
+use near_x::state::{
+    Account, AccountResponse, Fraction, OperationsControlUpdateRequest, ValidatorInfo,
+    ValidatorInfoResponse,
+};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
@@ -114,6 +117,58 @@ fn contract_setup(owner_account: AccountId, operator_account: AccountId) -> (VMC
     testing_env!(context.clone());
     let contract = new_contract(owner_account, operator_account);
     (context, contract)
+}
+
+#[test]
+#[should_panic]
+fn test_non_owner_calling_update_operations_control() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.predecessor_account_id = operator_account();
+    testing_env!(context.clone());
+
+    contract.update_operations_control(OperationsControlUpdateRequest {
+        stake_paused: None,
+        unstake_paused: None,
+        withdraw_paused: None,
+        epoch_stake_paused: None,
+        epoch_unstake_paused: None,
+        epoch_withdraw_paused: None,
+        epoch_autocompounding_paused: None,
+    });
+}
+
+#[test]
+fn test_update_operations_control_success() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.update_operations_control(OperationsControlUpdateRequest {
+        stake_paused: Some(true),
+        unstake_paused: Some(true),
+        withdraw_paused: None,
+        epoch_stake_paused: Some(true),
+        epoch_unstake_paused: Some(true),
+        epoch_withdraw_paused: Some(true),
+        epoch_autocompounding_paused: None,
+    });
+
+    let operations_control = contract.get_operations_control();
+    assert_eq!(
+        operations_control,
+        OperationControls {
+            stake_paused: true,
+            unstaked_paused: true,
+            withdraw_paused: false,
+            epoch_stake_paused: true,
+            epoch_unstake_paused: true,
+            epoch_withdraw_paused: true,
+            epoch_autocompounding_paused: false
+        }
+    );
 }
 
 #[test]
@@ -898,6 +953,76 @@ fn test_epoch_reconcilation() {
     assert_eq!(contract.reconciled_epoch_unstake_amount, ntoy(50));
     assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(0));
     assert_eq!(contract.last_reconcilation_epoch, 100);
+}
+
+#[test]
+#[should_panic]
+fn test_epoch_stake_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.epoch_stake_paused = true;
+
+    contract.epoch_stake();
+}
+
+#[test]
+#[should_panic]
+fn test_epoch_unstake_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.epoch_unstake_paused = true;
+
+    contract.epoch_unstake();
+}
+
+#[test]
+#[should_panic]
+fn test_epoch_withdraw_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.epoch_withdraw_paused = true;
+
+    contract.epoch_withdraw(AccountId::from_str("random_validator").unwrap());
+}
+
+#[test]
+#[should_panic]
+fn test_epoch_autocompounding_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.epoch_autocompounding_paused = true;
+
+    contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
+}
+
+#[test]
+#[should_panic]
+fn test_stake_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.stake_paused = true;
+
+    contract.deposit_and_stake();
+}
+
+#[test]
+#[should_panic]
+fn test_unstake_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.unstaked_paused = true;
+
+    contract.unstake(U128(100));
+}
+
+#[test]
+#[should_panic]
+fn test_withdraw_paused() {
+    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.withdraw_paused = true;
+
+    contract.withdraw(U128(100));
 }
 
 #[test]
@@ -1735,4 +1860,3 @@ fn test_on_stake_pool_drain_withdraw_success() {
 
     assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(200));
 }
-
