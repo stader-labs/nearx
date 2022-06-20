@@ -1,3 +1,5 @@
+import * as nearx from 'nearx-js';
+
 const commands: { [name: string]: () => Promise<void> } = {
   stake: stake,
   unstake: unstake,
@@ -24,7 +26,9 @@ const help: string = `./nearx COMMAND
     COMMAND: ${Object.keys(commands).join(' | ')}`;
 
 async function stake() {
-  console.log('stake');
+  const client = await nearx.NearxPoolClient.new('testnet');
+
+  await client.epochStake();
 }
 
 async function unstake() {

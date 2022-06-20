@@ -2,11 +2,13 @@
   "name": "nearx-app",
   "version": "0.1.0",
   "description": "NearX stake pool client",
-  "main": "client/index.ts",
+  "main": "src/index.ts",
   "repository": "git@github.com:stader-labs/near-liquid-token",
   "author": "Félix <felix@staderlabs.com>",
   "license": "UNLICENSED",
-  "dependencies": {},
+  "dependencies": {
+    "nearx-js": "*"
+  },
   "devDependencies": {},
   "scripts": {
     "build": "yarn tsc --build"

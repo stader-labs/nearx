@@ -15,7 +15,7 @@
     "typescript": "^4.3.5"
   },
   "scripts": {
-    "build": "yarn tsc --build cli/tsconfig.json client/tsconfig.json",
+    "build": "yarn tsc --build client/tsconfig.json cli/tsconfig.json",
     "nearx": "yarn workspace --silent nearx-app --silent ts-node src/index.ts"
   }
 }

@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "composite": true,
-    //"module": "commonjs",
     "outDir": "dist",
     "lib": ["es2015", "dom"],
     "target": "es6",
@@ -10,7 +9,6 @@
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noImplicitAny": true,
-    //"esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/*", "../node_modules/types-bn/index.d.ts"]
