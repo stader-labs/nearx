@@ -1,7 +1,7 @@
 use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
-use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_x::state::{AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -13,7 +13,7 @@ use workspaces::{network::Sandbox, prelude::*, Account, AccountId, Contract, Wor
 const NEARX_WASM_FILEPATH: &str =
     "/Users/bharath12345/stader-work/near-liquid-token/res/near_x.wasm";
 const STAKE_POOL_WASM: &str =
-    "/Users/bharath12345/stader-work/near-liquid-token/res/mock_stake_pool.wasm";
+    "/Users/bharath12345/stader-work/near-liquid-token/res/mock_stake_pool_2.wasm";
 
 pub fn get_validator_account_id(validator_idx: u32) -> AccountId {
     AccountId::from_str(format!("stake_public_key_{}", validator_idx).as_str()).unwrap()
@@ -91,7 +91,20 @@ impl IntegrationTestContext<Sandbox> {
                 .await?;
             println!("Successfully Added the validator!");
 
+            // let stake_pool_contract_balance = stake_pool_contract.call(&worker, "get_account_staked_balance").view().await?.json::<U128>()?;
+            // assert_eq!(stake_pool_contract_balance, U128(ntoy(5)));
+
             validator_to_stake_pool_contract.insert(validator_account_id, stake_pool_contract);
+        }
+
+        for i in 0..validator_count {
+            println!("Seeding with manager deposit of 5N");
+            let res = nearx_owner.call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
+                .max_gas()
+                .deposit(parse_near!("5 N"))
+                .transact()
+                .await?;
+            println!("Seed with manager deposit of 5N");
         }
 
         println!("Fast forward to around 10 epochs");
@@ -127,10 +140,10 @@ impl IntegrationTestContext<Sandbox> {
             self.nearx_contract.id(),
             "deposit_and_stake_direct_stake",
         )
-        .max_gas()
-        .deposit(amount)
-        .transact()
-        .await
+            .max_gas()
+            .deposit(amount)
+            .transact()
+            .await
     }
 
     pub async fn deposit(
@@ -292,6 +305,22 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn ping_stake_pool_contract(
+        &self,
+        stake_pool_contract: &Contract,
+        amount: U128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        stake_pool_contract
+            .call(&self.worker, "ping")
+            .args_json(json!({
+                "amount": amount,
+                "account_id": self.nearx_contract.id().clone()
+            }))?
+            .max_gas()
+            .transact()
+            .await
+    }
+
     pub async fn set_reward_fee(
         &self,
         reward_fee: Fraction,
@@ -304,6 +333,43 @@ impl IntegrationTestContext<Sandbox> {
             )?
             .transact()
             .await
+    }
+
+    pub async fn sync_validator_balances(
+        &self,
+        validator_id: AccountId
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, &self.nearx_contract.id(), "sync_balance_from_validator")
+            .max_gas()
+            .args_json(
+                json!({ "validator_id": validator_id }),
+            )?
+            .transact()
+            .await
+    }
+
+    pub async fn get_stake_pool_accounts(
+        &self,
+        stake_pool_contract: &Contract,
+    ) -> anyhow::Result<Vec<HumanReadableAccount>> {
+        stake_pool_contract
+            .call(&self.worker, "get_accounts")
+            .args_json(json!({ "from_index": 0, "limit": 10 }))?
+            .view()
+            .await?
+            .json::<Vec<HumanReadableAccount>>()
+    }
+
+    pub async fn get_stake_pool_total_staked_balance(
+        &self,
+        stake_pool_contract: &Contract,
+    ) -> anyhow::Result<U128> {
+        stake_pool_contract
+            .call(&self.worker, "get_total_staked_balance")
+            .view()
+            .await?
+            .json::<U128>()
     }
 
     #[deprecated]
