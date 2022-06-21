@@ -9,10 +9,7 @@ use near_sdk::{
 };
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::{NearxPool, OperationControls};
-use near_x::state::{
-    Account, AccountResponse, Fraction, OperationsControlUpdateRequest, ValidatorInfo,
-    ValidatorInfoResponse,
-};
+use near_x::state::{Account, AccountResponse, Fraction, HumanReadableAccount, OperationsControlUpdateRequest, ValidatorInfo, ValidatorInfoResponse};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
@@ -135,7 +132,7 @@ fn test_non_owner_calling_update_operations_control() {
         epoch_unstake_paused: None,
         epoch_withdraw_paused: None,
         epoch_autocompounding_paused: None,
-        sync_validator_balance_paused: None,
+        sync_validator_balance_paused: None
     });
 }
 
@@ -155,7 +152,7 @@ fn test_update_operations_control_success() {
         epoch_unstake_paused: Some(true),
         epoch_withdraw_paused: Some(true),
         epoch_autocompounding_paused: None,
-        sync_validator_balance_paused: Some(true),
+        sync_validator_balance_paused: Some(true)
     });
 
     let operations_control = contract.get_operations_control();
@@ -1862,4 +1859,67 @@ fn test_on_stake_pool_drain_withdraw_success() {
     contract.on_stake_pool_drain_withdraw(validator1.clone(), ntoy(100));
 
     assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(200));
+}
+
+#[test]
+#[should_panic]
+fn test_sync_balance_from_validator_paused() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    contract.operations_control.sync_validator_balance_paused = true;
+
+    contract.sync_balance_from_validator(AccountId::from_str("abc").unwrap());
+}
+
+#[test]
+fn test_sync_balance_from_validator_success() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+    let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
+    let validator3 = AccountId::from_str("stake_public_key_3").unwrap();
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone());
+    contract.add_validator(validator2.clone());
+    contract.add_validator(validator3.clone());
+
+
+    contract.sync_balance_from_validator(validator1);
+}
+
+#[test]
+fn test_on_stake_pool_get_account() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+    let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
+    let validator3 = AccountId::from_str("stake_public_key_3").unwrap();
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone());
+    contract.add_validator(validator2.clone());
+    contract.add_validator(validator3.clone());
+
+    let mut validator1_info = get_validator(&contract, validator1.clone());
+    validator1_info.staked = ntoy(99);
+    validator1_info.unstaked_amount = ntoy(9);
+    update_validator(&mut contract, validator1.clone(), &validator1_info);
+
+    contract.on_stake_pool_get_account(validator1.clone(), HumanReadableAccount {
+        account_id: validator1.clone(),
+        unstaked_balance: U128(ntoy(10)),
+        staked_balance: U128(ntoy(100)),
+        can_withdraw: false
+    });
+
+    let mut validator1_info = get_validator(&contract, validator1.clone());
+    assert_eq!(validator1_info.staked, ntoy(100));
+    assert_eq!(validator1_info.unstaked_amount, ntoy(10));
 }
