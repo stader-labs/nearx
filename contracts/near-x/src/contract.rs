@@ -24,6 +24,7 @@ pub struct OperationControls {
     pub epoch_unstake_paused: bool,
     pub epoch_withdraw_paused: bool,
     pub epoch_autocompounding_paused: bool,
+    pub sync_validator_balance_paused: bool,
 }
 
 #[near_bindgen]
@@ -125,7 +126,7 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_stake_pool_get_account(
         &mut self,
-        validator_info: ValidatorInfo,
+        validator_id: AccountId,
         #[callback] account: HumanReadableAccount,
     );
 }

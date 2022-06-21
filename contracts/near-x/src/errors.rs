@@ -50,3 +50,4 @@ pub const ERROR_EPOCH_STAKE_PAUSED: &str = "Staking epoch paused";
 pub const ERROR_EPOCH_UNSTAKE_PAUSED: &str = "Unstaking epoch paused";
 pub const ERROR_EPOCH_WITHDRAW_PAUSED: &str = "Withdraw epoch paused";
 pub const ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED: &str = "Autocompounding epoch paused";
+pub const ERROR_SYNC_VALIDATOR_BALANCE_PAUSED: &str = "Sync validator balance paused";

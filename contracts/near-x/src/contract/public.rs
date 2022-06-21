@@ -37,6 +37,7 @@ impl NearxPool {
                 epoch_unstake_paused: false,
                 epoch_withdraw_paused: false,
                 epoch_autocompounding_paused: false,
+                sync_validator_balance_paused: false,
             },
         }
     }
@@ -112,6 +113,13 @@ impl NearxPool {
     pub fn assert_epoch_autocompounding_not_paused(&self) {
         require!(
             !self.operations_control.epoch_autocompounding_paused,
+            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
+        );
+    }
+
+    pub fn assert_sync_validator_balance_not_paused(&self) {
+        require!(
+            !self.operations_control.sync_validator_balance_paused,
             errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
         );
     }
@@ -290,6 +298,9 @@ impl NearxPool {
         self.operations_control.epoch_autocompounding_paused = update_operations_control_request
             .epoch_autocompounding_paused
             .unwrap_or(self.operations_control.epoch_autocompounding_paused);
+        self.operations_control.sync_validator_balance_paused = update_operations_control_request
+            .sync_validator_balance_paused
+            .unwrap_or(self.operations_control.sync_validator_balance_paused);
     }
 
     // View methods

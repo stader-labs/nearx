@@ -135,6 +135,7 @@ fn test_non_owner_calling_update_operations_control() {
         epoch_unstake_paused: None,
         epoch_withdraw_paused: None,
         epoch_autocompounding_paused: None,
+        sync_validator_balance_paused: None,
     });
 }
 
@@ -154,6 +155,7 @@ fn test_update_operations_control_success() {
         epoch_unstake_paused: Some(true),
         epoch_withdraw_paused: Some(true),
         epoch_autocompounding_paused: None,
+        sync_validator_balance_paused: Some(true),
     });
 
     let operations_control = contract.get_operations_control();
@@ -166,7 +168,8 @@ fn test_update_operations_control_success() {
             epoch_stake_paused: true,
             epoch_unstake_paused: true,
             epoch_withdraw_paused: true,
-            epoch_autocompounding_paused: false
+            epoch_autocompounding_paused: false,
+            sync_validator_balance_paused: true
         }
     );
 }
