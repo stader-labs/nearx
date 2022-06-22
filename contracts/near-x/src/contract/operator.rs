@@ -17,8 +17,6 @@ impl NearxPool {
     pub fn epoch_stake(&mut self) -> bool {
         self.assert_epoch_stake_not_paused();
 
-        // make sure enough gas was given
-        // TODO - bchain - scope the gas into a module to make these constants more readable
         let min_gas =
             STAKE_EPOCH + ON_STAKE_POOL_DEPOSIT_AND_STAKE + ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
         require!(
@@ -168,22 +166,36 @@ impl NearxPool {
             rewards
         );
 
-        //updated accumulated_staked_rewards value for the contract
-        self.accumulated_staked_rewards += rewards;
-        //updated new "staked" value for this pool
-        validator_info.staked = new_total_balance;
+        if rewards > 0 {
+            //updated accumulated_staked_rewards value for the contract
+            self.accumulated_staked_rewards += rewards;
+            //updated new "staked" value for this pool
+            validator_info.staked = new_total_balance;
 
-        let operator_fee = rewards * self.rewards_fee;
-        self.total_staked += rewards;
+            let operator_fee = rewards * self.rewards_fee;
+            log!(format!("operator_fee is {:?}", operator_fee));
+            self.total_staked += rewards;
+            let treasury_account_shares =
+                self.num_shares_from_staked_amount_rounded_down(operator_fee);
+            log!(format!("total_staked is {:?}", self.total_staked));
+            log!(format!("total shares is {:?}", self.total_stake_shares));
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+            self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-        if operator_fee > 0 {
-            PromiseOrValue::Promise(
-                Promise::new(self.operator_account_id.clone()).transfer(operator_fee),
-            )
+            if treasury_account_shares > 0 {
+                // Mint shares for the treasury account
+                let treasury_account_id = self.treasury_account_id.clone();
+                let mut treasury_account = self.internal_get_account(&treasury_account_id);
+                treasury_account.stake_shares += treasury_account_shares;
+                self.total_stake_shares += treasury_account_shares;
+                self.internal_update_account(&treasury_account_id, &treasury_account);
+
+                PromiseOrValue::Value(true)
+            } else {
+                PromiseOrValue::Value(false)
+            }
         } else {
-            PromiseOrValue::Value(true)
+            PromiseOrValue::Value(false)
         }
     }
 

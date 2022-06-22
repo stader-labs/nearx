@@ -64,6 +64,8 @@ pub struct NearxPool {
 
     pub operator_account_id: AccountId,
 
+    pub treasury_account_id: AccountId,
+
     pub rewards_fee: Fraction,
 
     // Temp owner for owner update

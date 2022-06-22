@@ -14,7 +14,7 @@ near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --ac
 
 # manager deposit
 
-for i in {1..10};
+for i in {1..3};
 do near call $CONTRACT_NAME manager_deposit_and_stake --accountId=$ID --amount=3 --gas=300000000000000;
 done;
 
@@ -40,6 +40,7 @@ near view $CONTRACT_NAME get_validators
 # get staking pool
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_1"'"}'
+near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_2"'"}'
 
 # get user state
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
@@ -62,3 +63,4 @@ near view $STAKE_POOL_2 get_account_staked_balance '{"account_id": "'"$CONTRACT_
 
 near view $STAKE_POOL_0 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
+near view $STAKE_POOL_2 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
