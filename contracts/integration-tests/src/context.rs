@@ -1,7 +1,9 @@
 use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
-use near_x::state::{AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_x::state::{
+    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse,
+};
 use serde_json::json;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -13,7 +15,7 @@ use workspaces::{network::Sandbox, prelude::*, Account, AccountId, Contract, Wor
 const NEARX_WASM_FILEPATH: &str =
     "/Users/bharath12345/stader-work/near-liquid-token/res/near_x.wasm";
 const STAKE_POOL_WASM: &str =
-    "/Users/bharath12345/stader-work/near-liquid-token/res/mock_stake_pool_2.wasm";
+    "/Users/bharath12345/stader-work/near-liquid-token/res/mock_stake_pool.wasm";
 
 pub fn get_validator_account_id(validator_idx: u32) -> AccountId {
     AccountId::from_str(format!("stake_public_key_{}", validator_idx).as_str()).unwrap()
@@ -99,7 +101,8 @@ impl IntegrationTestContext<Sandbox> {
 
         for i in 0..validator_count {
             println!("Seeding with manager deposit of 5N");
-            let res = nearx_owner.call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
+            let res = nearx_owner
+                .call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
                 .max_gas()
                 .deposit(parse_near!("5 N"))
                 .transact()
@@ -140,10 +143,10 @@ impl IntegrationTestContext<Sandbox> {
             self.nearx_contract.id(),
             "deposit_and_stake_direct_stake",
         )
-            .max_gas()
-            .deposit(amount)
-            .transact()
-            .await
+        .max_gas()
+        .deposit(amount)
+        .transact()
+        .await
     }
 
     pub async fn deposit(
@@ -337,14 +340,16 @@ impl IntegrationTestContext<Sandbox> {
 
     pub async fn sync_validator_balances(
         &self,
-        validator_id: AccountId
+        validator_id: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
-            .call(&self.worker, &self.nearx_contract.id(), "sync_balance_from_validator")
+            .call(
+                &self.worker,
+                &self.nearx_contract.id(),
+                "sync_balance_from_validator",
+            )
             .max_gas()
-            .args_json(
-                json!({ "validator_id": validator_id }),
-            )?
+            .args_json(json!({ "validator_id": validator_id }))?
             .transact()
             .await
     }

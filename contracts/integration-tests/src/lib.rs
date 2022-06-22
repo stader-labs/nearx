@@ -145,8 +145,8 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     assert_eq!(user3_account.staked_balance, U128(ntoy(10)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.last_reconcilation_epoch, U64(0));
 
@@ -161,9 +161,9 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -174,13 +174,13 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(0)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(5)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
@@ -202,13 +202,13 @@ async fn test_validator_removal() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator1_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator1_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_1);
 
     let stake_pool1_unstaked_balance = context
         .get_stake_pool_total_unstaked_amount(context.get_stake_pool_contract(0))
         .await?;
-    assert_eq!(stake_pool1_unstaked_balance, U128(ntoy(30)));
+    assert_eq!(stake_pool1_unstaked_balance, U128(ntoy(35)));
 
     context.worker.fast_forward(10000).await?;
 
@@ -231,7 +231,7 @@ async fn test_validator_removal() -> anyhow::Result<()> {
 
     assert!(abs_diff_eq(
         contract_balance_after_drain_withdraw - contract_balance_before_drain_withdraw,
-        ntoy(30),
+        ntoy(35),
         ntoy(1)
     ));
 
@@ -249,7 +249,7 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     assert_eq!(validator1_info.paused, true);
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(35)));
 
     // remove validator 1 from set
     let all_validators = context.get_validators().await?;
@@ -284,8 +284,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     assert_eq!(user3_account.staked_balance, U128(ntoy(10)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.last_reconcilation_epoch, U64(0));
 
@@ -300,9 +300,9 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -313,13 +313,13 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(0)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(5)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
@@ -338,8 +338,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     assert_eq!(user3_account.staked_balance, U128(ntoy(20)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(60)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(60)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(75)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(75)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
@@ -354,9 +354,9 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
-    assert_eq!(validator2_info.staked, U128(ntoy(30)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(35)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -367,13 +367,13 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(60)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(60)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(75)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(75)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
 
@@ -393,8 +393,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     assert_eq!(user3_account.staked_balance, U128(ntoy(30)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(90)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(105)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(105)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
 
@@ -409,9 +409,9 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
-    assert_eq!(validator2_info.staked, U128(ntoy(30)));
-    assert_eq!(validator3_info.staked, U128(ntoy(30)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(35)));
+    assert_eq!(validator3_info.staked, U128(ntoy(35)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -422,13 +422,13 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(30)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(30)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(35)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(35)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(90)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(105)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(105)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_3);
 
@@ -467,8 +467,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     );
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(15)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(15)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(75)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -478,60 +478,60 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     context.epoch_unstake().await?;
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(15)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(15)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(45)));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(40)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_4);
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator1_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator1_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_4);
     let validator2_info = context
         .get_validator_info(context.get_stake_pool_contract(1).id().clone())
         .await?;
-    assert_eq!(validator2_info.staked, U128(ntoy(30)));
+    assert_eq!(validator2_info.staked, U128(ntoy(35)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator2_info.last_unstake_start_epoch, U64(0));
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator3_info.staked, U128(ntoy(30)));
+    assert_eq!(validator3_info.staked, U128(ntoy(35)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.last_unstake_start_epoch, U64(0));
 
     context.epoch_unstake().await?;
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(15)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(15)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
-    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(15)));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(5)));
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_4);
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator1_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator1_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_4);
     let validator2_info = context
         .get_validator_info(context.get_stake_pool_contract(1).id().clone())
         .await?;
     assert_eq!(validator2_info.staked, U128(0));
-    assert_eq!(validator2_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator2_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator2_info.last_unstake_start_epoch, current_epoch_4);
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator3_info.staked, U128(ntoy(30)));
+    assert_eq!(validator3_info.staked, U128(ntoy(35)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.last_unstake_start_epoch, U64(0));
 
@@ -540,8 +540,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     context.epoch_unstake().await?;
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(15)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(15)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -552,19 +552,19 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator1_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator1_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_4);
     let validator2_info = context
         .get_validator_info(context.get_stake_pool_contract(1).id().clone())
         .await?;
     assert_eq!(validator2_info.staked, U128(0));
-    assert_eq!(validator2_info.unstaked, U128(ntoy(30)));
+    assert_eq!(validator2_info.unstaked, U128(ntoy(35)));
     assert_eq!(validator2_info.last_unstake_start_epoch, current_epoch_4);
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.unstaked, U128(ntoy(15)));
+    assert_eq!(validator3_info.staked, U128(ntoy(30)));
+    assert_eq!(validator3_info.unstaked, U128(ntoy(5)));
     assert_eq!(validator3_info.last_unstake_start_epoch, current_epoch_4);
 
     assert_eq!(
@@ -613,7 +613,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         .balance;
     assert!(abs_diff_eq(
         contract_after_withdraw_from_val1 - contract_before_withdraw_from_val1,
-        ntoy(30),
+        ntoy(35),
         ntoy(1)
     ));
 
@@ -632,7 +632,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         .balance;
     assert!(abs_diff_eq(
         contract_after_withdraw_from_val2 - contract_before_withdraw_from_val2,
-        ntoy(30),
+        ntoy(35),
         ntoy(1)
     ));
 
@@ -651,7 +651,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         .balance;
     assert!(abs_diff_eq(
         contract_after_withdraw_from_val3 - contract_before_withdraw_from_val3,
-        ntoy(15),
+        ntoy(5),
         ntoy(1)
     ));
 
@@ -748,11 +748,11 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(user3_token_balance, U128(ntoy(11)));
 
     let total_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_supply, U128(ntoy(41)));
+    assert_eq!(total_supply, U128(ntoy(56)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(41)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(41)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(56)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(56)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(60)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(19)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -772,7 +772,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         validator1_info,
         ValidatorInfoResponse {
             account_id: validator1_info.account_id.clone(),
-            staked: U128(0),
+            staked: U128(ntoy(5)),
             unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -783,7 +783,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         validator2_info,
         ValidatorInfoResponse {
             account_id: validator2_info.account_id.clone(),
-            staked: U128(0),
+            staked: U128(ntoy(5)),
             unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -794,7 +794,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         validator3_info,
         ValidatorInfoResponse {
             account_id: validator3_info.account_id.clone(),
-            staked: U128(0),
+            staked: U128(ntoy(5)),
             unstaked: U128(0),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -814,9 +814,9 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(41)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(46)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -827,16 +827,16 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(41)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(0)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(46)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(5)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_price = context.get_nearx_price().await?;
     assert_eq!(nearx_price, U128(ntoy(1)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(41)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(41)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(56)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(56)));
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -899,9 +899,9 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(61)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(66)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -912,13 +912,13 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(61)));
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(0)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_1_staked_balance, U128(ntoy(66)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(5)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(91)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(71)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(106)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(86)));
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(20)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
@@ -927,17 +927,18 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(1281690140845070422535211));
+    assert_eq!(nearx_price, U128(1232558139534883720930232));
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
     let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+
     assert_eq!(
         user1_account,
         AccountResponse {
             account_id: user1_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
-            staked_balance: U128(32042253521126760563380281),
+            staked_balance: U128(30813953488372093023255813),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -946,7 +947,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user2_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
-            staked_balance: U128(32042253521126760563380281),
+            staked_balance: U128(30813953488372093023255813),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -955,7 +956,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(ntoy(9)),
-            staked_balance: U128(26915492957746478873239436),
+            staked_balance: U128(25883720930232558139534883),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -964,21 +965,23 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     context.unstake(&context.user3, U128(ntoy(5))).await?;
 
     let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+    println!("user3_account is {:?}", user3_account);
     assert_eq!(
         user3_account,
         AccountResponse {
             account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(14000000000000000000000001),
-            staked_balance: U128(21915492957746478873239436),
+            staked_balance: U128(20883720930232558139534883),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK + 1)
         }
     );
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(85999999999999999999999999));
+    println!("nearx_state is {:?}", nearx_state);
+    assert_eq!(nearx_state.total_staked, U128(100999999999999999999999999));
     assert_eq!(
         nearx_state.total_stake_shares,
-        U128(67098901098901098901098901)
+        U128(81943396226415094339622641)
     );
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(20)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
@@ -991,7 +994,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_1);
 
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(1281690140845070422535211));
+    assert_eq!(nearx_price, U128(1232558139534883720930232));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1002,9 +1005,13 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(61)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    println!("validator1_info is {:?}", validator1_info);
+    println!("validator2_info is {:?}", validator2_info);
+    println!("validator3_info is {:?}", validator3_info);
+
+    assert_eq!(validator1_info.staked, U128(ntoy(66)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(0)));
@@ -1014,10 +1021,10 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
 
     let nearx_state = context.get_nearx_state().await?;
     println!("nearx_state is {:?}", nearx_state);
-    assert_eq!(nearx_state.total_staked, U128(85999999999999999999999999));
+    assert_eq!(nearx_state.total_staked, U128(100999999999999999999999999));
     assert_eq!(
         nearx_state.total_stake_shares,
-        U128(67098901098901098901098901)
+        U128(81943396226415094339622641)
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(
@@ -1052,10 +1059,10 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         .await?;
     assert_eq!(
         stake_pool_1_staked_balance,
-        U128(61000000000000000000000000)
+        U128(66000000000000000000000000)
     );
-    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(0)));
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_2_staked_balance, U128(ntoy(5)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     // fast forward by 1000
     context.worker.fast_forward(1000).await?;
@@ -1073,22 +1080,35 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
+    println!(
+        "stake_pool_1_staked_balance {:?}",
+        stake_pool_1_staked_balance
+    );
+    println!(
+        "stake_pool_2_staked_balance {:?}",
+        stake_pool_2_staked_balance
+    );
+    println!(
+        "stake_pool_3_staked_balance {:?}",
+        stake_pool_3_staked_balance
+    );
+
     assert_eq!(
         stake_pool_1_staked_balance,
-        U128(61000000000000000000000000)
+        U128(66000000000000000000000000)
     );
     assert_eq!(
         stake_pool_2_staked_balance,
-        U128(24999999999999999999999999)
+        U128(29999999999999999999999999)
     );
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
     println!("nearx_state is {:?}", nearx_state);
-    assert_eq!(nearx_state.total_staked, U128(85999999999999999999999999));
+    assert_eq!(nearx_state.total_staked, U128(100999999999999999999999999));
     assert_eq!(
         nearx_state.total_stake_shares,
-        U128(67098901098901098901098901)
+        U128(81943396226415094339622641)
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(0));
@@ -1097,7 +1117,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
 
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(1281690140845070422535211));
+    assert_eq!(nearx_price, U128(1232558139534883720930232));
 
     // epoch autocompound add 10N rewards
     context
@@ -1116,10 +1136,10 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
 
     let nearx_state = context.get_nearx_state().await?;
     println!("nearx_state is {:?}", nearx_state);
-    assert_eq!(nearx_state.total_staked, U128(95999999999999999999999999));
+    assert_eq!(nearx_state.total_staked, U128(110999999999999999999999999));
     assert_eq!(
         nearx_state.total_stake_shares,
-        U128(67098901098901098901098901)
+        U128(81943396226415094339622641)
     );
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(0));
@@ -1137,15 +1157,28 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let stake_pool_3_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
+    println!(
+        "stake_pool_1_staked_balance {:?}",
+        stake_pool_1_staked_balance
+    );
+    println!(
+        "stake_pool_2_staked_balance {:?}",
+        stake_pool_2_staked_balance
+    );
+    println!(
+        "stake_pool_3_staked_balance {:?}",
+        stake_pool_3_staked_balance
+    );
+
     assert_eq!(
         stake_pool_1_staked_balance,
-        U128(66000000000000000000000000)
+        U128(71000000000000000000000000)
     );
     assert_eq!(
         stake_pool_2_staked_balance,
-        U128(29999999999999999999999999)
+        U128(34999999999999999999999999)
     );
-    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(0)));
+    assert_eq!(stake_pool_3_staked_balance, U128(ntoy(5)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1156,15 +1189,15 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(66000000000000000000000000));
-    assert_eq!(validator2_info.staked, U128(29999999999999999999999999));
-    assert_eq!(validator3_info.staked, U128(0));
+    assert_eq!(validator1_info.staked, U128(71000000000000000000000000));
+    assert_eq!(validator2_info.staked, U128(34999999999999999999999999));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(0)));
 
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(1430723878152636750736980));
+    assert_eq!(nearx_price, U128(1354593598894773198250057));
 
     let user1_token_balance = context
         .get_user_token_balance(context.user1.id().clone())
@@ -1192,7 +1225,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user1_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
-            staked_balance: U128(35768096953815918768424500),
+            staked_balance: U128(33864839972369329956251439),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -1201,7 +1234,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user2_account.account_id.clone(),
             unstaked_balance: U128(ntoy(5)),
-            staked_balance: U128(35768096953815918768424500),
+            staked_balance: U128(33864839972369329956251439),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -1210,7 +1243,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(14000000000000000000000001),
-            staked_balance: U128(24463806092368162463150998),
+            staked_balance: U128(22951416071839742113746257),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK + 1)
         }
     );
@@ -1257,14 +1290,19 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
     context.withdraw_all(&context.user2).await?;
     let user2_balance_after_withdraw = context.user2.view_account(&context.worker).await?.balance;
-    println!(
-        "user2_balance_before_withdraw is {}",
-        user2_balance_before_withdraw
-    );
-    println!(
-        "user2_balance_after_withdraw is {}",
-        user2_balance_after_withdraw
-    );
+    assert!(abs_diff_eq(
+        user2_balance_after_withdraw - user2_balance_before_withdraw,
+        ntoy(5),
+        ntoy(1)
+    ));
+    // println!(
+    //     "user2_balance_before_withdraw is {}",
+    //     user2_balance_before_withdraw
+    // );
+    // println!(
+    //     "user2_balance_after_withdraw is {}",
+    //     user2_balance_after_withdraw
+    // );
 
     // user 3 withdraws
     let user3_balance_before_withdraw = context.user3.view_account(&context.worker).await?.balance;
@@ -1278,6 +1316,11 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         "user3_balance_after_withdraw is {}",
         user3_balance_after_withdraw
     );
+    assert!(abs_diff_eq(
+        user3_balance_after_withdraw - user3_balance_before_withdraw,
+        ntoy(14),
+        ntoy(1)
+    ));
 
     // User 3 unstakes 5N
     context.unstake(&context.user3, U128(ntoy(5))).await?;
@@ -1295,7 +1338,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user1_account.account_id.clone(),
             unstaked_balance: U128(6000000000000000000000001),
-            staked_balance: U128(34768096953815918768424499),
+            staked_balance: U128(32864839972369329956251438),
             withdrawable_epoch: U64(current_epoch_3.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -1304,7 +1347,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user2_account.account_id.clone(),
             unstaked_balance: U128(ntoy(0)),
-            staked_balance: U128(35768096953815918768424499),
+            staked_balance: U128(33864839972369329956251438),
             withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -1313,7 +1356,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
         AccountResponse {
             account_id: user3_account.account_id.clone(),
             unstaked_balance: U128(5000000000000000000000001),
-            staked_balance: U128(19463806092368162463150997),
+            staked_balance: U128(17951416071839742113746256),
             withdrawable_epoch: U64(current_epoch_3.0 + NUM_EPOCHS_TO_UNLOCK)
         }
     );
@@ -1327,31 +1370,21 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     let context = IntegrationTestContext::new(3).await?;
 
     // User 1 deposits 10N
-    context
-        .deposit_direct_stake(&context.user1, ntoy(10))
-        .await?;
+    context.deposit(&context.user1, ntoy(10)).await?;
     // User 2 deposits 10N
-    context
-        .deposit_direct_stake(&context.user2, ntoy(10))
-        .await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
 
     // User 1 unstakes 3 N
     context.unstake(&context.user1, U128(ntoy(3))).await?;
     // User 3 deposits 10N
-    context
-        .deposit_direct_stake(&context.user3, ntoy(10))
-        .await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
 
     // User 3 unstakes 5N
     context.unstake(&context.user3, U128(ntoy(5))).await?;
     // User 1 deposits 10N
-    context
-        .deposit_direct_stake(&context.user1, ntoy(10))
-        .await?;
+    context.deposit(&context.user1, ntoy(10)).await?;
     // User 2 deposits 10N
-    context
-        .deposit_direct_stake(&context.user2, ntoy(10))
-        .await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
     // User 2 unstakes 10N
     context.unstake(&context.user2, U128(ntoy(10))).await?;
     // User 1 unstaked 10N
@@ -1367,9 +1400,9 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         nearx_state.last_reconcilation_epoch
     );
     assert_eq!(nearx_state.last_reconcilation_epoch, U64(0));
-    assert_eq!(nearx_state.total_staked, U128(ntoy(22)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(22)));
-    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(37)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(37)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(50)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(28)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
@@ -1420,7 +1453,7 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     assert_eq!(user3_token_balance, U128(ntoy(5)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(22)));
+    assert_eq!(total_token_supply, U128(ntoy(37)));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -1431,9 +1464,9 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     let stake_pool_contract_balance_2 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(20)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(20)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(10)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1453,7 +1486,7 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(20)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1469,7 +1502,7 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(20)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1485,13 +1518,42 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(10)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
+
+    // now run epoch stake
+    context.epoch_stake().await?;
+
+    let stake_pool_contract_balance_0 = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
+        .await?;
+    let stake_pool_contract_balance_1 = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(1))
+        .await?;
+    let stake_pool_contract_balance_2 = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
+        .await?;
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(27)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(ntoy(27)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     // now we run unstake epoch
     let res = context.epoch_unstake().await?;
@@ -1511,8 +1573,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         .get_stake_pool_total_unstaked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_unstaked_balance_0, U128(ntoy(20)));
-    assert_eq!(stake_pool_contract_unstaked_balance_1, U128(ntoy(8)));
+    assert_eq!(stake_pool_contract_unstaked_balance_0, U128(ntoy(0)));
+    assert_eq!(stake_pool_contract_unstaked_balance_1, U128(ntoy(0)));
     assert_eq!(stake_pool_contract_unstaked_balance_2, U128(ntoy(0)));
 
     let stake_pool_contract_balance_0 = context
@@ -1538,9 +1600,9 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         stake_pool_contract_balance_2
     );
 
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(0)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(12)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(10)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(27)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1565,10 +1627,10 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
-            unstaked: U128(ntoy(20)),
+            staked: U128(ntoy(27)),
+            unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
-            last_unstake_start_epoch: current_epoch,
+            last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
@@ -1581,10 +1643,10 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(12)),
-            unstaked: U128(ntoy(8)),
+            staked: U128(ntoy(5)),
+            unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
-            last_unstake_start_epoch: current_epoch,
+            last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
@@ -1597,7 +1659,7 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(10)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1611,20 +1673,49 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         "epoch_withdraw for val 0 {:?}",
         context.get_stake_pool_contract(0).id()
     );
-    context
-        .epoch_withdraw(context.get_stake_pool_contract(0).id().clone())
-        .await?;
-    println!("epoch_withdraw for val 1");
-    context
-        .epoch_withdraw(context.get_stake_pool_contract(1).id().clone())
-        .await?;
 
-    let user1_call = context.withdraw_all(&context.user1).await?;
-    let user2_call = context.withdraw_all(&context.user2).await?;
-    let user3_call = context.withdraw_all(&context.user3).await?;
-    assert!(user1_call.is_success());
-    assert!(user2_call.is_success());
-    assert!(user3_call.is_success());
+    if validator1_info.unstaked.0 != 0 {
+        context
+            .epoch_withdraw(context.get_stake_pool_contract(0).id().clone())
+            .await?;
+        println!("epoch_withdraw for val 1");
+    }
+
+    if validator2_info.unstaked.0 != 0 {
+        context
+            .epoch_withdraw(context.get_stake_pool_contract(1).id().clone())
+            .await?;
+    }
+
+    let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        user1_balance_after_withdraw - user1_balance_before_withdraw,
+        ntoy(13),
+        ntoy(1)
+    ));
+
+    let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user2).await?;
+    let user2_balance_after_withdraw = context.user2.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        user2_balance_after_withdraw - user2_balance_before_withdraw,
+        ntoy(10),
+        ntoy(1)
+    ));
+
+    let user3_balance_before_withdraw = context.user3.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user3).await?;
+    let user3_balance_after_withdraw = context.user3.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        user3_balance_after_withdraw - user3_balance_before_withdraw,
+        ntoy(5),
+        ntoy(1)
+    ));
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
@@ -1709,8 +1800,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         nearx_state.last_reconcilation_epoch
     );
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch);
-    assert_eq!(nearx_state.total_staked, U128(ntoy(52)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(52)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(67)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(67)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -1725,8 +1816,8 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
     );
     let current_epoch = context.get_current_epoch().await?;
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch);
-    assert_eq!(nearx_state.total_staked, U128(ntoy(52)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(52)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(67)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(67)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -1755,9 +1846,9 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
         stake_pool_contract_balance_2
     );
 
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(30)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(12)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(10)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(27)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(35)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1782,10 +1873,10 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(30)),
+            staked: U128(ntoy(27)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
-            last_unstake_start_epoch: last_unstake_epoch,
+            last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
@@ -1798,10 +1889,10 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(12)),
+            staked: U128(ntoy(35)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
-            last_unstake_start_epoch: last_unstake_epoch,
+            last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
@@ -1814,7 +1905,7 @@ async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(10)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1895,12 +1986,12 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
     assert_eq!(user3_token_balance, U128(ntoy(5)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(32)));
+    assert_eq!(total_token_supply, U128(ntoy(47)));
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.last_reconcilation_epoch, U64(0));
-    assert_eq!(nearx_state.total_staked, U128(ntoy(32)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(32)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(47)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(47)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(50)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(18)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
@@ -1915,9 +2006,9 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
     let stake_pool_contract_balance_2 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(0)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(0)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(0)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -1937,7 +2028,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1953,7 +2044,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -1969,7 +2060,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2007,7 +2098,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(32)),
+            staked: U128(ntoy(37)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2023,7 +2114,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2039,7 +2130,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2057,9 +2148,9 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(32)));
-    assert_eq!(stake_pool_contract_balance_1, U128(0));
-    assert_eq!(stake_pool_contract_balance_2, U128(0));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(37)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let stake_pool_contract_unstaked_balance_0 = context
         .get_stake_pool_total_unstaked_amount(context.get_stake_pool_contract(0))
@@ -2110,7 +2201,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(32)),
+            staked: U128(ntoy(37)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2126,7 +2217,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2142,7 +2233,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
                 .clone()
                 .parse()
                 .unwrap(),
-            staked: U128(ntoy(0)),
+            staked: U128(ntoy(5)),
             unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
@@ -2150,22 +2241,37 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
         }
     );
 
-    // User withdraws before withdrawable time
-    // let user1_call = context.withdraw_all(&context.user1).await?;
-    // let user2_call = context.withdraw_all(&context.user2).await?;
-    // let user3_call = context.withdraw_all(&context.user3).await?;
-    // assert!(user1_call.is_failure());
-    // assert!(user2_call.is_failure());
-    // assert!(user3_call.is_failure());
-
     context.worker.fast_forward(5000).await?;
 
+    let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?;
     let user1_call = context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?;
+
+    assert!(abs_diff_eq(
+        user1_balance_after_withdraw.balance - user1_balance_before_withdraw.balance,
+        ntoy(3),
+        ntoy(1)
+    ));
+
+    let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?;
     let user2_call = context.withdraw_all(&context.user2).await?;
+    let user2_balance_after_withdraw = context.user2.view_account(&context.worker).await?;
+
+    assert!(abs_diff_eq(
+        user2_balance_after_withdraw.balance - user2_balance_before_withdraw.balance,
+        ntoy(10),
+        ntoy(1)
+    ));
+
+    let user3_balance_before_withdraw = context.user3.view_account(&context.worker).await?;
     let user3_call = context.withdraw_all(&context.user3).await?;
-    assert!(user1_call.is_success());
-    assert!(user2_call.is_success());
-    assert!(user3_call.is_success());
+    let user3_balance_after_withdraw = context.user3.view_account(&context.worker).await?;
+
+    assert!(abs_diff_eq(
+        user3_balance_after_withdraw.balance - user3_balance_before_withdraw.balance,
+        ntoy(5),
+        ntoy(1)
+    ));
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
@@ -2252,9 +2358,9 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(0)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(5)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -2266,13 +2372,13 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_balance_0, U128(0));
-    assert_eq!(stake_pool_contract_balance_1, U128(0));
-    assert_eq!(stake_pool_contract_balance_2, U128(0));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
 
@@ -2282,7 +2388,7 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(
@@ -2302,9 +2408,9 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(30)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(0)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(0)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(35)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     Ok(())
 }
@@ -2359,9 +2465,9 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(0)));
-    assert_eq!(validator2_info.staked, U128(ntoy(0)));
-    assert_eq!(validator3_info.staked, U128(ntoy(0)));
+    assert_eq!(validator1_info.staked, U128(ntoy(5)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let stake_pool_contract_balance_0 = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -2373,13 +2479,13 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_balance_0, U128(0));
-    assert_eq!(stake_pool_contract_balance_1, U128(0));
-    assert_eq!(stake_pool_contract_balance_2, U128(0));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
 
@@ -2389,7 +2495,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(30)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(
@@ -2409,9 +2515,9 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
         .await?;
 
-    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(30)));
-    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(0)));
-    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(0)));
+    assert_eq!(stake_pool_contract_balance_0, U128(ntoy(35)));
+    assert_eq!(stake_pool_contract_balance_1, U128(ntoy(5)));
+    assert_eq!(stake_pool_contract_balance_2, U128(ntoy(5)));
 
     // User 1 and User 2 unstake 5 NEAR each
     context.unstake(&context.user1, U128(ntoy(5))).await?;
@@ -2467,12 +2573,12 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     assert_eq!(user3_token_balance, U128(ntoy(10)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(20)));
+    assert_eq!(total_token_supply, U128(ntoy(35)));
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(10)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(20)));
-    assert_eq!(nearx_state.total_staked, U128(ntoy(20)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(35)));
 
     context.worker.fast_forward(5000).await?;
 
@@ -2490,8 +2596,8 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(20)));
-    assert_eq!(nearx_state.total_staked, U128(ntoy(20)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(35)));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
 
     let current_epoch = context.get_current_epoch().await?;
@@ -2499,7 +2605,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(20)));
+    assert_eq!(validator1_info.staked, U128(ntoy(25)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(10)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch);
 
@@ -2517,12 +2623,12 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
 
     context.worker.fast_forward(5000).await?;
 
-    let initial_contract_balance = context
+    let balance_before_withdraw = context
         .nearx_contract
         .view_account(&context.worker)
         .await?
         .balance;
-    println!("initial contract balance is {:?}", initial_contract_balance);
+    println!("initial contract balance is {:?}", balance_before_withdraw);
     let res = context
         .epoch_withdraw(context.get_stake_pool_contract(0).id().clone())
         .await?;
@@ -2532,10 +2638,11 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         .await?
         .balance;
     println!("balance after withdraw is {:?}", balance_after_withdraw);
-    // assert!(is_close(
-    //     balance_after_withdraw - initial_contract_balance,
-    //     10 * ONE_NEAR
-    // ));
+    assert!(abs_diff_eq(
+        balance_after_withdraw - balance_before_withdraw,
+        ntoy(10),
+        ntoy(1)
+    ));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -2550,8 +2657,6 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         validator_unstaked_balance
     );
     assert_eq!(validator_unstaked_balance, U128(ntoy(0)));
-
-    println!("total gas burnt is {:?}", res.total_gas_burnt);
 
     // User withdraw flow
     let user1_balance = context.user1.view_account(&context.worker).await?.balance;
@@ -2568,10 +2673,12 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         "diff in user balance after withdrawal is {:?}",
         ((user1_balance_after_withdrawal) - user1_balance)
     );
-    // assert!(is_close(
-    //     user1_balance_after_withdrawal - user1_balance,
-    //     10 * ONE_NEAR
-    // ));
+
+    assert!(abs_diff_eq(
+        user1_balance_after_withdrawal - user1_balance,
+        ntoy(5),
+        ntoy(1)
+    ));
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     assert_eq!(user1_account.unstaked_balance, U128(ntoy(0)));
@@ -2591,10 +2698,11 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
         "diff in user balance after withdrawal is {:?}",
         ((user2_balance_after_withdrawal) - user2_balance)
     );
-    // assert!(is_close(
-    //     user2_balance_after_withdrawal - user2_balance,
-    //     10 * ONE_NEAR
-    // ));
+    assert!(abs_diff_eq(
+        user2_balance_after_withdrawal - user2_balance,
+        ntoy(5),
+        ntoy(1)
+    ));
 
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
     assert_eq!(user2_account.unstaked_balance, U128(ntoy(0)));
@@ -2616,28 +2724,24 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator2_info.staked, U128(0));
-    assert_eq!(validator3_info.staked, U128(0));
+    assert_eq!(validator1_info.staked, U128(ntoy(5)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     // Add user deposits
     println!("User 1 depositing");
-    context
-        .deposit_direct_stake(&context.user1, ntoy(10))
-        .await?;
+    context.deposit(&context.user1, ntoy(10)).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context
-        .deposit_direct_stake(&context.user2, ntoy(10))
-        .await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context
-        .deposit_direct_stake(&context.user3, ntoy(10))
-        .await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
     println!("User 3 successfully deposited");
+
+    context.epoch_stake().await?;
 
     let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
     let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
@@ -2670,17 +2774,17 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(10)));
-    assert_eq!(validator2_info.staked, U128(ntoy(10)));
-    assert_eq!(validator3_info.staked, U128(ntoy(10)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(30)));
+    assert_eq!(total_token_supply, U128(ntoy(45)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(0)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
 
     // Set reward fee to 10%
     context
@@ -2695,7 +2799,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
 
     // Add 30Near of rewards
     context
-        .add_stake_pool_rewards(U128(ntoy(30)), context.get_stake_pool_contract(0))
+        .add_stake_pool_rewards(U128(ntoy(45)), context.get_stake_pool_contract(0))
         .await?;
 
     // Get the operator details
@@ -2721,7 +2825,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         validator,
         ValidatorInfoResponse {
             account_id: validator.account_id.clone(),
-            staked: U128(ntoy(40)),
+            staked: U128(ntoy(80)),
             unstaked: U128(0),
             last_asked_rewards_epoch_height: context.get_current_epoch().await?,
             last_unstake_start_epoch: U64(0),
@@ -2730,9 +2834,9 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     );
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(60)));
-    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
+    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
 
     let operator_account = context
         .worker
@@ -2742,7 +2846,7 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
 
     assert_eq!(
         (current_operator_balance - previous_operator_balance),
-        ntoy(3)
+        4500000000000000000000000
     );
 
     let user1_token_balance = context
@@ -2767,24 +2871,25 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     assert_eq!(user2_staked_amount, U128(ntoy(20)));
     assert_eq!(user3_staked_amount, U128(ntoy(20)));
 
+    context.worker.fast_forward(1000).await?;
     // Deposit with NearX price > 1
     println!("User 1 depositing");
-    context
-        .deposit_direct_stake(&context.user1, ntoy(10))
-        .await?;
+    context.deposit(&context.user1, ntoy(10)).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context
-        .deposit_direct_stake(&context.user2, ntoy(10))
-        .await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context
-        .deposit_direct_stake(&context.user3, ntoy(10))
-        .await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
     println!("User 3 successfully deposited");
+
+    let nearx_state = context.get_nearx_state().await?;
+    println!("nearx_state is {:?}", nearx_state);
+
+    let res = context.epoch_stake().await?;
+    println!("res is {:?}", res);
 
     let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
     let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
@@ -2817,17 +2922,17 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(40)));
-    assert_eq!(validator2_info.staked, U128(ntoy(30)));
-    assert_eq!(validator3_info.staked, U128(ntoy(20)));
+    assert_eq!(validator1_info.staked, U128(ntoy(80)));
+    assert_eq!(validator2_info.staked, U128(ntoy(35)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(45)));
+    assert_eq!(total_token_supply, U128(ntoy(60)));
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
-    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(120)));
+    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(60)));
 
     // Autocompound in the same epoch
     let operator_account = context
@@ -2845,27 +2950,6 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         .view_account(&context.nearx_operator.id())
         .await?;
     let current_operator_balance = operator_account.balance;
-
-    let validator = context
-        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
-        .await?;
-    println!("validator is {:?}", validator);
-    assert_eq!(
-        validator,
-        ValidatorInfoResponse {
-            account_id: validator.account_id.clone(),
-            staked: U128(ntoy(40)),
-            unstaked: U128(0),
-            last_asked_rewards_epoch_height: context.get_current_epoch().await?,
-            last_unstake_start_epoch: U64(0),
-            paused: false
-        }
-    );
-
-    let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
-    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
 
     let nearx_price = context.get_nearx_price().await?;
     assert_eq!(nearx_price, U128(ntoy(2)));
@@ -2894,15 +2978,19 @@ async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
     println!("getting nearx_state");
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(0));
-    assert_eq!(nearx_state.total_staked, U128(0));
-    assert_eq!(nearx_state.total_stake_shares, U128(0));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(15)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(15)));
 
     println!("getting validator info");
     let validator_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    assert_eq!(validator_info.staked, U128(0));
-    assert_eq!(validator_info.last_asked_rewards_epoch_height, U64(0));
+    let current_epoch = context.get_current_epoch().await?;
+    assert_eq!(validator_info.staked, U128(ntoy(5)));
+    assert_eq!(
+        validator_info.last_asked_rewards_epoch_height,
+        current_epoch
+    );
 
     Ok(())
 }
@@ -2936,28 +3024,24 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator2_info.staked, U128(0));
-    assert_eq!(validator3_info.staked, U128(0));
+    assert_eq!(validator1_info.staked, U128(ntoy(5)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     println!("**** Simulating user deposits ****");
     println!("User 1 depositing");
-    context
-        .deposit_direct_stake(&context.user1, ntoy(10))
-        .await?;
+    context.deposit(&context.user1, ntoy(10)).await?;
     println!("User 1 successfully deposited");
 
     println!("User 2 depositing");
-    context
-        .deposit_direct_stake(&context.user2, ntoy(10))
-        .await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
     println!("User 2 successfully deposited");
 
     println!("User 3 depositing");
-    context
-        .deposit_direct_stake(&context.user3, ntoy(10))
-        .await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
     println!("User 3 successfully deposited");
+
+    context.epoch_stake().await?;
 
     println!("Checking user deposits after users have deposited");
     let user1_staked_amount = context.get_user_account(context.user1.id().clone()).await?;
@@ -2991,9 +3075,9 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
-    assert_eq!(validator1_info.staked, U128(ntoy(10)));
-    assert_eq!(validator2_info.staked, U128(ntoy(10)));
-    assert_eq!(validator3_info.staked, U128(ntoy(10)));
+    assert_eq!(validator1_info.staked, U128(ntoy(35)));
+    assert_eq!(validator2_info.staked, U128(ntoy(5)));
+    assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let nearx_price = context.get_nearx_price().await?;
     println!("nearx_price is {:?}", nearx_price);
@@ -3001,10 +3085,10 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
 
     let total_staked_amount = context.get_total_staked_amount().await?;
     println!("total_staked_amount is {:?}", total_staked_amount);
-    assert_eq!(total_staked_amount, U128(ntoy(30)));
+    assert_eq!(total_staked_amount, U128(ntoy(45)));
 
     let total_tokens_minted = context.get_total_tokens_supply().await?;
-    assert_eq!(total_tokens_minted, U128(ntoy(30)));
+    assert_eq!(total_tokens_minted, U128(ntoy(45)));
 
     // Second test
     // Test token transfers
@@ -3052,10 +3136,10 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     assert_eq!(nearx_price, U128(ntoy(1)));
 
     let total_staked_amount = context.get_total_staked_amount().await?;
-    assert_eq!(total_staked_amount, U128(ntoy(30)));
+    assert_eq!(total_staked_amount, U128(ntoy(45)));
 
     let total_tokens_minted = context.get_total_tokens_supply().await?;
-    assert_eq!(total_tokens_minted, U128(ntoy(30)));
+    assert_eq!(total_tokens_minted, U128(ntoy(45)));
 
     println!("**** Step 4: Auto compounding ****");
 
@@ -3066,7 +3150,13 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
 
     // Adding rewards
     context
-        .add_stake_pool_rewards(U128(ntoy(30)), context.get_stake_pool_contract(0))
+        .add_stake_pool_rewards(U128(ntoy(35)), context.get_stake_pool_contract(0))
+        .await?;
+    context
+        .add_stake_pool_rewards(U128(ntoy(5)), context.get_stake_pool_contract(1))
+        .await?;
+    context
+        .add_stake_pool_rewards(U128(ntoy(5)), context.get_stake_pool_contract(2))
         .await?;
 
     // restake_staking_pool(&worker, &stake_pool_contract).await?;
@@ -3077,13 +3167,19 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     context
         .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
+    context
+        .auto_compound_rewards(context.get_stake_pool_contract(1).id())
+        .await?;
+    context
+        .auto_compound_rewards(context.get_stake_pool_contract(2).id())
+        .await?;
     //
     let nearx_price = context.get_nearx_price().await?;
     // println!("nearx_price is {:?}", nearx_price);
     assert_eq!(nearx_price, U128(ntoy(2)));
 
     let total_tokens_minted = context.get_total_tokens_supply().await?;
-    assert_eq!(total_tokens_minted, U128(ntoy(30)));
+    assert_eq!(total_tokens_minted, U128(ntoy(45)));
 
     let user1_staked_amount = context.get_user_deposit(context.user1.id().clone()).await?;
     let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
@@ -3107,26 +3203,55 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
     assert_eq!(user2_token_balance, U128(ntoy(12)));
     assert_eq!(user3_token_balance, U128(ntoy(12)));
 
-    let validator = context
+    let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    println!("validator is {:?}", validator);
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    let current_epoch = context.get_current_epoch().await?;
+    println!("validator1 is {:?}", validator1_info);
     assert_eq!(
-        validator,
+        validator1_info,
         ValidatorInfoResponse {
-            account_id: validator.account_id.clone(),
-            staked: U128(ntoy(40)),
+            account_id: validator1_info.account_id.clone(),
+            staked: U128(ntoy(70)),
             unstaked: U128(0),
-            last_asked_rewards_epoch_height: context.get_current_epoch().await?,
+            last_asked_rewards_epoch_height: current_epoch,
+            last_unstake_start_epoch: U64(0),
+            paused: false
+        }
+    );
+    assert_eq!(
+        validator2_info,
+        ValidatorInfoResponse {
+            account_id: validator2_info.account_id.clone(),
+            staked: U128(ntoy(10)),
+            unstaked: U128(0),
+            last_asked_rewards_epoch_height: current_epoch,
+            last_unstake_start_epoch: U64(0),
+            paused: false
+        }
+    );
+    assert_eq!(
+        validator3_info,
+        ValidatorInfoResponse {
+            account_id: validator3_info.account_id.clone(),
+            staked: U128(ntoy(10)),
+            unstaked: U128(0),
+            last_asked_rewards_epoch_height: current_epoch,
             last_unstake_start_epoch: U64(0),
             paused: false
         }
     );
 
     let nearx_state = context.get_nearx_state().await?;
-    assert_eq!(nearx_state.total_staked, U128(ntoy(60)));
-    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(30)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(30)));
+    assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
+    assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
 
     println!("nearx_state after auto compounding is {:?}", nearx_state);
 

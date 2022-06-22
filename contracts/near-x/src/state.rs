@@ -1,5 +1,4 @@
 use crate::constants::NUM_EPOCHS_TO_UNLOCK;
-use crate::contract::OperationControls;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,

@@ -136,6 +136,12 @@ impl NearxPool {
         unimplemented!();
     }
 
+    #[payable]
+    pub fn manager_deposit_and_stake(&mut self) {
+        self.assert_owner_calling();
+        self.internal_manager_deposit_and_stake(env::attached_deposit());
+    }
+
     /// Deposits the attached amount into the inner account of the predecessor and stakes it.
     #[payable]
     pub fn deposit_and_stake_direct_stake(&mut self) {
