@@ -165,6 +165,8 @@ impl NearxPool {
             rewards
         );
 
+        self.internal_update_validator(&validator_info.account_id, &validator_info);
+
         if rewards > 0 {
             //updated accumulated_staked_rewards value for the contract
             self.accumulated_staked_rewards += rewards;
@@ -478,8 +480,6 @@ impl NearxPool {
         validator_info.unstake_start_epoch = env::epoch_height();
 
         self.internal_update_validator(&validator, &validator_info);
-
-        // TODO - setup events
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)

@@ -11,42 +11,6 @@ use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, Pr
 
 #[near_bindgen]
 impl NearxPool {
-    /// mints NearX based on user's deposited amount and current NearX price
-    #[private]
-    pub(crate) fn internal_deposit_and_stake_direct_stake(&mut self, user_amount: Balance) {
-        self.assert_min_deposit_amount(user_amount);
-
-        self.assert_staking_not_paused();
-
-        let account_id = env::predecessor_account_id();
-
-        // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
-        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
-        require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
-
-        let selected_validator = self.get_validator_to_stake();
-        require!(selected_validator.is_some(), ERROR_ALL_VALIDATORS_ARE_BUSY);
-
-        let selected_validator = selected_validator.unwrap();
-
-        //schedule async deposit_and_stake on that pool
-        ext_staking_pool::ext(selected_validator.account_id.clone())
-            .with_static_gas(gas::DEPOSIT_AND_STAKE)
-            .with_attached_deposit(user_amount)
-            .deposit_and_stake()
-            .then(
-                ext_staking_pool_callback::ext(env::current_account_id())
-                    .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake_direct(
-                        selected_validator,
-                        user_amount,
-                        num_shares,
-                        account_id,
-                    ),
-            );
-    }
-
     #[private]
     pub fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
         let account_id = env::predecessor_account_id();
@@ -233,80 +197,6 @@ impl NearxPool {
         .emit();
 
         Promise::new(account_id).transfer(amount);
-    }
-
-    #[private]
-    pub fn on_stake_pool_deposit_and_stake_direct(
-        &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
-        amount: u128,
-        shares: u128,
-        user: AccountId,
-    ) -> PromiseOrValue<bool> {
-        let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
-        let mut transfer_funds = false;
-
-        if is_promise_success() {
-            validator_info.staked += amount;
-            acc.stake_shares += shares;
-            self.total_stake_shares += shares;
-            self.total_staked += amount;
-            log!(
-                "Successfully staked {} into {}",
-                amount,
-                validator_info.account_id
-            );
-        } else {
-            log!(
-                "Failed to stake {} into {}",
-                amount,
-                validator_info.account_id
-            );
-            transfer_funds = true;
-        }
-
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
-        self.internal_update_account(&user, acc);
-
-        if transfer_funds {
-            log!("Transfering back {} to {} after stake failed", amount, user);
-            PromiseOrValue::Promise(Promise::new(user).transfer(amount))
-        } else {
-            log!("Reconciling total staked balance");
-            // Reconcile the total staked amount to the right value
-            ext_staking_pool::ext(validator_info.account_id.clone())
-                .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
-                .with_attached_deposit(NO_DEPOSIT)
-                .get_account_staked_balance(env::current_account_id())
-                .then(
-                    ext_staking_pool_callback::ext(env::current_account_id())
-                        .with_attached_deposit(NO_DEPOSIT)
-                        .with_static_gas(gas::ON_GET_SP_STAKED_BALANCE_TO_RECONCILE)
-                        .on_get_sp_staked_balance_reconcile(validator_info, amount),
-                );
-            PromiseOrValue::Value(true)
-        }
-    }
-
-    #[private]
-    pub fn on_get_sp_staked_balance_reconcile(
-        &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
-        amount_actually_staked: u128,
-        #[callback] total_staked_balance: U128,
-    ) {
-        log!("Actual staked amount is {}", amount_actually_staked);
-
-        // difference in staked amount and actual staked amount
-        let difference_in_amount = validator_info.staked.saturating_sub(total_staked_balance.0);
-        // Reconcile the total staked with the actual total staked amount
-        self.total_staked -= difference_in_amount;
-        log!("Reconciled total staked to {}", self.total_staked);
-
-        // Reconcile the stake pools total staked with the total staked balance
-        validator_info.staked = total_staked_balance.0;
-
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
     }
 
     #[private]
