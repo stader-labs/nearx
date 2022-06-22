@@ -436,7 +436,7 @@ impl NearxPool {
     }
 
     pub fn drain_unstake(&mut self, validator: AccountId) {
-        self.assert_owner_calling();
+        self.assert_operator_or_owner();
 
         let min_gas = DRAIN_UNSTAKE + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
         require!(
@@ -517,7 +517,7 @@ impl NearxPool {
 
     /// Withdraw from a drained validator
     pub fn drain_withdraw(&mut self, validator: AccountId) {
-        self.assert_owner_calling();
+        self.assert_operator_or_owner();
 
         // make sure enough gas was given
         let min_gas = DRAIN_WITHDRAW + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;

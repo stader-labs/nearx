@@ -240,11 +240,6 @@ impl NearxPool {
         .emit();
     }
 
-    pub fn toggle_staking_pause(&mut self) {
-        self.assert_operator_or_owner();
-        self.operations_control.stake_paused = !self.operations_control.stake_paused;
-    }
-
     // Owner update methods
     #[payable]
     pub fn set_owner(&mut self, new_owner: AccountId) {
