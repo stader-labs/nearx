@@ -11,6 +11,89 @@ use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 
+/// User flow specific integration tests
+#[tokio::test]
+async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() -> anyhow::Result<()>
+{
+    let context = IntegrationTestContext::new(3).await?;
+
+    let current_epoch_1 = context.get_current_epoch().await?;
+
+    // user 1 deposits 10N
+    println!("user1_depositing 10N");
+    context.deposit(&context.user1, ntoy(10)).await?;
+    // user 2 deposits 5N
+    println!("user2 depositing 5N");
+    context.deposit(&context.user2, ntoy(5)).await?;
+    // user 1 unstakes 5N
+    println!("User 1 unstake 5N");
+    context.unstake(&context.user1, U128(ntoy(5))).await?;
+    // user 3 deposits 2N
+    println!("User 3 depositing 2N");
+    context.deposit(&context.user3, ntoy(2)).await?;
+    // User 2 unstakes 1N
+    println!("user 1 unstake 1N");
+    context.unstake(&context.user2, U128(ntoy(1))).await?;
+
+    // User 1 transfers 4N to user 3
+    println!("User 1 transfers 4N to user 3");
+    context
+        .ft_transfer(&context.user1, &context.user3, ntoy(4).to_string())
+        .await?;
+
+    // User 3 unstakes 4N
+    println!("User 3 unstakes 4N");
+    context.unstake(&context.user3, U128(ntoy(4))).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(22)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(22)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(17)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(10)));
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+    println!("user1_account is {:?}", user1_account);
+    println!("user2_account is {:?}", user2_account);
+    println!("user3_account is {:?}", user3_account);
+
+    assert_eq!(
+        user1_account,
+        AccountResponse {
+            account_id: user1_account.account_id.clone(),
+            unstaked_balance: U128(ntoy(5)),
+            staked_balance: U128(ntoy(1)),
+            withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
+        }
+    );
+    assert_eq!(
+        user2_account,
+        AccountResponse {
+            account_id: user2_account.account_id.clone(),
+            unstaked_balance: U128(ntoy(1)),
+            staked_balance: U128(ntoy(4)),
+            withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
+        }
+    );
+    assert_eq!(
+        user3_account,
+        AccountResponse {
+            account_id: user3_account.account_id.clone(),
+            unstaked_balance: U128(ntoy(4)),
+            staked_balance: U128(ntoy(2)),
+            withdrawable_epoch: U64(current_epoch_1.0 + NUM_EPOCHS_TO_UNLOCK)
+        }
+    );
+
+    // Run user epoch
+    println!("Running epoch methods!");
+    context.run_epoch_methods().await?;
+
+    Ok(())
+}
+
+/// Fuzzy integration tests
 #[tokio::test]
 async fn test_validator_balance_sync() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;

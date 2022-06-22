@@ -28,7 +28,7 @@ pub struct NearxPoolStateResponse {
     /// how many "shares" were minted. Every time someone "stakes" he "buys pool shares" with the staked amount
     // the buy share price is computed so if she "sells" the shares on that moment she recovers the same near amount
     // staking produces rewards, rewards are added to total_for_staking so share_price will increase with rewards
-    // share_price = total_for_staking/total_shares
+    // share_price = total_staked/total_shares
     pub total_stake_shares: U128, //total NearX minted
 
     pub accumulated_staked_rewards: U128,
