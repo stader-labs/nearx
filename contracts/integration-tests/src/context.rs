@@ -126,6 +126,43 @@ impl IntegrationTestContext<Sandbox> {
         })
     }
 
+    pub async fn run_epoch_methods(&self) -> anyhow::Result<()> {
+        // Run the autocompounding epoch
+        for i in 0..self.validator_count {
+            self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
+                .await?;
+        }
+
+        // Run the staking epoch
+        self.epoch_stake().await?;
+
+        // Run the unstaking epoch
+        let mut res = true;
+        while res {
+            res = self.epoch_unstake().await?.json::<bool>().unwrap();
+        }
+
+        // Run the withdraw epoch
+        for i in 0..self.validator_count {
+            let validator_info = self
+                .get_validator_info(self.get_stake_pool_contract(i).id().clone())
+                .await?;
+
+            if validator_info.unstaked.0 != 0 {
+                self.epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
+                    .await?;
+            }
+        }
+
+        // Run the validator balance syncing epoch
+        for i in 0..self.validator_count {
+            self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
+                .await?;
+        }
+
+        Ok(())
+    }
+
     pub fn get_stake_pool_contract(&self, validator_idx: u32) -> &Contract {
         let validator_account_id = get_validator_account_id(validator_idx);
         self.validator_to_stake_pool_contract
