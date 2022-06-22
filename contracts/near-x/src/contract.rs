@@ -7,9 +7,25 @@ use near_sdk::json_types::U128;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::UnorderedMap,
-    env, ext_contract, near_bindgen, AccountId, Balance, EpochHeight, PanicOnDefault, Promise,
-    PromiseOrValue, PublicKey,
+    env, ext_contract, near_bindgen,
+    serde::{Deserialize, Serialize},
+    AccountId, Balance, EpochHeight, PanicOnDefault, Promise, PromiseOrValue, PublicKey,
 };
+
+#[derive(
+    Debug, BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, Copy, PartialEq,
+)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OperationControls {
+    pub stake_paused: bool,
+    pub unstaked_paused: bool,
+    pub withdraw_paused: bool,
+    pub epoch_stake_paused: bool,
+    pub epoch_unstake_paused: bool,
+    pub epoch_withdraw_paused: bool,
+    pub epoch_autocompounding_paused: bool,
+    pub sync_validator_balance_paused: bool,
+}
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -56,7 +72,7 @@ pub struct NearxPool {
     pub temp_owner: Option<AccountId>,
 
     // Operations control
-    pub stake_paused: bool,
+    pub operations_control: OperationControls,
 }
 
 //self-callbacks
@@ -66,6 +82,14 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     // TODO - refactor codebase to use accountid instead of validator info
     fn on_stake_pool_deposit_and_stake_direct(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+        shares: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool>;
+
+    fn on_stake_pool_deposit_and_stake_manager(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,
@@ -110,7 +134,7 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_stake_pool_get_account(
         &mut self,
-        validator_info: ValidatorInfo,
+        validator_id: AccountId,
         #[callback] account: HumanReadableAccount,
     );
 }

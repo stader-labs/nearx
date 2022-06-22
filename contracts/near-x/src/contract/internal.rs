@@ -46,6 +46,72 @@ impl NearxPool {
             );
     }
 
+    #[private]
+    pub fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
+        let account_id = env::predecessor_account_id();
+
+        // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
+        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
+        require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
+
+        let selected_validator = self.get_validator_to_stake();
+        require!(selected_validator.is_some(), ERROR_ALL_VALIDATORS_ARE_BUSY);
+
+        let selected_validator = selected_validator.unwrap();
+
+        //schedule async deposit_and_stake on that pool
+        ext_staking_pool::ext(selected_validator.account_id.clone())
+            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .with_attached_deposit(user_amount)
+            .deposit_and_stake()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
+                    .on_stake_pool_deposit_and_stake_manager(
+                        selected_validator,
+                        user_amount,
+                        num_shares,
+                        account_id,
+                    ),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_deposit_and_stake_manager(
+        &mut self,
+        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
+        amount: u128,
+        shares: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool> {
+        let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
+
+        if is_promise_success() {
+            validator_info.staked += amount;
+            acc.stake_shares += shares;
+            self.total_stake_shares += shares;
+            self.total_staked += amount;
+            log!(
+                "Successfully staked {} into {}",
+                amount,
+                validator_info.account_id
+            );
+            self.internal_update_validator(&validator_info.account_id, &validator_info);
+            self.internal_update_account(&user, acc);
+            PromiseOrValue::Value(true)
+        } else {
+            log!(
+                "Failed to stake {} into {}",
+                amount,
+                validator_info.account_id
+            );
+            self.contract_lock = false;
+            log!("Transfering back {} to {} after stake failed", amount, user);
+            PromiseOrValue::Promise(Promise::new(user).transfer(amount))
+        }
+    }
+
     // TODO - bchain - I think this is better than the direct stake
     pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();
@@ -74,7 +140,8 @@ impl NearxPool {
             amount: U128(amount),
             minted_stake_shares: U128(num_shares),
             new_stake_shares: U128(account.stake_shares),
-        }.emit();
+        }
+        .emit();
     }
 
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
@@ -127,7 +194,8 @@ impl NearxPool {
             new_unstaked_balance: U128(account.unstaked_amount),
             new_stake_shares: U128(account.stake_shares),
             unstaked_available_epoch_height: account.withdrawable_epoch_height,
-        }.emit();
+        }
+        .emit();
     }
 
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
@@ -158,7 +226,8 @@ impl NearxPool {
             account_id: account_id.clone(),
             amount: U128(amount),
             new_unstaked_balance: U128(account.unstaked_amount),
-        }.emit();
+        }
+        .emit();
 
         Promise::new(account_id).transfer(amount);
     }
@@ -273,7 +342,6 @@ impl NearxPool {
             return amount;
         }
 
-
         ((U256::from(self.total_stake_shares) * U256::from(amount)
             + U256::from(self.total_staked - 1))
             / U256::from(self.total_staked))
@@ -346,7 +414,7 @@ impl NearxPool {
         for validator in self.validator_info_map.values() {
             total_staked_amount += validator.staked;
 
-            if !validator.pending_unstake_release() && validator.staked > 0 {
+            if !validator.paused() && !validator.pending_unstake_release() && validator.staked > 0 {
                 available_amount += validator.staked;
             }
 

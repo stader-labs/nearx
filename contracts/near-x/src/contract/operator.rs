@@ -15,6 +15,8 @@ use near_sdk::{env, log, near_bindgen, require, ONE_NEAR};
 impl NearxPool {
     // keep calling this method until false is return
     pub fn epoch_stake(&mut self) -> bool {
+        self.assert_epoch_stake_not_paused();
+
         // make sure enough gas was given
         // TODO - bchain - scope the gas into a module to make these constants more readable
         let min_gas =
@@ -100,6 +102,8 @@ impl NearxPool {
     }
 
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
+        self.assert_epoch_autocompounding_not_paused();
+
         let min_gas = AUTOCOMPOUND_EPOCH
             + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
             + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
@@ -189,6 +193,8 @@ impl NearxPool {
     }
 
     pub fn epoch_unstake(&mut self) -> bool {
+        self.assert_epoch_unstake_not_paused();
+
         let min_gas = UNSTAKE_EPOCH + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
@@ -280,6 +286,8 @@ impl NearxPool {
     }
 
     pub fn epoch_withdraw(&mut self, validator: AccountId) {
+        self.assert_epoch_withdraw_not_paused();
+
         // make sure enough gas was given
         let min_gas = WITHDRAW_EPOCH + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
         require!(
@@ -326,8 +334,7 @@ impl NearxPool {
     #[private]
     pub fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128) {
         if !is_promise_success() {
-            let mut validator_info =
-                self.internal_get_validator(&validator_info.account_id);
+            let mut validator_info = self.internal_get_validator(&validator_info.account_id);
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
@@ -357,6 +364,8 @@ impl NearxPool {
     }
 
     pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
+        self.assert_sync_validator_balance_not_paused();
+
         let min_gas = SYNC_VALIDATOR_EPOCH
             + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
             + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
@@ -375,7 +384,7 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB)
-                    .on_stake_pool_get_account(validator_info),
+                    .on_stake_pool_get_account(validator_info.account_id),
             );
     }
 

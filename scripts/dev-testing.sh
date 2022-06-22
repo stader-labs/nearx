@@ -19,11 +19,21 @@ STAKE_POOL_11=stakely_v2.pool.f863973.m0
 # add some validators
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID
+
+for i in {1..10};
+do near call $CONTRACT_NAME manager_deposit_and_stake --accountId=$ID --amount=3 --gas=300000000000000;
+done;
+
+near call $CONTRACT_NAME unstake '{"amount": "3000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 # 10 deposits
 for i in {1..10};
-do near call $CONTRACT_NAME deposit_and_stake_direct_stake --accountId=$ID --amount=1 --gas=300000000000000;
+do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
+
+# epoch stake
+near call $CONTRACT_NAME epoch_stake --accountId=$ID --gas=300000000000000;
 
 # get contract state
 near view $CONTRACT_NAME get_nearx_pool_state
@@ -42,9 +52,9 @@ near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_1"'"}'
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
 
 # Reward distribution
-near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
-near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
-near call $CONTRACT_NAME autocompound_rewards '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
 
 near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
 near view $CONTRACT_NAME ft_total_supply
