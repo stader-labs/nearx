@@ -300,14 +300,14 @@ impl NearxPool {
 
         let amount = validator_info.unstaked_amount;
 
-        validator_info.unstaked_amount = 0;
+        validator_info.unstaked_amount -= amount;
 
         self.internal_update_validator(&validator, &validator_info);
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
             .with_attached_deposit(NO_DEPOSIT)
-            .withdraw_all()
+            .withdraw(U128(amount))
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
@@ -540,14 +540,14 @@ impl NearxPool {
         );
 
         let amount = validator_info.unstaked_amount;
-        validator_info.unstaked_amount = 0;
+        validator_info.unstaked_amount -= amount;
 
         self.internal_update_validator(&validator, &validator_info);
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
             .with_attached_deposit(NO_DEPOSIT)
-            .withdraw_all()
+            .withdraw(U128(amount))
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
