@@ -81,7 +81,6 @@ pub struct NearxPool {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
-    // TODO - refactor codebase to use accountid instead of validator info
     fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         validator_info: ValidatorInfo,

@@ -75,7 +75,6 @@ impl NearxPool {
         }
     }
 
-    // TODO - bchain - I think this is better than the direct stake
     #[private]
     pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();

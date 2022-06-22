@@ -1,5 +1,3 @@
-// TODO - refactor this to a module
-
 pub const ERROR_VALIDATOR_IS_BUSY: &str = "Validator is busy";
 pub const ERROR_ALL_VALIDATORS_ARE_BUSY: &str = "All validators are busy";
 pub const ERROR_DEPOSIT_SHOULD_BE_GREATER_THAN_ZERO: &str = "Deposit should be greater than 0";

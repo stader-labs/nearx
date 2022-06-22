@@ -27,8 +27,6 @@ uint::construct_uint! {
 pub mod gas {
     use near_sdk::Gas;
 
-    // TODO - bchain - refactor this module
-
     /// Gas attached to deposit call on the staking pool contract.
     pub const DEPOSIT_AND_STAKE: Gas = base_gas(3);
 
@@ -60,7 +58,6 @@ pub mod gas {
     pub const ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB: Gas = base_gas(1);
 
     /// Gas attached to the inner callback for processing result of the call to get the current total balance from the staking pool.
-    /// TODO - bchain - see if we can refactor this
     pub const ON_GET_SP_STAKED_BALANCE_TO_RECONCILE: Gas = tera(5);
 
     pub const ON_STAKE_POOL_WITHDRAW_ALL: Gas = base_gas(3);

@@ -618,8 +618,6 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
     assert_eq!(validator3_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.last_unstake_start_epoch, U64(0));
 
-    // TODO - bchain check for unstaked balance
-
     context.epoch_unstake().await?;
 
     let nearx_state = context.get_nearx_state().await?;
