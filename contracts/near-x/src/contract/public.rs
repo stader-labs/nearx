@@ -184,7 +184,7 @@ impl NearxPool {
        Staking pool addition and deletion
     */
     pub fn pause_validator(&mut self, validator: AccountId) {
-        self.assert_owner_calling();
+        self.assert_operator_or_owner();
 
         let mut validator_info = self.internal_get_validator(&validator);
 
@@ -198,7 +198,7 @@ impl NearxPool {
     }
 
     pub fn un_pause_validator(&mut self, validator: AccountId) {
-        self.assert_owner_calling();
+        self.assert_operator_or_owner();
 
         let mut validator_info = self.internal_get_validator(&validator);
         validator_info.paused = false;
