@@ -1,5 +1,5 @@
 import * as nearjs from 'near-api-js';
-import { Balance, NearxPoolClient as Iface } from '.';
+import { Balance, NearxPoolClient as Iface, Network } from '.';
 import { createContract, NearxContract } from './contract';
 import * as os from 'os';
 import { isBrowser } from './utils';
@@ -84,7 +84,7 @@ export const NearxPoolClient = {
       async epochStake(): Promise<string> {
         let result = 0;
 
-        while (await contract.epoch_stake({})) {
+        while (await contract.epoch_stake({ args: {} })) {
           result += 1;
         }
 
@@ -94,7 +94,7 @@ export const NearxPoolClient = {
       async epochUnstake(): Promise<string> {
         let result = 0;
 
-        while (await contract.epoch_stake({})) {
+        while (await contract.epoch_stake({ args: {} })) {
           result += 1;
         }
 
@@ -104,7 +104,7 @@ export const NearxPoolClient = {
       async epochWithdraw(): Promise<string> {
         let result = 0;
 
-        while (await contract.epoch_stake({})) {
+        while (await contract.epoch_stake({ args: {} })) {
           result += 1;
         }
 
@@ -118,7 +118,7 @@ function localAccountPath(): string {
   return `${os.homedir()}/.near-credentials`;
 }
 
-function configFromNetwork(networkId: string): nearjs.ConnectConfig {
+function configFromNetwork(networkId: Network): nearjs.ConnectConfig {
   const keyStore = isBrowser()
     ? new nearjs.keyStores.BrowserLocalStorageKeyStore()
     : new nearjs.keyStores.UnencryptedFileSystemKeyStore(localAccountPath());

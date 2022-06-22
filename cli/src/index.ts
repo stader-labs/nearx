@@ -9,16 +9,18 @@ const commands: {
 };
 
 async function run(networkContract: string, accountId: string, commandName: string) {
-  const [network, contractName, ...rest] = networkContract.split(':');
+  const [network_, contractName, ...rest] = networkContract.split(':');
   if (rest.length != 0) {
     error('Invalid network and contract name');
   }
 
   if (commandName in commands) {
-    console.debug(
-      `Running the command '${commandName}' on network '${network}', contract name '${contractName}'`,
-    );
-    const client = await nearx.NearxPoolClient.new(typedNetwork(network), contractName, accountId);
+    const network = typedNetwork(network_);
+    accountId = canonicalAccountId(network, accountId);
+
+    console.debug({ commandName, network, contractName, accountId });
+
+    const client = await nearx.NearxPoolClient.new(network, contractName, accountId);
 
     await commands[commandName](client);
   } else {
@@ -62,5 +64,20 @@ function typedNetwork(s: string): nearx.Network {
       return s;
     default:
       error(`Invalid network: ${s}`);
+  }
+}
+
+function canonicalAccountId(networkId: nearx.Network, accountId: string): string {
+  if (accountId.split('.')[1] != undefined) {
+    return accountId;
+  }
+
+  switch (networkId) {
+    case 'mainnet':
+      return accountId + '.near';
+    case 'testnet':
+      return accountId + '.testnet';
+    default:
+      throw new Error('Invalid network: ' + networkId);
   }
 }
