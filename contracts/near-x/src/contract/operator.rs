@@ -132,8 +132,6 @@ impl NearxPool {
             validator_info.account_id
         );
 
-        self.contract_lock = true;
-
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
         ext_staking_pool::ext(validator_info.account_id.clone())
@@ -154,8 +152,6 @@ impl NearxPool {
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool> {
-        self.contract_lock = false;
-
         validator_info.last_redeemed_rewards_epoch = env::epoch_height();
 
         //new_total_balance has the new staked amount for this pool
