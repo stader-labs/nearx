@@ -2793,9 +2793,9 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
     Ok(())
 }
 
-// Tests: Autocompound with operator rewards and autocompound in the same epoch
+// Tests: Autocompound with treasury rewards and autocompound in the same epoch
 #[tokio::test]
-async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
+async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;
 
     let validator1_info = context
@@ -2886,19 +2886,21 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         .await?;
 
     // Get the operator details
-    let operator_account = context
-        .worker
-        .view_account(&context.nearx_operator.id())
-        .await?;
-    let previous_operator_balance = operator_account.balance;
+    // let operator_account = context
+    //     .worker
+    //     .view_account(&context.nearx_operator.id())
+    //     .await?;
+    // let previous_operator_balance = operator_account.balance;
 
     // auto compound the rewards
-    context
+    let res = context
         .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
+    println!("auto compounding logs are");
+    println!("{:?}", res.logs());
 
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(ntoy(2)));
+    assert_eq!(nearx_price, U128(1904761904761904761904761));
 
     let validator = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -2919,18 +2921,24 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(90)));
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(45)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
-
-    let operator_account = context
-        .worker
-        .view_account(&context.nearx_operator.id())
-        .await?;
-    let current_operator_balance = operator_account.balance;
-
     assert_eq!(
-        (current_operator_balance - previous_operator_balance),
-        4500000000000000000000000
+        nearx_state.total_stake_shares,
+        U128(47250000000000000000000000)
     );
+
+    let treasury_account = context
+        .get_user_account(context.nearx_treasury.id().clone())
+        .await?;
+    println!(
+        "Treasury account amount is {:?}",
+        treasury_account.staked_balance
+    );
+    assert!(abs_diff_eq(
+        treasury_account.staked_balance.0,
+        4500000000000000000000000,
+        ntoy(1)
+    ));
+    // assert_eq!(treasury_account.staked_balance, U128(4500000000000000000000000));
 
     let user1_token_balance = context
         .get_user_token_balance(context.user1.id().clone())
@@ -2950,9 +2958,22 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
     let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
 
-    assert_eq!(user1_staked_amount, U128(ntoy(20)));
-    assert_eq!(user2_staked_amount, U128(ntoy(20)));
-    assert_eq!(user3_staked_amount, U128(ntoy(20)));
+    println!("user1_staked_amount is {:?}", user1_staked_amount);
+    println!("user2_staked_amount is {:?}", user2_staked_amount);
+    println!("user3_staked_amount is {:?}", user3_staked_amount);
+
+    assert_eq!(user1_staked_amount, U128(19047619047619047619047619));
+    assert_eq!(user2_staked_amount, U128(19047619047619047619047619));
+    assert_eq!(user3_staked_amount, U128(19047619047619047619047619));
+
+    let near_owner_account = context
+        .get_user_account(context.nearx_owner.id().clone())
+        .await?;
+
+    println!(
+        "near_owner_account staked balance is {:?}",
+        near_owner_account.staked_balance
+    );
 
     context.worker.fast_forward(1000).await?;
     // Deposit with NearX price > 1
@@ -2978,9 +2999,13 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let user2_staked_amount = context.get_user_deposit(context.user2.id().clone()).await?;
     let user3_staked_amount = context.get_user_deposit(context.user3.id().clone()).await?;
 
-    assert_eq!(user1_staked_amount, U128(ntoy(30)));
-    assert_eq!(user2_staked_amount, U128(ntoy(30)));
-    assert_eq!(user3_staked_amount, U128(ntoy(30)));
+    println!("user1_staked_amount is {:?}", user1_staked_amount);
+    println!("user2_staked_amount is {:?}", user2_staked_amount);
+    println!("user3_staked_amount is {:?}", user3_staked_amount);
+
+    assert_eq!(user1_staked_amount, U128(29047619047619047619047619));
+    assert_eq!(user2_staked_amount, U128(29047619047619047619047619));
+    assert_eq!(user3_staked_amount, U128(29047619047619047619047619));
 
     let user1_token_balance = context
         .get_user_token_balance(context.user1.id().clone())
@@ -2992,9 +3017,13 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
         .get_user_token_balance(context.user3.id().clone())
         .await?;
 
-    assert_eq!(user1_token_balance, U128(ntoy(15)));
-    assert_eq!(user2_token_balance, U128(ntoy(15)));
-    assert_eq!(user3_token_balance, U128(ntoy(15)));
+    println!("user1_token_balance is {:?}", user1_token_balance);
+    println!("user2_token_balance is {:?}", user2_token_balance);
+    println!("user3_token_balance is {:?}", user3_token_balance);
+
+    assert_eq!(user1_token_balance, U128(15250000000000000000000000));
+    assert_eq!(user2_token_balance, U128(15250000000000000000000000));
+    assert_eq!(user3_token_balance, U128(15250000000000000000000000));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -3005,39 +3034,31 @@ async fn test_autocompound_with_operator_rewards() -> anyhow::Result<()> {
     let validator3_info = context
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
+    println!("validator1_info is {:?}", validator1_info);
+    println!("validator2_info is {:?}", validator2_info);
+    println!("validator3_info is {:?}", validator3_info);
     assert_eq!(validator1_info.staked, U128(ntoy(80)));
     assert_eq!(validator2_info.staked, U128(ntoy(35)));
     assert_eq!(validator3_info.staked, U128(ntoy(5)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
-    assert_eq!(total_token_supply, U128(ntoy(60)));
+    assert_eq!(total_token_supply, U128(63000000000000000000000000));
 
     let nearx_state = context.get_nearx_state().await?;
+    println!("nearx_state is {:?}", nearx_state);
     assert_eq!(nearx_state.total_staked, U128(ntoy(120)));
     assert_eq!(nearx_state.accumulated_staked_rewards, U128(ntoy(45)));
-    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(60)));
-
-    // Autocompound in the same epoch
-    let operator_account = context
-        .worker
-        .view_account(&context.nearx_operator.id())
-        .await?;
-    let previous_operator_balance = operator_account.balance;
+    assert_eq!(
+        nearx_state.total_stake_shares,
+        U128(63000000000000000000000000)
+    );
 
     context
         .auto_compound_rewards(context.get_stake_pool_contract(0).id())
         .await?;
 
-    let operator_account = context
-        .worker
-        .view_account(&context.nearx_operator.id())
-        .await?;
-    let current_operator_balance = operator_account.balance;
-
     let nearx_price = context.get_nearx_price().await?;
-    assert_eq!(nearx_price, U128(ntoy(2)));
-
-    assert_eq!((current_operator_balance - previous_operator_balance), 0);
+    assert_eq!(nearx_price, U128(1904761904761904761904761));
 
     Ok(())
 }

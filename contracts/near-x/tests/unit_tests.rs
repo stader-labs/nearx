@@ -1,5 +1,6 @@
 mod helpers;
 
+use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
@@ -45,6 +46,10 @@ pub fn operator_account() -> AccountId {
 
 pub fn contract_account() -> AccountId {
     AccountId::from_str("nearx-pool").unwrap()
+}
+
+pub fn treasury_account() -> AccountId {
+    AccountId::from_str("treasury_account").unwrap()
 }
 
 pub fn check_equal_vec<S: PartialEq>(v1: Vec<S>, v2: Vec<S>) -> bool {
@@ -108,21 +113,30 @@ fn basic_context() -> VMContext {
     get_context(system_account(), ntoy(100), 0, to_ts(500))
 }
 
-fn new_contract(owner_account: AccountId, operator_account: AccountId) -> NearxPool {
-    NearxPool::new(owner_account, operator_account)
+fn new_contract(
+    owner_account: AccountId,
+    operator_account: AccountId,
+    treasury_account: AccountId,
+) -> NearxPool {
+    NearxPool::new(owner_account, operator_account, treasury_account)
 }
 
-fn contract_setup(owner_account: AccountId, operator_account: AccountId) -> (VMContext, NearxPool) {
+fn contract_setup(
+    owner_account: AccountId,
+    operator_account: AccountId,
+    treasury_account: AccountId,
+) -> (VMContext, NearxPool) {
     let context = basic_context();
     testing_env!(context.clone());
-    let contract = new_contract(owner_account, operator_account);
+    let contract = new_contract(owner_account, operator_account, treasury_account);
     (context, contract)
 }
 
 #[test]
 #[should_panic]
 fn test_non_owner_calling_update_operations_control() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = operator_account();
     testing_env!(context.clone());
@@ -141,7 +155,8 @@ fn test_non_owner_calling_update_operations_control() {
 
 #[test]
 fn test_update_operations_control_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     context.attached_deposit = 1;
@@ -177,7 +192,8 @@ fn test_update_operations_control_success() {
 #[test]
 #[should_panic]
 fn test_add_validator_fail() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        Non operator adding stake pool
@@ -190,7 +206,8 @@ fn test_add_validator_fail() {
 #[test]
 #[should_panic]
 fn test_remove_validator_fail() {
-    let (_context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (_context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        Non operator removing stake pool
@@ -201,7 +218,8 @@ fn test_remove_validator_fail() {
 #[test]
 #[should_panic]
 fn test_remove_validator_validator_not_empty() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context); // this updates the context
@@ -220,7 +238,8 @@ fn test_remove_validator_validator_not_empty() {
 
 #[test]
 fn test_add_validator_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        initial staking pools should be empty
@@ -287,7 +306,8 @@ fn test_add_validator_success() {
 
 #[test]
 fn test_remove_validator_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        seed staking pools
@@ -411,7 +431,8 @@ fn test_remove_validator_success() {
 
 #[test]
 fn test_get_validator_with_min_stake() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
         Get stake pool in empty stake pool set
@@ -489,7 +510,8 @@ fn test_get_validator_with_min_stake() {
 #[test]
 #[should_panic]
 fn test_set_reward_fee_fail() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        Set reward fee more than 10%
@@ -500,7 +522,8 @@ fn test_set_reward_fee_fail() {
 #[test]
 #[should_panic]
 fn test_deposit_and_stake_direct_stake_contract_busy() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.attached_deposit = 100;
     testing_env!(context);
@@ -511,7 +534,8 @@ fn test_deposit_and_stake_direct_stake_contract_busy() {
 #[test]
 #[should_panic]
 fn test_deposit_and_stake_direct_stake_min_deposit() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.attached_deposit = 100;
     testing_env!(context);
@@ -524,7 +548,8 @@ fn test_deposit_and_stake_direct_stake_min_deposit() {
 #[test]
 #[should_panic]
 fn test_deposit_and_stake_direct_stake_with_no_stake_pools() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.attached_deposit = 5000000000000000000000000;
     testing_env!(context);
@@ -534,7 +559,8 @@ fn test_deposit_and_stake_direct_stake_with_no_stake_pools() {
 
 #[test]
 fn test_deposit_and_stake_direct_stake_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context.clone()); // this updates the context
@@ -564,7 +590,8 @@ fn test_deposit_and_stake_direct_stake_success() {
 
 #[test]
 fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context.clone()); // this updates the context
@@ -608,7 +635,8 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
 
 #[test]
 fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context.clone()); // this updates the context
@@ -667,7 +695,8 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
 
 #[test]
 fn test_on_get_sp_staked_balance_reconcile() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context.clone()); // this updates the context
@@ -719,7 +748,8 @@ fn test_on_get_sp_staked_balance_reconcile() {
 #[test]
 #[should_panic]
 fn test_autocompound_rewards_contract_busy() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
 }
@@ -727,7 +757,8 @@ fn test_autocompound_rewards_contract_busy() {
 #[test]
 #[should_panic]
 fn test_autocompound_rewards_invalid_validator() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.epoch_autocompound_rewards(AccountId::from_str("invalid_validator").unwrap());
 }
@@ -735,7 +766,8 @@ fn test_autocompound_rewards_invalid_validator() {
 #[test]
 #[should_panic]
 fn test_autocompound_rewards_validator_busy() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        Add stake pool
@@ -768,7 +800,8 @@ fn test_autocompound_rewards_validator_busy() {
 
 #[test]
 fn test_autocompound_rewards_stake_pool_with_no_stake() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     /*
        Add stake pool
@@ -824,7 +857,8 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
 
 #[test]
 fn test_on_get_sp_staked_balance_for_rewards() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     testing_env!(context.clone());
@@ -864,14 +898,22 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     assert_eq!(validator1.staked, ntoy(150));
     assert_eq!(validator1.last_redeemed_rewards_epoch, context.epoch_height);
     assert_eq!(contract.total_staked, ntoy(150));
-    assert_eq!(contract.total_stake_shares, ntoy(100));
+    assert_eq!(contract.total_stake_shares, 103333333333333333333333333);
     assert_eq!(contract.accumulated_staked_rewards, ntoy(50));
+
+    let treasury_account = contract.get_account(treasury_account());
+    assert!(abs_diff_eq(
+        treasury_account.staked_balance.0,
+        ntoy(5),
+        ntoy(1)
+    ));
 }
 
 #[test]
 #[should_panic]
 fn test_deposit_and_stake_fail_min_deposit() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.attached_deposit = 100;
     testing_env!(context);
@@ -884,7 +926,8 @@ fn test_deposit_and_stake_fail_min_deposit() {
 #[test]
 #[should_panic]
 fn test_deposit_and_stake_fail_zero_amount() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.attached_deposit = 0;
     testing_env!(context);
@@ -894,7 +937,8 @@ fn test_deposit_and_stake_fail_zero_amount() {
 
 #[test]
 fn test_deposit_and_stake_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
 
@@ -919,7 +963,8 @@ fn test_deposit_and_stake_success() {
 
 #[test]
 fn test_epoch_reconcilation() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 100;
     testing_env!(context);
@@ -942,7 +987,8 @@ fn test_epoch_reconcilation() {
 #[test]
 #[should_panic]
 fn test_epoch_stake_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.epoch_stake_paused = true;
 
@@ -952,7 +998,8 @@ fn test_epoch_stake_paused() {
 #[test]
 #[should_panic]
 fn test_epoch_unstake_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.epoch_unstake_paused = true;
 
@@ -962,7 +1009,8 @@ fn test_epoch_unstake_paused() {
 #[test]
 #[should_panic]
 fn test_epoch_withdraw_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.epoch_withdraw_paused = true;
 
@@ -972,7 +1020,8 @@ fn test_epoch_withdraw_paused() {
 #[test]
 #[should_panic]
 fn test_epoch_autocompounding_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.epoch_autocompounding_paused = true;
 
@@ -982,7 +1031,8 @@ fn test_epoch_autocompounding_paused() {
 #[test]
 #[should_panic]
 fn test_stake_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.stake_paused = true;
 
@@ -992,7 +1042,8 @@ fn test_stake_paused() {
 #[test]
 #[should_panic]
 fn test_unstake_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.unstaked_paused = true;
 
@@ -1002,7 +1053,8 @@ fn test_unstake_paused() {
 #[test]
 #[should_panic]
 fn test_withdraw_paused() {
-    let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut _context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.withdraw_paused = true;
 
@@ -1011,7 +1063,8 @@ fn test_withdraw_paused() {
 
 #[test]
 fn test_epoch_stake() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
@@ -1045,7 +1098,8 @@ fn test_epoch_stake() {
 
 #[test]
 fn test_on_validator_deposit_and_stake_failed() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
@@ -1073,7 +1127,8 @@ fn test_on_validator_deposit_and_stake_failed() {
 
 #[test]
 fn test_on_validator_deposit_and_stake_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
@@ -1100,7 +1155,8 @@ fn test_on_validator_deposit_and_stake_success() {
 
 #[test]
 fn test_get_unstake_release_epoch() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1156,7 +1212,8 @@ fn test_get_unstake_release_epoch() {
 #[test]
 #[should_panic]
 fn test_withdraw_fail_zero_deposit() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.withdraw(U128(0));
 }
@@ -1164,7 +1221,8 @@ fn test_withdraw_fail_zero_deposit() {
 #[test]
 #[should_panic]
 fn test_withdraw_fail_not_enough_amount() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
 
@@ -1181,7 +1239,8 @@ fn test_withdraw_fail_not_enough_amount() {
 #[test]
 #[should_panic]
 fn test_withdraw_fail_before_withdrawable_epoch() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
 
@@ -1200,7 +1259,8 @@ fn test_withdraw_fail_before_withdrawable_epoch() {
 #[test]
 #[should_panic]
 fn test_withdraw_fail_not_enough_storage_balance() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
 
@@ -1219,7 +1279,8 @@ fn test_withdraw_fail_not_enough_storage_balance() {
 
 #[test]
 fn test_withdraw_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
 
@@ -1242,7 +1303,8 @@ fn test_withdraw_success() {
 #[test]
 #[should_panic]
 fn test_epoch_withdraw_fail_validator_in_unbonding() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 10;
     context.predecessor_account_id = owner_account();
@@ -1262,7 +1324,8 @@ fn test_epoch_withdraw_fail_validator_in_unbonding() {
 
 #[test]
 fn test_epoch_withdraw_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 4;
     context.predecessor_account_id = owner_account();
@@ -1286,7 +1349,8 @@ fn test_epoch_withdraw_success() {
 
 #[test]
 fn test_on_stake_pool_withdraw_all_fail() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.epoch_height = 4;
     context.predecessor_account_id = owner_account();
@@ -1316,7 +1380,8 @@ fn test_on_stake_pool_withdraw_all_fail() {
 #[test]
 #[should_panic]
 fn test_unstake_fail_zero_amount() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.unstake(U128(ntoy(0)));
 }
@@ -1324,7 +1389,8 @@ fn test_unstake_fail_zero_amount() {
 #[test]
 #[should_panic]
 fn test_unstake_fail_greater_than_total_staked_amount() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.total_staked = ntoy(100);
 
@@ -1333,7 +1399,8 @@ fn test_unstake_fail_greater_than_total_staked_amount() {
 
 #[test]
 fn test_unstake_success_diff_epoch_than_reconcilation_epoch() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
@@ -1377,7 +1444,8 @@ fn test_unstake_success_diff_epoch_than_reconcilation_epoch() {
 
 #[test]
 fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let user1 = AccountId::from_str("user1").unwrap();
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
@@ -1421,7 +1489,8 @@ fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
 
 #[test]
 fn test_epoch_unstake_fail_less_than_one_near() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1466,7 +1535,8 @@ fn test_epoch_unstake_fail_less_than_one_near() {
 
 #[test]
 fn test_epoch_unstake_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1517,7 +1587,8 @@ fn test_epoch_unstake_success() {
 #[test]
 #[should_panic]
 fn test_drain_unstake_fail_validator_not_paused() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1537,7 +1608,8 @@ fn test_drain_unstake_fail_validator_not_paused() {
 #[test]
 #[should_panic]
 fn test_drain_unstake_fail_validator_pending_release() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1562,7 +1634,8 @@ fn test_drain_unstake_fail_validator_pending_release() {
 #[test]
 #[should_panic]
 fn test_drain_unstake_fail_validator_has_unstake() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1587,7 +1660,8 @@ fn test_drain_unstake_fail_validator_has_unstake() {
 
 #[test]
 fn test_drain_unstake_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1617,7 +1691,8 @@ fn test_drain_unstake_success() {
 
 #[test]
 fn test_on_stake_pool_drain_unstake_promise_fail() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1648,7 +1723,8 @@ fn test_on_stake_pool_drain_unstake_promise_fail() {
 
 #[test]
 fn test_on_stake_pool_drain_unstake_promise_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1682,7 +1758,8 @@ fn test_on_stake_pool_drain_unstake_promise_success() {
 #[test]
 #[should_panic]
 fn test_drain_withdraw_fail_validator_not_paused() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1702,7 +1779,8 @@ fn test_drain_withdraw_fail_validator_not_paused() {
 #[test]
 #[should_panic]
 fn test_drain_withdraw_fail_validator_has_non_zero_staked() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1729,7 +1807,8 @@ fn test_drain_withdraw_fail_validator_has_non_zero_staked() {
 #[test]
 #[should_panic]
 fn test_drain_withdraw_fail_validator_pending_unstake() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1755,7 +1834,8 @@ fn test_drain_withdraw_fail_validator_pending_unstake() {
 
 #[test]
 fn test_drain_withdraw_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1784,7 +1864,8 @@ fn test_drain_withdraw_success() {
 
 #[test]
 fn test_on_stake_pool_drain_withdraw_failure() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1815,7 +1896,8 @@ fn test_on_stake_pool_drain_withdraw_failure() {
 
 #[test]
 fn test_on_stake_pool_drain_withdraw_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1848,7 +1930,8 @@ fn test_on_stake_pool_drain_withdraw_success() {
 #[test]
 #[should_panic]
 fn test_sync_balance_from_validator_paused() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     contract.operations_control.sync_validator_balance_paused = true;
 
@@ -1857,7 +1940,8 @@ fn test_sync_balance_from_validator_paused() {
 
 #[test]
 fn test_sync_balance_from_validator_success() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1877,7 +1961,8 @@ fn test_sync_balance_from_validator_success() {
 #[test]
 #[should_panic]
 fn test_on_stake_pool_get_account_total_balance_off() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
@@ -1913,7 +1998,8 @@ fn test_on_stake_pool_get_account_total_balance_off() {
 
 #[test]
 fn test_on_stake_pool_get_account() {
-    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
     let validator2 = AccountId::from_str("stake_public_key_2").unwrap();

@@ -9,7 +9,11 @@ use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
 #[near_bindgen]
 impl NearxPool {
     #[init]
-    pub fn new(owner_account_id: AccountId, operator_account_id: AccountId) -> Self {
+    pub fn new(
+        owner_account_id: AccountId,
+        operator_account_id: AccountId,
+        treasury_account_id: AccountId,
+    ) -> Self {
         require!(!env::state_exists(), ERROR_CONTRACT_ALREADY_INITIALIZED);
 
         Self {
@@ -38,6 +42,7 @@ impl NearxPool {
                 epoch_autocompounding_paused: false,
                 sync_validator_balance_paused: false,
             },
+            treasury_account_id,
         }
     }
 
@@ -263,6 +268,22 @@ impl NearxPool {
         } else {
             panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }
+    }
+
+    #[payable]
+    pub fn set_operator_id(&mut self, new_operator_account_id: AccountId) {
+        assert_one_yocto();
+        self.assert_owner_calling();
+
+        self.operator_account_id = new_operator_account_id;
+    }
+
+    #[payable]
+    pub fn set_treasury_id(&mut self, new_treasury_account_id: AccountId) {
+        assert_one_yocto();
+        self.assert_owner_calling();
+
+        self.treasury_account_id = new_treasury_account_id;
     }
 
     #[payable]

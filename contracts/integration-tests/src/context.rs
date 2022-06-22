@@ -29,6 +29,7 @@ pub struct IntegrationTestContext<T> {
     // pub stake_pool_contract: Contract,
     pub nearx_operator: Account,
     pub nearx_owner: Account,
+    pub nearx_treasury: Account,
     pub user1: Account,
     pub user2: Account,
     pub user3: Account,
@@ -46,6 +47,7 @@ impl IntegrationTestContext<Sandbox> {
 
         let nearx_operator = worker.dev_create_account().await?;
         let nearx_owner = worker.dev_create_account().await?;
+        let nearx_treasury = worker.dev_create_account().await?;
 
         let user1 = worker.dev_create_account().await?;
         let user2 = worker.dev_create_account().await?;
@@ -60,6 +62,7 @@ impl IntegrationTestContext<Sandbox> {
             .args_json(json!({
                     "owner_account_id": nearx_owner.id().clone(),
                     "operator_account_id": nearx_operator.id().clone(),
+                    "treasury_account_id": nearx_treasury.id().clone()
             }))?
             .transact()
             .await?;
@@ -93,9 +96,6 @@ impl IntegrationTestContext<Sandbox> {
                 .await?;
             println!("Successfully Added the validator!");
 
-            // let stake_pool_contract_balance = stake_pool_contract.call(&worker, "get_account_staked_balance").view().await?.json::<U128>()?;
-            // assert_eq!(stake_pool_contract_balance, U128(ntoy(5)));
-
             validator_to_stake_pool_contract.insert(validator_account_id, stake_pool_contract);
         }
 
@@ -120,6 +120,7 @@ impl IntegrationTestContext<Sandbox> {
             validator_to_stake_pool_contract,
             nearx_operator,
             nearx_owner,
+            nearx_treasury,
             user1,
             user2,
             user3,
