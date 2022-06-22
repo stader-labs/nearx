@@ -348,17 +348,6 @@ impl NearxPool {
         }
     }
 
-    pub fn epoch_reconcile_total_staked(&mut self) {
-        let mut actual_total_staked_amount: u128 = 0;
-        for validator_info in self.validator_info_map.values() {
-            actual_total_staked_amount = actual_total_staked_amount
-                .checked_add(validator_info.staked)
-                .unwrap();
-        }
-
-        self.total_staked = actual_total_staked_amount;
-    }
-
     pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
         self.assert_sync_validator_balance_not_paused();
 

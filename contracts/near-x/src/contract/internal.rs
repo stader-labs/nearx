@@ -12,6 +12,7 @@ use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, Pr
 #[near_bindgen]
 impl NearxPool {
     /// mints NearX based on user's deposited amount and current NearX price
+    #[private]
     pub(crate) fn internal_deposit_and_stake_direct_stake(&mut self, user_amount: Balance) {
         self.assert_min_deposit_amount(user_amount);
 
@@ -112,6 +113,7 @@ impl NearxPool {
     }
 
     // TODO - bchain - I think this is better than the direct stake
+    #[private]
     pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();
 
@@ -143,6 +145,7 @@ impl NearxPool {
         .emit();
     }
 
+    #[private]
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
         require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
 
@@ -197,6 +200,7 @@ impl NearxPool {
         .emit();
     }
 
+    #[private]
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         let account_id = env::predecessor_account_id();
 
@@ -231,6 +235,7 @@ impl NearxPool {
         Promise::new(account_id).transfer(amount);
     }
 
+    #[private]
     pub fn on_stake_pool_deposit_and_stake_direct(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
@@ -238,8 +243,6 @@ impl NearxPool {
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
-        assert_callback_calling();
-
         let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
         let mut transfer_funds = false;
 
@@ -285,14 +288,13 @@ impl NearxPool {
         }
     }
 
+    #[private]
     pub fn on_get_sp_staked_balance_reconcile(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount_actually_staked: u128,
         #[callback] total_staked_balance: U128,
     ) {
-        assert_callback_calling();
-
         log!("Actual staked amount is {}", amount_actually_staked);
 
         // difference in staked amount and actual staked amount
@@ -307,6 +309,7 @@ impl NearxPool {
         self.internal_update_validator(&validator_info.account_id, &validator_info);
     }
 
+    #[private]
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
         if let Some(val_info) = self.validator_info_map.get(validator) {
             val_info
@@ -315,6 +318,7 @@ impl NearxPool {
         }
     }
 
+    #[private]
     pub(crate) fn internal_update_validator(
         &mut self,
         validator: &AccountId,
@@ -323,6 +327,7 @@ impl NearxPool {
         self.validator_info_map.insert(validator, validator_info);
     }
 
+    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
         // At this point the er will be 1
         if self.total_stake_shares == 0 || self.total_staked == 0 {
@@ -333,6 +338,7 @@ impl NearxPool {
             .as_u128()
     }
 
+    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_up(&self, amount: Balance) -> u128 {
         if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
@@ -344,6 +350,7 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_down(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -354,6 +361,7 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_up(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -365,10 +373,12 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
     }
 
+    #[private]
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
         if account.is_empty() {
             self.accounts.remove(account_id);
