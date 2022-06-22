@@ -22,8 +22,6 @@ pub struct AccountResponse {
 pub struct NearxPoolStateResponse {
     pub owner_account_id: AccountId,
 
-    pub contract_lock: bool,
-
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     pub total_staked: U128,
 

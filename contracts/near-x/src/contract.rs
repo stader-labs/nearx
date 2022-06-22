@@ -33,8 +33,6 @@ pub struct OperationControls {
 pub struct NearxPool {
     pub owner_account_id: AccountId,
 
-    pub contract_lock: bool,
-
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
     // nearx_price = (total_staked) / (total_stake_shares)
     pub total_staked: u128,

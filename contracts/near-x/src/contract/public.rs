@@ -14,7 +14,6 @@ impl NearxPool {
 
         Self {
             owner_account_id,
-            contract_lock: false,
             operator_account_id,
             accumulated_staked_rewards: 0,
             user_amount_to_stake_in_epoch: 0,
@@ -58,10 +57,6 @@ impl NearxPool {
                 || env::predecessor_account_id() == self.operator_account_id,
             errors::ERROR_UNAUTHORIZED
         );
-    }
-
-    pub fn assert_not_busy(&self) {
-        require!(!self.contract_lock, errors::ERROR_CONTRACT_BUSY);
     }
 
     pub fn assert_min_deposit_amount(&self, amount: u128) {
@@ -374,7 +369,6 @@ impl NearxPool {
     pub fn get_nearx_pool_state(&self) -> NearxPoolStateResponse {
         NearxPoolStateResponse {
             owner_account_id: self.owner_account_id.clone(),
-            contract_lock: self.contract_lock,
             total_staked: U128::from(self.total_staked),
             total_stake_shares: U128::from(self.total_stake_shares),
             accumulated_staked_rewards: U128::from(self.accumulated_staked_rewards),

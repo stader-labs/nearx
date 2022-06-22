@@ -505,8 +505,6 @@ fn test_deposit_and_stake_direct_stake_contract_busy() {
     context.attached_deposit = 100;
     testing_env!(context);
 
-    contract.contract_lock = true;
-
     contract.deposit_and_stake_direct_stake();
 }
 
@@ -599,8 +597,6 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
     validator1.staked = ntoy(10);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
-    contract.contract_lock = true;
-
     let res = contract.on_stake_pool_deposit_and_stake_direct(
         validator1,
         ntoy(100),
@@ -608,8 +604,6 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_fail() {
         AccountId::from_str("user1").unwrap(),
     );
     assert!(matches!(res, PromiseOrValue::Promise(..)));
-
-    assert!(!contract.contract_lock);
 }
 
 #[test]
@@ -647,7 +641,6 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
     testing_env_with_promise_results(context.clone(), PromiseResult::Successful(Vec::default()));
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
-    contract.contract_lock = true;
 
     let res = contract.on_stake_pool_deposit_and_stake_direct(
         validator1,
@@ -670,8 +663,6 @@ fn test_stake_pool_deposit_and_stake_direct_stake_callback_success() {
             withdrawable_epoch: U64(0)
         }
     );
-
-    assert!(contract.contract_lock);
 }
 
 #[test]
@@ -709,7 +700,6 @@ fn test_on_get_sp_staked_balance_reconcile() {
     validator1.staked = ntoy(299);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
-    contract.contract_lock = true;
     contract.total_staked = ntoy(498);
 
     let _res = contract.on_get_sp_staked_balance_reconcile(
@@ -724,15 +714,12 @@ fn test_on_get_sp_staked_balance_reconcile() {
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert_eq!(validator1.staked, ntoy(298));
     assert_eq!(contract.total_staked, ntoy(497));
-    assert!(!contract.contract_lock);
 }
 
 #[test]
 #[should_panic]
 fn test_autocompound_rewards_contract_busy() {
     let (mut _context, mut contract) = contract_setup(owner_account(), operator_account());
-
-    contract.contract_lock = true;
 
     contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
 }
@@ -810,7 +797,6 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     contract.epoch_autocompound_rewards(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
-    assert!(!contract.contract_lock);
 
     /*
        Redeeming rewards in the same epoch
@@ -823,7 +809,6 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     contract.epoch_autocompound_rewards(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
-    assert!(!contract.contract_lock);
 
     /*
        Successful case
@@ -835,9 +820,6 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
     contract.epoch_autocompound_rewards(stake_public_key_1.clone());
-
-    let validator1 = get_validator(&contract, stake_public_key_1.clone());
-    assert!(contract.contract_lock);
 }
 
 #[test]
@@ -879,7 +861,6 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     let _res = contract.on_get_sp_staked_balance_for_rewards(validator1, U128::from(ntoy(150)));
 
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
-    assert!(!contract.contract_lock);
     assert_eq!(validator1.staked, ntoy(150));
     assert_eq!(validator1.last_redeemed_rewards_epoch, context.epoch_height);
     assert_eq!(contract.total_staked, ntoy(150));

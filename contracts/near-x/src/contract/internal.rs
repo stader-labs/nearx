@@ -106,7 +106,6 @@ impl NearxPool {
                 amount,
                 validator_info.account_id
             );
-            self.contract_lock = false;
             log!("Transfering back {} to {} after stake failed", amount, user);
             PromiseOrValue::Promise(Promise::new(user).transfer(amount))
         }
@@ -261,7 +260,6 @@ impl NearxPool {
                 validator_info.account_id
             );
             transfer_funds = true;
-            self.contract_lock = false;
         }
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
@@ -294,8 +292,6 @@ impl NearxPool {
         #[callback] total_staked_balance: U128,
     ) {
         assert_callback_calling();
-
-        self.contract_lock = false;
 
         log!("Actual staked amount is {}", amount_actually_staked);
 
