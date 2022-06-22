@@ -174,7 +174,7 @@ impl NearxPool {
             let receiver_balance = receiver_acc.stake_shares;
             if receiver_balance > 0 {
                 let refund_amount = std::cmp::min(receiver_balance, unused_amount);
-                receiver_acc.stake_shares += refund_amount;
+                receiver_acc.stake_shares -= refund_amount;
                 self.internal_update_account(&receiver_id, &receiver_acc);
 
                 let mut sender_acc = self.internal_get_account(sender_id);
