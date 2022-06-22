@@ -85,7 +85,6 @@ impl NearxPool {
                 amount: U128(amount),
             }
             .emit();
-            // reconcile total staked amount to the actual total staked amount
         } else {
             self.reconciled_epoch_stake_amount += amount;
 
@@ -156,7 +155,7 @@ impl NearxPool {
         log!("total staked balance is {}", total_staked_balance.0);
 
         //compute rewards, as new balance minus old balance
-        let rewards = new_total_balance.saturating_sub(validator_info.total_balance());
+        let rewards = new_total_balance.saturating_sub(validator_info.staked);
 
         log!(
             "validator account:{} old_balance:{} new_balance:{} rewards:{}",
