@@ -9,7 +9,10 @@ use near_sdk::{
 };
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::{NearxPool, OperationControls};
-use near_x::state::{Account, AccountResponse, Fraction, HumanReadableAccount, OperationsControlUpdateRequest, ValidatorInfo, ValidatorInfoResponse};
+use near_x::state::{
+    Account, AccountResponse, Fraction, HumanReadableAccount, OperationsControlUpdateRequest,
+    ValidatorInfo, ValidatorInfoResponse,
+};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
@@ -132,7 +135,7 @@ fn test_non_owner_calling_update_operations_control() {
         epoch_unstake_paused: None,
         epoch_withdraw_paused: None,
         epoch_autocompounding_paused: None,
-        sync_validator_balance_paused: None
+        sync_validator_balance_paused: None,
     });
 }
 
@@ -152,7 +155,7 @@ fn test_update_operations_control_success() {
         epoch_unstake_paused: Some(true),
         epoch_withdraw_paused: Some(true),
         epoch_autocompounding_paused: None,
-        sync_validator_balance_paused: Some(true)
+        sync_validator_balance_paused: Some(true),
     });
 
     let operations_control = contract.get_operations_control();
@@ -1887,7 +1890,6 @@ fn test_sync_balance_from_validator_success() {
     contract.add_validator(validator2.clone());
     contract.add_validator(validator3.clone());
 
-
     contract.sync_balance_from_validator(validator1);
 }
 
@@ -1912,12 +1914,15 @@ fn test_on_stake_pool_get_account() {
     validator1_info.unstaked_amount = ntoy(9);
     update_validator(&mut contract, validator1.clone(), &validator1_info);
 
-    contract.on_stake_pool_get_account(validator1.clone(), HumanReadableAccount {
-        account_id: validator1.clone(),
-        unstaked_balance: U128(ntoy(10)),
-        staked_balance: U128(ntoy(100)),
-        can_withdraw: false
-    });
+    contract.on_stake_pool_get_account(
+        validator1.clone(),
+        HumanReadableAccount {
+            account_id: validator1.clone(),
+            unstaked_balance: U128(ntoy(10)),
+            staked_balance: U128(ntoy(100)),
+            can_withdraw: false,
+        },
+    );
 
     let mut validator1_info = get_validator(&contract, validator1.clone());
     assert_eq!(validator1_info.staked, ntoy(100));

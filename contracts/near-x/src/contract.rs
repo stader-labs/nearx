@@ -90,6 +90,14 @@ pub trait ExtNearxStakingPoolCallbacks {
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
+    fn on_stake_pool_deposit_and_stake_manager(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+        shares: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool>;
+
     fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: u128);
 
     fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128);
