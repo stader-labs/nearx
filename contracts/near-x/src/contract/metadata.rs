@@ -1,12 +1,5 @@
 use crate::contract::*;
-use crate::*;
-use near_sdk::{
-    env,
-    json_types::{U128, U64},
-    near_bindgen,
-    serde::{Deserialize, Serialize},
-    AccountId, Balance, EpochHeight,
-};
+use near_sdk::near_bindgen;
 
 /// To make it easier for the contract to be audited and validated by community
 /// and 3rd party, we adopt [NEP-330 standard](https://github.com/near/NEPs/blob/master/neps/nep-0330.md)

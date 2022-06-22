@@ -23,6 +23,10 @@ pub fn is_promise_success() -> bool {
     matches!(env::promise_result(0), PromiseResult::Successful(_))
 }
 
+pub(crate) fn abs_diff_eq(left: u128, right: u128, epsilon: u128) -> bool {
+    left <= right + epsilon && right <= left + epsilon
+}
+
 /// Returns amount * numerator/denominator
 #[allow(clippy::all)]
 pub fn proportional(amount: u128, numerator: u128, denominator: u128) -> u128 {

@@ -42,6 +42,14 @@ pub const ERROR_TEMP_OWNER_NOT_SET: &str = "Temp owner has not been set to any a
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
 pub const ERROR_INVALID_VALIDATOR_REMOVAL: &str = "Cannot remove this validator";
 
+/// Validator sync errors
+pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str =
+    "Total balance is out of sync by more than 1yNEAR";
+pub const ERROR_VALIDATOR_STAKED_BALANCE_OUT_OF_SYNC: &str =
+    "Total staked balance is out of sync by more than 200yNEAR";
+pub const ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC: &str =
+    "Total unstaked amount is out of sync by more than 200yNEAR";
+
 /// Operations controls
 pub const ERROR_STAKING_PAUSED: &str = "Staking paused";
 pub const ERROR_UNSTAKING_PAUSED: &str = "Unstaking paused";

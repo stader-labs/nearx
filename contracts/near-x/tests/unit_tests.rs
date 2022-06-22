@@ -1875,6 +1875,43 @@ fn test_sync_balance_from_validator_success() {
 }
 
 #[test]
+#[should_panic]
+fn test_on_stake_pool_get_account_total_balance_off() {
+    let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+    let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
+    let validator3 = AccountId::from_str("stake_public_key_3").unwrap();
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone());
+    contract.add_validator(validator2.clone());
+    contract.add_validator(validator3.clone());
+
+    let mut validator1_info = get_validator(&contract, validator1.clone());
+    validator1_info.staked = 99000000000000000000000000;
+    validator1_info.unstaked_amount = 9000000000000000000000000;
+    update_validator(&mut contract, validator1.clone(), &validator1_info);
+
+    contract.on_stake_pool_get_account(
+        validator1.clone(),
+        HumanReadableAccount {
+            account_id: validator1.clone(),
+            unstaked_balance: U128(9000000000000000000000008),
+            staked_balance: U128(98999999999999999999999996),
+            can_withdraw: false,
+        },
+    );
+
+    let mut validator1_info = get_validator(&contract, validator1.clone());
+    assert_eq!(validator1_info.staked, 98999999999999999999999996);
+    assert_eq!(validator1_info.unstaked_amount, 9000000000000000000000004);
+}
+
+#[test]
 fn test_on_stake_pool_get_account() {
     let (mut context, mut contract) = contract_setup(owner_account(), operator_account());
 
@@ -1891,21 +1928,21 @@ fn test_on_stake_pool_get_account() {
     contract.add_validator(validator3.clone());
 
     let mut validator1_info = get_validator(&contract, validator1.clone());
-    validator1_info.staked = ntoy(99);
-    validator1_info.unstaked_amount = ntoy(9);
+    validator1_info.staked = 99000000000000000000000000;
+    validator1_info.unstaked_amount = 9000000000000000000000000;
     update_validator(&mut contract, validator1.clone(), &validator1_info);
 
     contract.on_stake_pool_get_account(
         validator1.clone(),
         HumanReadableAccount {
             account_id: validator1.clone(),
-            unstaked_balance: U128(ntoy(10)),
-            staked_balance: U128(ntoy(100)),
+            unstaked_balance: U128(9000000000000000000000004),
+            staked_balance: U128(98999999999999999999999996),
             can_withdraw: false,
         },
     );
 
     let mut validator1_info = get_validator(&contract, validator1.clone());
-    assert_eq!(validator1_info.staked, ntoy(100));
-    assert_eq!(validator1_info.unstaked_amount, ntoy(10));
+    assert_eq!(validator1_info.staked, 98999999999999999999999996);
+    assert_eq!(validator1_info.unstaked_amount, 9000000000000000000000004);
 }

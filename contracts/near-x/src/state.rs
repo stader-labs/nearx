@@ -104,7 +104,7 @@ impl ValidatorInfo {
     }
 
     pub fn total_balance(&self) -> u128 {
-        self.staked
+        self.staked + self.unstaked_amount
     }
 
     pub fn paused(&self) -> bool {
