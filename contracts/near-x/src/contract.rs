@@ -10,7 +10,7 @@ use near_sdk::{
     collections::UnorderedMap,
     env, ext_contract, near_bindgen,
     serde::{Deserialize, Serialize},
-    AccountId, Balance, EpochHeight, PanicOnDefault, Promise, PromiseOrValue, PublicKey,
+    AccountId, Balance, EpochHeight, PanicOnDefault, PromiseOrValue, PublicKey,
 };
 
 #[derive(

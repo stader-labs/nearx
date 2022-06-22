@@ -5,7 +5,6 @@ use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
     state::*,
-    utils::assert_callback_calling,
 };
 use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
