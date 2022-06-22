@@ -118,7 +118,6 @@ impl NearxPool {
 
         let epoch_height = env::epoch_height();
 
-        println!("validator staked amount is {:?}", validator_info.staked);
         if validator_info.staked == 0 {
             return;
         }
@@ -199,10 +198,6 @@ impl NearxPool {
 
         self.epoch_reconcilation();
 
-        println!(
-            "reconciled epoch unstake amount is {:?}",
-            self.reconciled_epoch_unstake_amount / ONE_NEAR
-        );
         // after cleanup, there might be no need to unstake
 
         if self.reconciled_epoch_unstake_amount == 0 {
