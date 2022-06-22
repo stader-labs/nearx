@@ -6,31 +6,24 @@ near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_
 STAKE_POOL_0=legends.pool.f863973.m0
 STAKE_POOL_1=masternode24.pool.f863973.m0
 STAKE_POOL_2=01node.pool.f863973.m0
-STAKE_POOL_3=p2p.pool.f863973.m0
-STAKE_POOL_4=nodeasy.pool.f863973.m0
-STAKE_POOL_5=chorusone.pool.f863973.m0
-STAKE_POOL_6=foundryusa.pool.f863973.m0
-STAKE_POOL_7=lunanova2.pool.f863973.m0
-STAKE_POOL_8=chorus-one.pool.f863973.m0
-STAKE_POOL_9=ni.pool.f863973.m0
-STAKE_POOL_10=cryptogarik.pool.f863973.m0
-STAKE_POOL_11=stakely_v2.pool.f863973.m0
 
 # add some validators
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID
 
+# manager deposit
+
 for i in {1..10};
 do near call $CONTRACT_NAME manager_deposit_and_stake --accountId=$ID --amount=3 --gas=300000000000000;
 done;
-
-near call $CONTRACT_NAME unstake '{"amount": "3000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 # 10 deposits
 for i in {1..10};
 do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
+
+near call $CONTRACT_NAME unstake '{"amount": "3000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 # epoch stake
 near call $CONTRACT_NAME epoch_stake --accountId=$ID --gas=300000000000000;
