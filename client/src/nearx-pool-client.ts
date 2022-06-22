@@ -1,38 +1,61 @@
 import * as nearjs from 'near-api-js';
 import { Balance, NearxPoolClient as Iface } from '.';
-import { createContract } from './contract';
+import { createContract, NearxContract } from './contract';
+import * as os from 'os';
+import { isBrowser } from './utils';
 
 type NearxPoolClient = Iface;
 export const NearxPoolClient = {
-  async new(networkId: 'testnet' | 'mainnet'): Promise<NearxPoolClient> {
+  async new(
+    networkId: 'testnet' | 'mainnet',
+    contractName: string,
+    // Local account:
+    accountId?: string,
+  ): Promise<NearxPoolClient> {
+    // Depending on being in the browser or not,
+    // the config is set from a local keystore or the browser wallet:
     const config = configFromNetwork(networkId);
     // Connect to NEAR:
     const near = await nearjs.connect(config);
-    // Create wallet connection:
-    const wallet = new nearjs.WalletConnection(near, null);
 
-    const contract = createContract(wallet);
+    let contract: NearxContract;
+
+    if (isBrowser()) {
+      console.debug('Client created from the browser');
+      const wallet = new nearjs.WalletAccount(near, null);
+
+      contract = createContract(wallet.account(), contractName);
+      accountId = wallet.getAccountId();
+    } else {
+      console.debug('Client created from a CLI');
+      if (accountId == null) {
+        throw new Error('When used in a CLI, the accountId must be specified');
+      }
+      // Use the previously set keystore:
+      const account = new nearjs.Account(near.connection, accountId);
+
+      contract = createContract(account, contractName);
+    }
 
     return {
       near,
       config,
-      wallet,
       contract,
 
       // View methods:
       async stakedBalance(): Promise<Balance> {
         return contract.get_account_staked_balance({
-          account_id: wallet.getAccountId(),
+          account_id: accountId,
         });
       },
       async unstakedBalance(): Promise<Balance> {
         return contract.get_account_unstaked_balance({
-          account_id: wallet.getAccountId(),
+          account_id: accountId,
         });
       },
       async totalBalance(): Promise<Balance> {
         return contract.get_account_total_balance({
-          account_id: wallet.getAccountId(),
+          account_id: accountId,
         });
       },
 
@@ -91,9 +114,16 @@ export const NearxPoolClient = {
   },
 };
 
+function localAccountPath(): string {
+  return `${os.homedir()}/.near-credentials`;
+}
+
 function configFromNetwork(networkId: string): nearjs.ConnectConfig {
+  const keyStore = isBrowser()
+    ? new nearjs.keyStores.BrowserLocalStorageKeyStore()
+    : new nearjs.keyStores.UnencryptedFileSystemKeyStore(localAccountPath());
   const config = {
-    keyStore: new nearjs.keyStores.BrowserLocalStorageKeyStore(),
+    keyStore,
     networkId,
     headers: {},
   };

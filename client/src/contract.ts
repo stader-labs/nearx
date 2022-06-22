@@ -1,4 +1,5 @@
 import * as nearjs from 'near-api-js';
+import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract & RpcCallsStakingPool & RpcCallsOperator;
 
@@ -22,13 +23,13 @@ export interface RpcCallsOperator {
   epoch_withdraw(args: any): Promise<string>;
 }
 
-export function createContract(wallet: nearjs.WalletConnection): NearxContract {
+export function createContract(account: nearjs.Account, contractName: string): NearxContract {
   return new nearjs.Contract(
     // The account object that is connecting:
-    wallet.account(),
+    account,
 
     // Name of contract you're connecting to:
-    'near-x',
+    contractName,
 
     // Options:
     {
@@ -52,11 +53,7 @@ export function createContract(wallet: nearjs.WalletConnection): NearxContract {
         nameof<RpcCallsOperator>('epoch_unstake'),
         nameof<RpcCallsOperator>('epoch_withdraw'),
       ],
-      //sender: wallet.account(), // account object to initialize and sign transactions.
+      //sender: account, // account object to initialize and sign transactions.
     },
   ) as NearxContract;
-}
-
-function nameof<T>(name: keyof T) {
-  return name;
 }

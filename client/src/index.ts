@@ -3,6 +3,8 @@ export * as nearjs from 'near-api-js';
 
 export type Balance = string;
 
+export type Network = 'testnet' | 'mainnet';
+
 export interface NearxStakingPool {
   // View methods:
 
@@ -68,7 +70,6 @@ export interface NearxStakingPool {
 export interface NearxPoolClient extends NearxStakingPool {
   near: nearjs.Near;
   config: nearjs.ConnectConfig;
-  wallet: nearjs.WalletConnection;
   contract: nearjs.Contract;
 }
 export { NearxPoolClient } from './nearx-pool-client';
