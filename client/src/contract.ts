@@ -1,4 +1,5 @@
 import * as nearjs from 'near-api-js';
+import { ValidatorInfo } from '.';
 import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract & RpcCallsStakingPool & RpcCallsOperator;
@@ -18,9 +19,12 @@ export interface RpcCallsStakingPool {
 }
 
 export interface RpcCallsOperator {
+  get_validators(args: any): Promise<ValidatorInfo[]>;
   epoch_stake(args: any): Promise<string>;
+  epoch_autocompound_rewards(args: any): Promise<string>;
   epoch_unstake(args: any): Promise<string>;
   epoch_withdraw(args: any): Promise<string>;
+  sync_balance_from_validator(args: any): Promise<string>;
 }
 
 export function createContract(account: nearjs.Account, contractName: string): NearxContract {
@@ -34,9 +38,12 @@ export function createContract(account: nearjs.Account, contractName: string): N
     // Options:
     {
       viewMethods: [
+        // Staking Pool:
         nameof<RpcCallsStakingPool>('get_account_staked_balance'),
         nameof<RpcCallsStakingPool>('get_account_unstaked_balance'),
         nameof<RpcCallsStakingPool>('get_account_total_balance'),
+        // Operator:
+        nameof<RpcCallsOperator>('get_validators'),
       ],
       changeMethods: [
         // Staking Pool:
@@ -50,8 +57,10 @@ export function createContract(account: nearjs.Account, contractName: string): N
         nameof<RpcCallsStakingPool>('unstake_all'),
         // Operator:
         nameof<RpcCallsOperator>('epoch_stake'),
+        nameof<RpcCallsOperator>('epoch_autocompound_rewards'),
         nameof<RpcCallsOperator>('epoch_unstake'),
         nameof<RpcCallsOperator>('epoch_withdraw'),
+        nameof<RpcCallsOperator>('sync_balance_from_validator'),
       ],
       //sender: account, // account object to initialize and sign transactions.
     },

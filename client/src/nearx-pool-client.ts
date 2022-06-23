@@ -1,5 +1,5 @@
 import * as nearjs from 'near-api-js';
-import { Balance, NearxPoolClient as Iface, Network } from '.';
+import { AccountId, Balance, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
 import * as os from 'os';
 import { isBrowser } from './utils';
@@ -20,14 +20,13 @@ export const NearxPoolClient = {
 
     let contract: NearxContract;
 
+    //console.debug('Client created from the', isBrowser() ? 'browser' : 'CLI');
     if (isBrowser()) {
-      console.debug('Client created from the browser');
       const wallet = new nearjs.WalletAccount(near, null);
 
       contract = createContract(wallet.account(), contractName);
       accountId = wallet.getAccountId();
     } else {
-      console.debug('Client created from a CLI');
       if (accountId == null) {
         throw new Error('When used in a CLI, the accountId must be specified');
       }
@@ -35,6 +34,10 @@ export const NearxPoolClient = {
       const account = new nearjs.Account(near.connection, accountId);
 
       contract = createContract(account, contractName);
+    }
+
+    async function getValidatorsId(): Promise<AccountId[]> {
+      return (await contract.get_validators({ args: {} })).map((validator) => validator.account_id);
     }
 
     return {
@@ -45,18 +48,28 @@ export const NearxPoolClient = {
       // View methods:
       async stakedBalance(): Promise<Balance> {
         return contract.get_account_staked_balance({
-          account_id: accountId,
+          args: {
+            account_id: accountId,
+          },
         });
       },
       async unstakedBalance(): Promise<Balance> {
         return contract.get_account_unstaked_balance({
-          account_id: accountId,
+          args: {
+            account_id: accountId,
+          },
         });
       },
       async totalBalance(): Promise<Balance> {
         return contract.get_account_total_balance({
-          account_id: accountId,
+          args: {
+            account_id: accountId,
+          },
         });
+      },
+
+      async validators(): Promise<ValidatorInfo[]> {
+        return contract.get_validators({ args: {} });
       },
 
       // User-facing methods:
@@ -81,34 +94,40 @@ export const NearxPoolClient = {
       },
 
       // Operator methods:
-      async epochStake(): Promise<string> {
-        let result = 0;
+      async epochStake(): Promise<void> {
+        let n = 0;
 
         while (await contract.epoch_stake({ args: {} })) {
-          result += 1;
+          n += 1;
         }
-
-        return `Successfully staked ${result} times`;
+        console.debug(`Epoch stake has staked ${n} times.`);
       },
 
-      async epochUnstake(): Promise<string> {
-        let result = 0;
-
-        while (await contract.epoch_stake({ args: {} })) {
-          result += 1;
+      async epochAutocompoundRewards(): Promise<void> {
+        for (const validator of await getValidatorsId()) {
+          await contract.epoch_autocompound_rewards({ args: { validator } });
         }
-
-        return `Successfully staked ${result} times`;
       },
 
-      async epochWithdraw(): Promise<string> {
-        let result = 0;
+      async epochUnstake(): Promise<void> {
+        let n = 0;
 
         while (await contract.epoch_stake({ args: {} })) {
-          result += 1;
+          n += 1;
         }
+        console.debug(`Epoch unstake has unstaked ${n} times.`);
+      },
 
-        return `Successfully staked ${result} times`;
+      async epochWithdraw(): Promise<void> {
+        for (const validator of await getValidatorsId()) {
+          await contract.epoch_autocompound_rewards({ args: { validator } });
+        }
+      },
+
+      async syncBalances(): Promise<void> {
+        for (const validator of await getValidatorsId()) {
+          await contract.sync_balance_from_validator({ args: { validator } });
+        }
       },
     };
   },
