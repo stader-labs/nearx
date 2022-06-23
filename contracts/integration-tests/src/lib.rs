@@ -11,6 +11,19 @@ use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 
+#[tokio::test]
+async fn test_one_epoch() -> anyhow::Result<()> {
+    let context = IntegrationTestContext::new(3).await?;
+
+    let current_epoch = context.get_current_epoch().await?;
+    println!("curent_epoch is {:?}", current_epoch);
+    context.worker.fast_forward(10000);
+    let new_epoch = context.get_current_epoch().await?;
+    println!("new_epoch is {:?}", new_epoch);
+
+    Ok(())
+}
+
 /// User flow specific integration tests
 #[tokio::test]
 async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() -> anyhow::Result<()>
