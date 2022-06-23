@@ -407,11 +407,35 @@ async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() 
         900000000000000000000000
     ));
 
-    // user1 withdraws TODO
+    let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?.balance;
 
-    // user 2 withdraws TODO
+    assert!(abs_diff_eq(
+        user1_balance_after_withdraw - user1_balance_before_withdraw,
+        ntoy(5),
+        ntoy(1)
+    ));
 
-    // user 3 withdraws TODO
+    let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user2).await?;
+    let user2_balance_after_withdraw = context.user2.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        user2_balance_after_withdraw - user2_balance_before_withdraw,
+        ntoy(7),
+        ntoy(1)
+    ));
+
+    let user3_balance_before_withdraw = context.user3.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user3).await?;
+    let user3_balance_after_withdraw = context.user3.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        user3_balance_after_withdraw - user3_balance_before_withdraw,
+        ntoy(4),
+        ntoy(1)
+    ));
 
     Ok(())
 }
