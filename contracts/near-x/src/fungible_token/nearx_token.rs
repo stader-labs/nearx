@@ -124,7 +124,7 @@ impl FungibleTokenResolver for NearxPool {
 
 #[near_bindgen]
 impl NearxPool {
-    pub fn internal_nearx_transfer(
+    fn internal_nearx_transfer(
         &mut self,
         sender_id: &AccountId,
         receiver_id: &AccountId,
@@ -147,7 +147,7 @@ impl NearxPool {
         self.internal_update_account(receiver_id, &receiver_acc);
     }
 
-    pub fn int_ft_resolve_transfer(
+    fn int_ft_resolve_transfer(
         &mut self,
         sender_id: &AccountId,
         receiver_id: AccountId,

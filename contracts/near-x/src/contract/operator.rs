@@ -230,10 +230,10 @@ impl NearxPool {
             ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT
         );
 
-        if amount_to_unstake <= ONE_NEAR {
-            log!("unstake amount too low: {}", amount_to_unstake);
-            return false;
-        }
+        // if amount_to_unstake <= ONE_NEAR {
+        //     log!("unstake amount too low: {}", amount_to_unstake);
+        //     return false;
+        // }
 
         self.reconciled_epoch_unstake_amount -= amount_to_unstake;
         validator.staked -= amount_to_unstake;
@@ -418,8 +418,7 @@ impl NearxPool {
         .emit();
     }
 
-    #[private]
-    pub fn epoch_reconcilation(&mut self) {
+    pub(crate) fn epoch_reconcilation(&mut self) {
         if self.last_reconcilation_epoch == env::epoch_height() {
             return;
         }
@@ -494,6 +493,11 @@ impl NearxPool {
                         amount_to_unstake,
                     ),
             );
+        Event::DrainUnstake {
+            account_id: validator,
+            amount: U128(amount_to_unstake),
+        }
+        .emit();
     }
 
     #[private]
@@ -565,6 +569,11 @@ impl NearxPool {
                     .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL_CB)
                     .on_stake_pool_drain_withdraw(validator_info.account_id, amount),
             );
+        Event::DrainWithdraw {
+            account_id: validator,
+            amount: U128(amount),
+        }
+        .emit();
     }
 
     #[private]
@@ -576,11 +585,9 @@ impl NearxPool {
         let mut validator_info = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
-            log!("Success!");
             // stake the drained amount into the next epoch
             self.user_amount_to_stake_in_epoch += amount_to_withdraw;
         } else {
-            log!("Failure: bchain!");
             validator_info.unstaked_amount += amount_to_withdraw;
             self.internal_update_validator(&validator_id, &validator_info);
         }

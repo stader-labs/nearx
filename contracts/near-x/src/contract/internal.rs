@@ -10,8 +10,7 @@ use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, Pr
 
 #[near_bindgen]
 impl NearxPool {
-    #[private]
-    pub fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
+    pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
         let account_id = env::predecessor_account_id();
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
@@ -76,7 +75,7 @@ impl NearxPool {
     }
 
     #[private]
-    pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
+    pub fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();
 
         self.assert_min_deposit_amount(amount);
@@ -107,7 +106,6 @@ impl NearxPool {
         .emit();
     }
 
-    #[private]
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
         require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
 
@@ -162,7 +160,6 @@ impl NearxPool {
         .emit();
     }
 
-    #[private]
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         let account_id = env::predecessor_account_id();
 
@@ -197,7 +194,6 @@ impl NearxPool {
         Promise::new(account_id).transfer(amount);
     }
 
-    #[private]
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
         if let Some(val_info) = self.validator_info_map.get(validator) {
             val_info
@@ -206,7 +202,6 @@ impl NearxPool {
         }
     }
 
-    #[private]
     pub(crate) fn internal_update_validator(
         &mut self,
         validator: &AccountId,
@@ -215,7 +210,6 @@ impl NearxPool {
         self.validator_info_map.insert(validator, validator_info);
     }
 
-    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
         // At this point the er will be 1
         if self.total_stake_shares == 0 || self.total_staked == 0 {
@@ -226,7 +220,6 @@ impl NearxPool {
             .as_u128()
     }
 
-    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_up(&self, amount: Balance) -> u128 {
         if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
@@ -238,7 +231,6 @@ impl NearxPool {
         .as_u128()
     }
 
-    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_down(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -249,7 +241,6 @@ impl NearxPool {
         .as_u128()
     }
 
-    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_up(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -261,12 +252,10 @@ impl NearxPool {
         .as_u128()
     }
 
-    #[private]
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
     }
 
-    #[private]
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
         if account.is_empty() {
             self.accounts.remove(account_id);
@@ -275,7 +264,6 @@ impl NearxPool {
         }
     }
 
-    #[private]
     pub fn get_validator_to_stake(&self) -> Option<ValidatorInfo> {
         self.validator_info_map
             .values()
@@ -283,7 +271,6 @@ impl NearxPool {
             .min_by_key(|v| v.staked)
     }
 
-    #[private]
     pub fn get_validator_to_unstake(&self) -> Option<ValidatorInfo> {
         let mut max_validator_stake_amount: u128 = 0;
         let mut current_validator: Option<ValidatorInfo> = None;
@@ -301,8 +288,7 @@ impl NearxPool {
         current_validator
     }
 
-    #[private]
-    pub fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
+    pub(crate) fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
         let mut available_amount: Balance = 0;
         let mut total_staked_amount: Balance = 0;
         for validator in self.validator_info_map.values() {

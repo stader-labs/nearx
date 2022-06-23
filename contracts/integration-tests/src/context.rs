@@ -1,6 +1,7 @@
 use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
+use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::state::{
     AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse,
 };
@@ -125,6 +126,8 @@ impl IntegrationTestContext<Sandbox> {
     }
 
     pub async fn run_epoch_methods(&self) -> anyhow::Result<()> {
+        let current_epoch = self.get_current_epoch().await?;
+
         // Run the autocompounding epoch
         for i in 0..self.validator_count {
             self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
@@ -137,7 +140,9 @@ impl IntegrationTestContext<Sandbox> {
         // Run the unstaking epoch
         let mut res = true;
         while res {
-            res = self.epoch_unstake().await?.json::<bool>().unwrap();
+            let output = self.epoch_unstake().await?;
+            println!("output of epoch unstake is {:?}", output);
+            res = output.json::<bool>().unwrap();
         }
 
         // Run the withdraw epoch
@@ -146,7 +151,10 @@ impl IntegrationTestContext<Sandbox> {
                 .get_validator_info(self.get_stake_pool_contract(i).id().clone())
                 .await?;
 
-            if validator_info.unstaked.0 != 0 {
+            if validator_info.unstaked.0 != 0
+                && validator_info.last_unstake_start_epoch.0 + NUM_EPOCHS_TO_UNLOCK
+                    < current_epoch.0
+            {
                 self.epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
                     .await?;
             }

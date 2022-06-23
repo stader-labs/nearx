@@ -88,6 +88,15 @@ pub enum Event {
     ValidatorRemoved {
         account_id: AccountId,
     },
+    // Validator draining
+    DrainUnstake {
+        account_id: AccountId,
+        amount: U128,
+    },
+    DrainWithdraw {
+        account_id: AccountId,
+        amount: U128,
+    },
 }
 
 impl Event {
