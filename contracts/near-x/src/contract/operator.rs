@@ -230,11 +230,6 @@ impl NearxPool {
             ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT
         );
 
-        // if amount_to_unstake <= ONE_NEAR {
-        //     log!("unstake amount too low: {}", amount_to_unstake);
-        //     return false;
-        // }
-
         self.reconciled_epoch_unstake_amount -= amount_to_unstake;
         validator.staked -= amount_to_unstake;
         validator.last_unstake_start_epoch = validator.unstake_start_epoch;
@@ -418,7 +413,8 @@ impl NearxPool {
         .emit();
     }
 
-    pub(crate) fn epoch_reconcilation(&mut self) {
+    #[private]
+    pub fn epoch_reconcilation(&mut self) {
         if self.last_reconcilation_epoch == env::epoch_height() {
             return;
         }

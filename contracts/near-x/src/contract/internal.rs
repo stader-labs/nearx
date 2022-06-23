@@ -288,7 +288,8 @@ impl NearxPool {
         current_validator
     }
 
-    pub(crate) fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
+    #[private]
+    pub fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
         let mut available_amount: Balance = 0;
         let mut total_staked_amount: Balance = 0;
         for validator in self.validator_info_map.values() {

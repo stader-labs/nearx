@@ -1262,52 +1262,6 @@ fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
 }
 
 #[test]
-fn test_epoch_unstake_fail_less_than_one_near() {
-    let (mut context, mut contract) =
-        contract_setup(owner_account(), operator_account(), treasury_account());
-
-    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
-    let validator2 = AccountId::from_str("stake_public_key_2").unwrap();
-    let validator3 = AccountId::from_str("stake_public_key_3").unwrap();
-
-    context.epoch_height = 10;
-    context.predecessor_account_id = owner_account();
-    testing_env!(context.clone());
-
-    contract.add_validator(validator1.clone());
-    contract.add_validator(validator2.clone());
-    contract.add_validator(validator3.clone());
-
-    let mut val1_info = get_validator(&contract, validator1.clone());
-    val1_info.staked = ntoy(100);
-    val1_info.unstaked_amount = ntoy(0);
-    val1_info.unstake_start_epoch = 3;
-    update_validator(&mut contract, validator1.clone(), &val1_info);
-
-    let mut val2_info = get_validator(&contract, validator2.clone());
-    val2_info.staked = ntoy(200);
-    val2_info.unstaked_amount = ntoy(0);
-    val2_info.unstake_start_epoch = 3;
-    update_validator(&mut contract, validator2.clone(), &val2_info);
-
-    let mut val3_info = get_validator(&contract, validator3.clone());
-    val3_info.staked = ntoy(300);
-    val3_info.unstaked_amount = ntoy(0);
-    val3_info.unstake_start_epoch = 3;
-    update_validator(&mut contract, validator3.clone(), &val3_info);
-
-    contract.last_reconcilation_epoch = 99;
-    contract.total_staked = ntoy(600);
-    contract.user_amount_to_stake_in_epoch = ntoy(1499);
-    contract.user_amount_to_unstake_in_epoch = ntoy(1500);
-    contract.reconciled_epoch_stake_amount = ntoy(10);
-    contract.reconciled_epoch_unstake_amount = ntoy(10);
-
-    let res = contract.epoch_unstake();
-    assert_eq!(res, false);
-}
-
-#[test]
 fn test_epoch_unstake_success() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
