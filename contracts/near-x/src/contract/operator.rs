@@ -140,6 +140,11 @@ impl NearxPool {
                     .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
+
+        Event::EpochAutocompoundRewardsAttempt {
+            validator_id: validator,
+        }
+        .emit();
     }
 
     #[private]
@@ -166,6 +171,14 @@ impl NearxPool {
         );
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
+
+        Event::EpochAutocompoundRewards {
+            validator_id: validator_info.account_id,
+            old_balance: U128(validator_info.total_balance()),
+            new_balance: U128(new_total_balance),
+            rewards: U128(rewards),
+        }
+        .emit();
 
         if rewards > 0 {
             //updated accumulated_staked_rewards value for the contract
@@ -374,6 +387,8 @@ impl NearxPool {
                     .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB)
                     .on_stake_pool_get_account(validator_info.account_id),
             );
+
+        Event::BalanceSyncedFromValidatorAttempt { validator_id }.emit();
     }
 
     #[private]
@@ -437,8 +452,10 @@ impl NearxPool {
         self.reconciled_epoch_unstake_amount = reconciled_unstake_amount;
 
         Event::EpochReconcile {
-            user_stake_amount: U128(self.reconciled_epoch_stake_amount),
-            user_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
+            actual_epoch_stake_amount: U128(self.user_amount_to_stake_in_epoch),
+            actual_epoch_unstake_amount: U128(self.user_amount_to_unstake_in_epoch),
+            reconciled_stake_amount: U128(self.reconciled_epoch_stake_amount),
+            reconciled_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
         }
         .emit();
     }
@@ -507,7 +524,7 @@ impl NearxPool {
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
 
-            Event::EpochUnstakeCallbackSuccess {
+            Event::DrainUnstakeCallbackSuccess {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -516,7 +533,7 @@ impl NearxPool {
             validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
 
-            Event::EpochUnstakeCallbackFailed {
+            Event::DrainUnstakeCallbackFail {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -566,7 +583,7 @@ impl NearxPool {
                     .on_stake_pool_drain_withdraw(validator_info.account_id, amount),
             );
         Event::DrainWithdraw {
-            account_id: validator,
+            validator_id: validator,
             amount: U128(amount),
         }
         .emit();
@@ -583,9 +600,21 @@ impl NearxPool {
         if is_promise_success() {
             // stake the drained amount into the next epoch
             self.user_amount_to_stake_in_epoch += amount_to_withdraw;
+
+            Event::DrainWithdrawCallbackSuccess {
+                validator_id,
+                amount: U128(amount_to_withdraw),
+            }
+            .emit();
         } else {
             validator_info.unstaked_amount += amount_to_withdraw;
             self.internal_update_validator(&validator_id, &validator_info);
+
+            Event::DrainWithdrawCallbackFail {
+                validator_id,
+                amount: U128(amount_to_withdraw),
+            }
+            .emit();
         }
     }
 }

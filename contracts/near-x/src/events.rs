@@ -45,6 +45,9 @@ pub enum Event {
         validator_id: AccountId,
         amount: U128,
     },
+    EpochAutocompoundRewardsAttempt {
+        validator_id: AccountId,
+    },
     EpochAutocompoundRewards {
         validator_id: AccountId,
         old_balance: U128,
@@ -52,10 +55,15 @@ pub enum Event {
         rewards: U128,
     },
     EpochReconcile {
-        user_stake_amount: U128,
-        user_unstake_amount: U128,
+        actual_epoch_stake_amount: U128,
+        actual_epoch_unstake_amount: U128,
+        reconciled_stake_amount: U128,
+        reconciled_unstake_amount: U128,
     },
     // Sync validator balance
+    BalanceSyncedFromValidatorAttempt {
+        validator_id: AccountId,
+    },
     BalanceSyncedFromValidator {
         validator_id: AccountId,
         staked_balance: U128,
@@ -93,8 +101,24 @@ pub enum Event {
         account_id: AccountId,
         amount: U128,
     },
+    DrainUnstakeCallbackFail {
+        validator_id: AccountId,
+        amount: U128,
+    },
+    DrainUnstakeCallbackSuccess {
+        validator_id: AccountId,
+        amount: U128,
+    },
     DrainWithdraw {
-        account_id: AccountId,
+        validator_id: AccountId,
+        amount: U128,
+    },
+    DrainWithdrawCallbackFail {
+        validator_id: AccountId,
+        amount: U128,
+    },
+    DrainWithdrawCallbackSuccess {
+        validator_id: AccountId,
         amount: U128,
     },
 }
