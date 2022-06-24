@@ -13,6 +13,14 @@ use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
 use serde_json::json;
 
+// Important data points to check
+/// 1. nearx state
+/// 2. nearx price
+/// 3. user account
+/// 4. validator account
+/// 5. actual staked info
+/// 6. actual unstaked info
+
 /// User flow specific integration tests
 #[tokio::test]
 async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() -> anyhow::Result<()>
