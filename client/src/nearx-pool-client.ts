@@ -4,6 +4,8 @@ import { createContract, NearxContract } from './contract';
 import * as os from 'os';
 import { isBrowser } from './utils';
 
+const gas = '300000000000000';
+
 type NearxPoolClient = Iface;
 export const NearxPoolClient = {
   async new(
@@ -97,7 +99,7 @@ export const NearxPoolClient = {
       async epochStake(): Promise<void> {
         let n = 0;
 
-        while (await contract.epoch_stake({ args: {} })) {
+        while (await contract.epoch_stake({ args: {}, gas })) {
           n += 1;
         }
         console.debug(`Epoch stake has staked ${n} times.`);
@@ -105,14 +107,14 @@ export const NearxPoolClient = {
 
       async epochAutocompoundRewards(): Promise<void> {
         for (const validator of await getValidatorsId()) {
-          await contract.epoch_autocompound_rewards({ args: { validator } });
+          await contract.epoch_autocompound_rewards({ args: { validator }, gas });
         }
       },
 
       async epochUnstake(): Promise<void> {
         let n = 0;
 
-        while (await contract.epoch_stake({ args: {} })) {
+        while (await contract.epoch_stake({ args: {}, gas })) {
           n += 1;
         }
         console.debug(`Epoch unstake has unstaked ${n} times.`);
@@ -120,13 +122,13 @@ export const NearxPoolClient = {
 
       async epochWithdraw(): Promise<void> {
         for (const validator of await getValidatorsId()) {
-          await contract.epoch_autocompound_rewards({ args: { validator } });
+          await contract.epoch_autocompound_rewards({ args: { validator }, gas });
         }
       },
 
       async syncBalances(): Promise<void> {
-        for (const validator of await getValidatorsId()) {
-          await contract.sync_balance_from_validator({ args: { validator } });
+        for (const validator_id of await getValidatorsId()) {
+          await contract.sync_balance_from_validator({ args: { validator_id }, gas });
         }
       },
     };

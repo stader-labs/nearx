@@ -54,28 +54,32 @@ async function displayValidators(client: nearx.NearxPoolClient): Promise<void> {
 }
 
 async function syncBalances(client: nearx.NearxPoolClient): Promise<void> {
-  console.debug('> Running `sync balances`');
+  logCommand('sync balances');
   await client.syncBalances();
 }
 
 async function epochAutocompoundRewards(client: nearx.NearxPoolClient): Promise<void> {
-  console.debug('> Running `epoch autocompound`');
+  logCommand('epoch autocompound');
   await client.epochAutocompoundRewards();
 }
 
 async function stake(client: nearx.NearxPoolClient): Promise<void> {
-  console.debug('> Running `epoch stake`');
+  logCommand('epoch stake');
   await client.epochStake();
 }
 
 async function unstake(client: nearx.NearxPoolClient): Promise<void> {
-  console.debug('> Running `epoch unstake`');
+  logCommand('epoch unstake');
   await client.epochUnstake();
 }
 
 async function withdraw(client: nearx.NearxPoolClient): Promise<void> {
-  console.debug('> Running `epoch withdraw`');
+  logCommand('epoch withdraw');
   await client.epochWithdraw();
+}
+
+function logCommand(name: string) {
+  console.debug(`\n> Running '${name}'`);
 }
 
 async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void> {
