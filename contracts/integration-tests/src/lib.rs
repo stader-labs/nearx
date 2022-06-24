@@ -1802,7 +1802,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
 
 /// Happy flows of testing
 #[tokio::test]
-async fn test_user_direct_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Result<()> {
+async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;
 
     // User 1 deposits 10N

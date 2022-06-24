@@ -173,7 +173,7 @@ impl NearxPool {
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
         Event::EpochAutocompoundRewards {
-            validator_id: validator_info.account_id,
+            validator_id: validator_info.account_id.clone(),
             old_balance: U128(validator_info.total_balance()),
             new_balance: U128(new_total_balance),
             rewards: U128(rewards),
