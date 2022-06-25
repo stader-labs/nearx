@@ -65,24 +65,20 @@ impl MockStakingPool {
 #[near_bindgen]
 impl StakingPool for MockStakingPool {
     fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
-        require!(!self.panic, "Test Panic!");
         U128::from(self.internal_get_staked(&account_id))
     }
 
     fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128 {
-        require!(!self.panic, "Test Panic!");
         U128::from(self.internal_get_unstaked_deposit(&account_id))
     }
 
     fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
-        require!(!self.panic, "Test Panic!");
         U128::from(
             self.internal_get_unstaked_deposit(&account_id) + self.internal_get_staked(&account_id),
         )
     }
 
     fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
-        require!(!self.panic, "Test Panic!");
         HumanReadableAccount {
             account_id: account_id.clone(),
             staked_balance: U128::from(self.internal_get_staked(&account_id)),
@@ -166,7 +162,9 @@ impl MockStakingPool {
         staked_delta: u128,
         unstaked_delta: u128,
     ) {
-        let staked_amount = self.internal_get_staked(&account_id) - staked_delta;
+        let staked_amount = self
+            .internal_get_staked(&account_id)
+            .saturating_sub(staked_delta);
         let unstaked_amount = self.internal_get_unstaked_deposit(&account_id) + unstaked_delta;
 
         self.staked.insert(&account_id, &staked_amount);

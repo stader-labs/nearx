@@ -316,6 +316,24 @@ impl NearxPool {
             .unwrap_or(self.operations_control.sync_validator_balance_paused);
     }
 
+    #[payable]
+    pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+        require!((numerator * 100 / denominator) < 20); // less than 20%
+        self.rewards_fee = Fraction::new(numerator, denominator);
+    }
+
+    #[payable]
+    pub fn set_min_deposit(&mut self, min_deposit: u128) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+
+        require!(min_deposit < 100 * ONE_NEAR, ERROR_MIN_DEPOSIT_TOO_HIGH);
+
+        self.min_deposit_amount = min_deposit;
+    }
+
     // View methods
 
     pub fn get_account_staked_balance(&self, account_id: AccountId) -> U128 {
@@ -334,12 +352,6 @@ impl NearxPool {
 
     pub fn get_reward_fee_fraction(&self) -> Fraction {
         self.rewards_fee
-    }
-
-    pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
-        self.assert_owner_calling();
-        require!((numerator * 100 / denominator) < 20); // less than 20%
-        self.rewards_fee = Fraction::new(numerator, denominator);
     }
 
     pub fn get_total_staked(&self) -> U128 {

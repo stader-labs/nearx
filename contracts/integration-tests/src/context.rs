@@ -338,6 +338,18 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn adjust_balance(
+        &self,
+        stake_pool_contract: &AccountId,
+        staked_delta: U128,
+        unstaked_delta: U128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner.call(&self.worker, stake_pool_contract, "adjust_balance").max_gas()
+            .args_json(json!({ "account_id": stake_pool_contract, "staked_delta": staked_delta.0, "unstaked_delta": unstaked_delta.0 }))?
+            .transact()
+            .await
+    }
+
     pub async fn add_stake_pool_rewards(
         &self,
         amount: U128,
@@ -363,6 +375,19 @@ impl IntegrationTestContext<Sandbox> {
                 "account_id": self.nearx_contract.id().clone()
             }))?
             .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn set_stake_pool_panic(
+        &self,
+        stake_pool_contract: &AccountId,
+        panic: bool,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, stake_pool_contract, "set_panic")
+            .max_gas()
+            .args_json(json!({ "panic": panic }))?
             .transact()
             .await
     }

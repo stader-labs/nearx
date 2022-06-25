@@ -1827,3 +1827,103 @@ fn test_commit_owner() {
     assert_eq!(contract.owner_account_id, new_owner);
     assert_eq!(contract.temp_owner, None);
 }
+
+#[test]
+#[should_panic]
+fn test_set_operator_account_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_operator_account = AccountId::from_str("new_operator").unwrap();
+
+    context.predecessor_account_id = AccountId::from_str("user").unwrap();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(new_operator_account);
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_treasury_account = AccountId::from_str("new_treasury").unwrap();
+
+    context.predecessor_account_id = AccountId::from_str("user").unwrap();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(new_treasury_account);
+}
+
+#[test]
+fn test_set_operator_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_operator_account = AccountId::from_str("new_operator").unwrap();
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(new_operator_account.clone());
+
+    contract.operator_account_id = new_operator_account;
+}
+
+#[test]
+fn test_set_treasury_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_treasury_account = AccountId::from_str("new_treasury").unwrap();
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(new_treasury_account);
+}
+
+#[test]
+#[should_panic]
+fn test_set_min_deposit_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = AccountId::from_str("user").unwrap();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_min_deposit(ntoy(10));
+}
+
+#[test]
+#[should_panic]
+fn test_set_min_deposit_more_than_100_near() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_min_deposit(ntoy(200));
+}
+
+#[test]
+fn test_set_min_deposit() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_min_deposit(ntoy(50));
+
+    assert_eq!(contract.min_deposit_amount, ntoy(50));
+}
