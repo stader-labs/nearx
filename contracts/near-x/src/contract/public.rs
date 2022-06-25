@@ -258,7 +258,9 @@ impl NearxPool {
             require!(
                 env::predecessor_account_id() == temp_owner,
                 ERROR_UNAUTHORIZED
-            )
+            );
+            self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();
+            self.temp_owner = None;
         } else {
             panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }

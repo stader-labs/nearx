@@ -1760,3 +1760,70 @@ fn test_on_stake_pool_get_account() {
     assert_eq!(validator1_info.staked, 98999999999999999999999996);
     assert_eq!(validator1_info.unstaked_amount, 9000000000000000000000004);
 }
+
+#[test]
+#[should_panic]
+fn test_set_owner_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = AccountId::from_str("user").unwrap();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    contract.set_owner(new_owner);
+}
+
+#[test]
+fn test_set_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    contract.set_owner(new_owner.clone());
+
+    assert_eq!(contract.temp_owner, Some(new_owner));
+}
+
+#[test]
+#[should_panic]
+fn test_commit_owner_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    contract.temp_owner = Some(new_owner.clone());
+
+    contract.commit_owner();
+}
+
+#[test]
+fn test_commit_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    context.predecessor_account_id = new_owner.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.temp_owner = Some(new_owner.clone());
+
+    contract.commit_owner();
+
+    assert_eq!(contract.owner_account_id, new_owner);
+    assert_eq!(contract.temp_owner, None);
+}
