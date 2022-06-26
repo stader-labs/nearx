@@ -2062,17 +2062,17 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         ntoy(1)
     ));
 
-    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
-    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
-
     let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?.balance;
-    context.withdraw_all(&context.user1).await?;
+    let res = context.withdraw_all(&context.user1).await?;
+    println!("res is {:?}", res);
     let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?.balance;
     assert!(abs_diff_eq(
         user1_balance_after_withdraw - user1_balance_before_withdraw,
         ntoy(25),
         ntoy(1)
     ));
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     assert_eq!(user1_account.unstaked_balance, U128(0));
 
     let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
@@ -2083,6 +2083,8 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
         ntoy(25),
         ntoy(1)
     ));
+
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
     assert_eq!(user2_account.unstaked_balance, U128(0));
 
     Ok(())

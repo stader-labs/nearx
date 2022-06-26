@@ -399,6 +399,7 @@ impl IntegrationTestContext<Sandbox> {
         self.nearx_owner
             .call(&self.worker, &self.nearx_contract.id(), "set_reward_fee")
             .max_gas()
+            .deposit(1)
             .args_json(
                 json!({ "numerator": reward_fee.numerator, "denominator": reward_fee.denominator }),
             )?
