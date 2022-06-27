@@ -362,6 +362,15 @@ impl NearxPool {
         panic!("{}", ERROR_NO_STAKING_KEY);
     }
 
+    pub fn get_roles(&self) -> RolesResponse {
+        RolesResponse {
+            treasury_account: self.treasury_account_id.clone(),
+            operator_account: self.operator_account_id.clone(),
+            owner_account: self.owner_account_id.clone(),
+            temp_owner: self.temp_owner.clone()
+        }
+    }
+
     pub fn get_operations_control(&self) -> OperationControls {
         self.operations_control
     }

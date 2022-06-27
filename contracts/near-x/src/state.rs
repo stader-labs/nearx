@@ -189,6 +189,15 @@ pub struct HumanReadableAccount {
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
+pub struct RolesResponse {
+    pub owner_account: AccountId,
+    pub operator_account: AccountId,
+    pub treasury_account: AccountId,
+    pub temp_owner: Option<AccountId>
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct OperationsControlUpdateRequest {
     pub stake_paused: Option<bool>,
     pub unstake_paused: Option<bool>,

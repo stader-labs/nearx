@@ -1829,6 +1829,35 @@ fn test_commit_owner() {
 }
 
 #[test]
+fn set_commit_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+
+    contract.set_owner(new_owner.clone());
+
+    assert_eq!(contract.temp_owner, Some(new_owner.clone()));
+
+    context.predecessor_account_id = new_owner.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.temp_owner = Some(new_owner.clone());
+
+    contract.commit_owner();
+
+    assert_eq!(contract.owner_account_id, new_owner);
+    assert_eq!(contract.temp_owner, None);
+}
+
+#[test]
 #[should_panic]
 fn test_set_operator_account_unauthorized() {
     let (mut context, mut contract) =

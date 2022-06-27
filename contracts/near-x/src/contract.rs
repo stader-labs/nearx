@@ -1,4 +1,4 @@
-mod empty_storage_spc;
+mod empty_storage_spec;
 mod internal;
 mod metadata;
 mod operator;

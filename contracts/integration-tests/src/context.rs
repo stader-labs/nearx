@@ -2,9 +2,7 @@ use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
-use near_x::state::{
-    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, ValidatorInfoResponse,
-};
+use near_x::state::{AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, RolesResponse, ValidatorInfoResponse};
 use serde_json::json;
 use std::collections::HashMap;
 use std::str::FromStr;
