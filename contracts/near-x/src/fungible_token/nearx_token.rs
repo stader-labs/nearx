@@ -61,7 +61,7 @@ impl FungibleTokenCore for NearxPool {
     ) {
         assert_one_yocto();
         Event::FtTransfer {
-            receiver_id,
+            receiver_id: receiver_id.clone(),
             sender_id: env::predecessor_account_id(),
             amount,
         }
@@ -87,7 +87,7 @@ impl FungibleTokenCore for NearxPool {
         Event::FtTransferCall {
             receiver_id: receiver_id.clone(),
             sender_id: env::predecessor_account_id(),
-            msg,
+            msg: msg.clone(),
             amount,
         }
         .emit();

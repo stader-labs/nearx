@@ -1,7 +1,7 @@
 near dev-deploy --wasmFile res/nearX.wasm
 
 # Deploy and init should be a batch call
-near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'"}' --accountId=$ID
+near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'", "treasury_account_id": "'"$ID"'"}' --accountId=$ID
 
 STAKE_POOL_0=legends.pool.f863973.m0
 STAKE_POOL_1=masternode24.pool.f863973.m0

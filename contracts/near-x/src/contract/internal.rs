@@ -150,7 +150,7 @@ impl NearxPool {
         self.user_amount_to_unstake_in_epoch += receive_amount;
 
         Event::Unstake {
-            account_id,
+            account_id: account_id.clone(),
             unstaked_amount: U128(amount),
             burnt_stake_shares: U128(num_shares),
             new_unstaked_balance: U128(account.unstaked_amount),
@@ -160,7 +160,7 @@ impl NearxPool {
         .emit();
 
         Event::FtBurn {
-            account_id: account_id.clone(),
+            account_id,
             amount: U128(num_shares),
         }
         .emit();
