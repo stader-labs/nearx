@@ -193,7 +193,7 @@ pub struct RolesResponse {
     pub owner_account: AccountId,
     pub operator_account: AccountId,
     pub treasury_account: AccountId,
-    pub temp_owner: Option<AccountId>
+    pub temp_owner: Option<AccountId>,
 }
 
 #[derive(Serialize, Deserialize)]

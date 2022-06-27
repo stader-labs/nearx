@@ -161,8 +161,9 @@ impl NearxPool {
 
         Event::FtBurn {
             account_id: account_id.clone(),
-            amount: U128(num_shares)
-        }.emit();
+            amount: U128(num_shares),
+        }
+        .emit();
     }
 
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {

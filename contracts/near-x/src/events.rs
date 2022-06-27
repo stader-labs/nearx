@@ -125,7 +125,7 @@ pub enum Event {
     FtTransfer {
         receiver_id: AccountId,
         sender_id: AccountId,
-        amount: U128
+        amount: U128,
     },
     FtTransferCall {
         receiver_id: AccountId,
@@ -135,8 +135,8 @@ pub enum Event {
     },
     FtBurn {
         account_id: AccountId,
-        amount: U128
-    }
+        amount: U128,
+    },
 }
 
 impl Event {

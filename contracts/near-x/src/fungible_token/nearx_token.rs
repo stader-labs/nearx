@@ -1,5 +1,6 @@
 use crate::constants::NO_DEPOSIT;
 use crate::contract::*;
+use crate::events::Event;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore, metadata::FungibleTokenMetadata,
 };
@@ -12,7 +13,6 @@ use near_sdk::{
     log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult,
     StorageUsage,
 };
-use crate::events::Event;
 
 #[ext_contract(ext_ft_receiver)]
 pub trait FungibleTokenReceiver {
@@ -63,8 +63,9 @@ impl FungibleTokenCore for NearxPool {
         Event::FtTransfer {
             receiver_id,
             sender_id: env::predecessor_account_id(),
-            amount
-        }.emit();
+            amount,
+        }
+        .emit();
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
     }
 
@@ -87,8 +88,9 @@ impl FungibleTokenCore for NearxPool {
             receiver_id: receiver_id.clone(),
             sender_id: env::predecessor_account_id(),
             msg,
-            amount
-        }.emit();
+            amount,
+        }
+        .emit();
 
         let receiver_id: AccountId = receiver_id;
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);

@@ -367,7 +367,7 @@ impl NearxPool {
             treasury_account: self.treasury_account_id.clone(),
             operator_account: self.operator_account_id.clone(),
             owner_account: self.owner_account_id.clone(),
-            temp_owner: self.temp_owner.clone()
+            temp_owner: self.temp_owner.clone(),
         }
     }
 
