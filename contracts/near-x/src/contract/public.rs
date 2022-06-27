@@ -204,8 +204,10 @@ impl NearxPool {
         self.internal_update_validator(&validator, &validator_info);
     }
 
+    #[payable]
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let validator_info = self.internal_get_validator(&validator);
 
@@ -225,8 +227,10 @@ impl NearxPool {
         .emit();
     }
 
+    #[payable]
     pub fn add_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
         if self.validator_info_map.get(&validator).is_some() {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }

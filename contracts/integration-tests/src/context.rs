@@ -90,6 +90,7 @@ impl IntegrationTestContext<Sandbox> {
             println!("Adding validator");
             nearx_operator
                 .call(&worker, nearx_contract.id(), "add_validator")
+                .deposit(1)
                 .args_json(json!({ "validator": stake_pool_contract.id() }))?
                 .transact()
                 .await?;
@@ -254,6 +255,7 @@ impl IntegrationTestContext<Sandbox> {
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
             .call(&self.worker, self.nearx_contract.id(), "remove_validator")
+            .deposit(1)
             .max_gas()
             .args_json(json!({ "validator": validator }))?
             .transact()
