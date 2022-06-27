@@ -121,6 +121,22 @@ pub enum Event {
         validator_id: AccountId,
         amount: U128,
     },
+    // Ft related events
+    FtTransfer {
+        receiver_id: AccountId,
+        sender_id: AccountId,
+        amount: U128
+    },
+    FtTransferCall {
+        receiver_id: AccountId,
+        sender_id: AccountId,
+        msg: String,
+        amount: U128,
+    },
+    FtBurn {
+        account_id: AccountId,
+        amount: U128
+    }
 }
 
 impl Event {
