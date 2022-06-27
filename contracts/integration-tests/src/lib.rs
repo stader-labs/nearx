@@ -22,6 +22,67 @@ use workspaces::network::DevAccountDeployer;
 /// 5. actual staked info
 /// 6. actual unstaked info
 
+#[tokio::test]
+async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {
+    let context = IntegrationTestContext::new(3).await?;
+
+    // get 10 Nearx
+    context.deposit(&context.user1, ntoy(10)).await?;
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    assert_eq!(user1_account.staked_balance, U128(ntoy(10)));
+
+    context
+        .set_stake_pool_panic(context.get_stake_pool_contract(0).id(), true)
+        .await?;
+
+    // Transfer 7N to the contract with 3N being used only
+    let res = context
+        .ft_transfer_call(
+            &context.user1,
+            context.get_stake_pool_contract(0),
+            U128(ntoy(7)),
+        )
+        .await?;
+    println!("res logs are {:?}", res);
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    assert_eq!(user1_account.staked_balance, U128(ntoy(10)));
+
+    Ok(())
+}
+
+/// Test ft_on_transfer
+#[tokio::test]
+async fn test_ft_on_transfer() -> anyhow::Result<()> {
+    let context = IntegrationTestContext::new(3).await?;
+
+    // get 10 Nearx
+    context.deposit(&context.user1, ntoy(10)).await?;
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    assert_eq!(user1_account.staked_balance, U128(ntoy(10)));
+
+    context
+        .set_refund_amount(U128(ntoy(6)), context.get_stake_pool_contract(0))
+        .await?;
+
+    // Transfer 7N to the contract with 3N being used only
+    let res = context
+        .ft_transfer_call(
+            &context.user1,
+            context.get_stake_pool_contract(0),
+            U128(ntoy(7)),
+        )
+        .await?;
+    println!("res logs are {:?}", res);
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    assert_eq!(user1_account.staked_balance, U128(ntoy(9)));
+
+    Ok(())
+}
+
 /// Stake pool Failures
 /// Stake pool deposit_and_stake failures
 #[tokio::test]

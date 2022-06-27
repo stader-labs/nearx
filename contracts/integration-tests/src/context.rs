@@ -178,20 +178,18 @@ impl IntegrationTestContext<Sandbox> {
             .unwrap()
     }
 
-    pub async fn deposit_direct_stake(
+    pub async fn ft_transfer_call(
         &self,
         user: &Account,
-        amount: u128,
+        receiving_contract: &Contract,
+        amount: U128,
     ) -> anyhow::Result<CallExecutionDetails> {
-        user.call(
-            &self.worker,
-            self.nearx_contract.id(),
-            "deposit_and_stake_direct_stake",
-        )
-        .max_gas()
-        .deposit(amount)
-        .transact()
-        .await
+        user.call(&self.worker, self.nearx_contract.id(), "ft_transfer_call")
+            .args_json(json!({ "receiver_id": receiving_contract.id().clone(), "amount": amount, "msg": amount.0.to_string() }))?
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
     }
 
     pub async fn deposit(
@@ -362,6 +360,19 @@ impl IntegrationTestContext<Sandbox> {
             .call(&self.worker, "add_reward_for")
             .max_gas()
             .args_json(json!({ "amount": amount, "account_id": self.nearx_contract.id().clone() }))?
+            .transact()
+            .await
+    }
+
+    pub async fn set_refund_amount(
+        &self,
+        amount: U128,
+        stake_pool_contract: &Contract,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        stake_pool_contract
+            .call(&self.worker, "set_refund_amount")
+            .max_gas()
+            .args_json(json!({ "amount": amount }))?
             .transact()
             .await
     }

@@ -2,7 +2,13 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{env, near_bindgen, require, AccountId, PanicOnDefault, Promise};
+use near_sdk::{
+    env, near_bindgen, require, serde_json, AccountId, PanicOnDefault, Promise, PromiseOrValue,
+};
+
+pub fn ntoy(near_amount: u128) -> u128 {
+    near_amount * 10u128.pow(24)
+}
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -39,6 +45,13 @@ trait StakingPool {
     fn unstake(&mut self, amount: U128);
 
     fn unstake_all(&mut self);
+
+    fn ft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        msg: String,
+    ) -> PromiseOrValue<U128>;
 }
 
 /// mockup of staking pool, for testing
@@ -47,6 +60,8 @@ trait StakingPool {
 pub struct MockStakingPool {
     deposits: LookupMap<AccountId, u128>,
     staked: LookupMap<AccountId, u128>,
+    /// For ft_on_transfer testing
+    refund_amount: U128,
     panic: bool,
 }
 
@@ -57,6 +72,7 @@ impl MockStakingPool {
         Self {
             deposits: LookupMap::new(b"d"),
             staked: LookupMap::new(b"s"),
+            refund_amount: U128(ntoy(5)),
             panic: false,
         }
     }
@@ -133,6 +149,16 @@ impl StakingPool for MockStakingPool {
         let staked_amount = self.internal_get_staked(&account_id);
         self.internal_unstake(staked_amount);
     }
+
+    fn ft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
+        require!(!self.panic);
+        PromiseOrValue::Value(self.refund_amount)
+    }
 }
 
 #[near_bindgen]
@@ -142,6 +168,10 @@ impl MockStakingPool {
     pub fn add_reward(&mut self, amount: U128) {
         let account_id = env::predecessor_account_id();
         self.add_reward_for(amount, account_id);
+    }
+
+    pub fn set_refund_amount(&mut self, amount: U128) {
+        self.refund_amount = amount;
     }
 
     pub fn add_reward_for(&mut self, amount: U128, account_id: AccountId) {
