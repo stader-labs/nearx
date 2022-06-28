@@ -22,6 +22,7 @@ use workspaces::network::DevAccountDeployer;
 /// 5. actual staked info
 /// 6. actual unstaked info
 
+/// Test ft_on_transfer
 #[tokio::test]
 async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;
@@ -52,7 +53,6 @@ async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {
     Ok(())
 }
 
-/// Test ft_on_transfer
 #[tokio::test]
 async fn test_ft_on_transfer() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3).await?;
