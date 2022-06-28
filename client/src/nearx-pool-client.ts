@@ -1,8 +1,9 @@
 import * as nearjs from 'near-api-js';
-import { AccountId, Balance, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
+import { Balance, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
 import * as os from 'os';
 import { isBrowser } from './utils';
+//import * as bn from 'bn';
 
 const gas = '300000000000000';
 
@@ -38,8 +39,8 @@ export const NearxPoolClient = {
       contract = createContract(account, contractName);
     }
 
-    async function getValidatorsId(): Promise<AccountId[]> {
-      return (await contract.get_validators({ args: {} })).map((validator) => validator.account_id);
+    async function getValidators(): Promise<ValidatorInfo[]> {
+      return await contract.get_validators({ args: {} });
     }
 
     return {
@@ -49,25 +50,31 @@ export const NearxPoolClient = {
 
       // View methods:
       async stakedBalance(): Promise<Balance> {
-        return contract.get_account_staked_balance({
-          args: {
-            account_id: accountId,
-          },
-        });
+        return BigInt(
+          await contract.get_account_staked_balance({
+            args: {
+              account_id: accountId,
+            },
+          }),
+        );
       },
       async unstakedBalance(): Promise<Balance> {
-        return contract.get_account_unstaked_balance({
-          args: {
-            account_id: accountId,
-          },
-        });
+        return BigInt(
+          await contract.get_account_unstaked_balance({
+            args: {
+              account_id: accountId,
+            },
+          }),
+        );
       },
       async totalBalance(): Promise<Balance> {
-        return contract.get_account_total_balance({
-          args: {
-            account_id: accountId,
-          },
-        });
+        return BigInt(
+          await contract.get_account_total_balance({
+            args: {
+              account_id: accountId,
+            },
+          }),
+        );
       },
 
       async validators(): Promise<ValidatorInfo[]> {
@@ -97,18 +104,17 @@ export const NearxPoolClient = {
 
       // Operator methods:
       async epochStake(): Promise<void> {
-        let n = 0;
-
-        while (await contract.epoch_stake({ args: {}, gas })) {
-          n += 1;
-        }
-        console.debug(`Epoch stake has staked ${n} times.`);
+        await contract.epoch_stake({ args: {}, gas });
       },
 
       async epochAutocompoundRewards(): Promise<void> {
-        for (const validator of await getValidatorsId()) {
-          await contract.epoch_autocompound_rewards({ args: { validator }, gas });
-        }
+        const validators = await getValidators();
+
+        await Promise.all(
+          validators.map((v) =>
+            contract.epoch_autocompound_rewards({ args: { validator: v.account_id }, gas }),
+          ),
+        );
       },
 
       async epochUnstake(): Promise<void> {
@@ -120,16 +126,31 @@ export const NearxPoolClient = {
         console.debug(`Epoch unstake has unstaked ${n} times.`);
       },
 
-      async epochWithdraw(): Promise<void> {
-        for (const validator of await getValidatorsId()) {
-          await contract.epoch_autocompound_rewards({ args: { validator }, gas });
-        }
+      async epochWithdraw(): Promise<any[]> {
+        const currentEpoch = BigInt(0);
+        const validators = await getValidators().then((a) =>
+          a.filter((v) => v.unstaked !== BigInt(0) && v.last_unstake_start_epoch <= currentEpoch),
+        );
+
+        const result = await Promise.allSettled(
+          validators.map((v) =>
+            contract.epoch_withdraw({ args: { validator: v.account_id }, gas }),
+          ),
+        );
+
+        return result
+          .filter((r) => r.status === 'rejected')
+          .map((r) => (r as PromiseRejectedResult).reason);
       },
 
       async syncBalances(): Promise<void> {
-        for (const validator_id of await getValidatorsId()) {
-          await contract.sync_balance_from_validator({ args: { validator_id }, gas });
-        }
+        const validators = await getValidators();
+
+        await Promise.all(
+          validators.map((v) =>
+            contract.sync_balance_from_validator({ args: { validator_id: v.account_id }, gas }),
+          ),
+        );
       },
     };
   },
