@@ -6,6 +6,7 @@ import { isBrowser } from './utils';
 //import * as bn from 'bn';
 
 const gas = '300000000000000';
+const EPOCH_TO_UNBOUND = BigInt(4);
 
 type NearxPoolClient = Iface;
 export const NearxPoolClient = {
@@ -107,14 +108,14 @@ export const NearxPoolClient = {
       },
 
       // Operator methods:
-      async epochStake(): Promise<void> {
-        await contract.epoch_stake({ args: {}, gas });
+      async epochStake(): Promise<string> {
+        return contract.epoch_stake({ args: {}, gas });
       },
 
-      async epochAutocompoundRewards(): Promise<void> {
+      async epochAutocompoundRewards(): Promise<any[]> {
         const validators = await getValidators();
 
-        await Promise.all(
+        return promiseAllSettledErrors(
           validators.map((v) =>
             contract.epoch_autocompound_rewards({ args: { validator: v.account_id }, gas }),
           ),
@@ -124,7 +125,7 @@ export const NearxPoolClient = {
       async epochUnstake(): Promise<void> {
         let n = 0;
 
-        while (await contract.epoch_stake({ args: {}, gas })) {
+        while (await contract.epoch_unstake({ args: {}, gas })) {
           n += 1;
         }
         console.debug(`Epoch unstake has unstaked ${n} times.`);
@@ -133,24 +134,24 @@ export const NearxPoolClient = {
       async epochWithdraw(): Promise<any[]> {
         const currentEpoch = await this.currentEpoch();
         const validators = await getValidators().then((a) =>
-          a.filter((v) => v.unstaked !== BigInt(0) && v.last_unstake_start_epoch <= currentEpoch),
+          a.filter(
+            (v) =>
+              v.unstaked !== BigInt(0) &&
+              v.last_unstake_start_epoch + EPOCH_TO_UNBOUND <= currentEpoch,
+          ),
         );
 
-        const result = await Promise.allSettled(
+        return promiseAllSettledErrors(
           validators.map((v) =>
             contract.epoch_withdraw({ args: { validator: v.account_id }, gas }),
           ),
         );
-
-        return result
-          .filter((r) => r.status === 'rejected')
-          .map((r) => (r as PromiseRejectedResult).reason);
       },
 
-      async syncBalances(): Promise<void> {
+      async syncBalances(): Promise<any[]> {
         const validators = await getValidators();
 
-        await Promise.all(
+        return promiseAllSettledErrors(
           validators.map((v) =>
             contract.sync_balance_from_validator({ args: { validator_id: v.account_id }, gas }),
           ),
@@ -194,4 +195,13 @@ function configFromNetwork(networkId: Network): nearjs.ConnectConfig {
     default:
       throw new Error('Invalid network: ' + networkId);
   }
+}
+
+/**
+ * Returns the errors after calling `Promise.allSettled`.
+ */
+async function promiseAllSettledErrors<T>(promises: Promise<T>[]): Promise<any[]> {
+  return (await Promise.allSettled(promises))
+    .filter((r) => r.status === 'rejected')
+    .map((r) => (r as PromiseRejectedResult).reason);
 }

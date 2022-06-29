@@ -1,8 +1,8 @@
 import * as nearjs from 'near-api-js';
 export * as nearjs from 'near-api-js';
 
-export type Balance = BigInt;
-export type Epoch = BigInt;
+export type Balance = bigint;
+export type Epoch = bigint;
 export type AccountId = string;
 
 export type Network = 'testnet' | 'mainnet';
@@ -66,12 +66,12 @@ export interface NearxStakingPool {
   /**
    * Epoch stake.
    */
-  epochStake(): Promise<void>;
+  epochStake(): Promise<string>;
 
   /**
    * Epoch autocompound rewards.
    */
-  epochAutocompoundRewards(): Promise<void>;
+  epochAutocompoundRewards(): Promise<any[]>;
 
   /**
    * Epoch unstake.
@@ -87,7 +87,7 @@ export interface NearxStakingPool {
   /**
    * Syncronize balance from validator.
    */
-  syncBalances(): Promise<void>;
+  syncBalances(): Promise<any[]>;
 }
 
 export interface NearxPoolClient extends NearxStakingPool {
