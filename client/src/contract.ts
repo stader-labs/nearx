@@ -1,8 +1,11 @@
 import * as nearjs from 'near-api-js';
-import { ValidatorInfo } from '.';
+import { Epoch, ValidatorInfo } from '.';
 import { nameof } from './utils';
 
-export type NearxContract = nearjs.Contract & RpcCallsStakingPool & RpcCallsOperator;
+export type NearxContract = nearjs.Contract &
+  RpcCallsStakingPool &
+  RpcCallsOperator &
+  RpcCallsUtils;
 
 export interface RpcCallsStakingPool {
   get_account_staked_balance(args: any): Promise<string>;
@@ -27,6 +30,10 @@ export interface RpcCallsOperator {
   sync_balance_from_validator(args: any): Promise<string>;
 }
 
+export interface RpcCallsUtils {
+  get_current_epoch(args: any): Promise<Epoch>;
+}
+
 export function createContract(account: nearjs.Account, contractName: string): NearxContract {
   return new nearjs.Contract(
     // The account object that is connecting:
@@ -44,6 +51,8 @@ export function createContract(account: nearjs.Account, contractName: string): N
         nameof<RpcCallsStakingPool>('get_account_total_balance'),
         // Operator:
         nameof<RpcCallsOperator>('get_validators'),
+        // Utils:
+        nameof<RpcCallsUtils>('get_current_epoch'),
       ],
       changeMethods: [
         // Staking Pool:

@@ -31,6 +31,11 @@ export interface NearxStakingPool {
    */
   validators(): Promise<ValidatorInfo[]>;
 
+  /**
+   * Returns the current epoch.
+   */
+  currentEpoch(): Promise<Epoch>;
+
   // User-facing methods:
 
   /**

@@ -5,6 +5,7 @@ const commands: {
 } = {
   // Read:
   validators: displayValidators,
+  epoch: async (client) => console.log(await client.currentEpoch()),
   // Operation:
   'sync-balances': syncBalances,
   autocompound: epochAutocompoundRewards,
@@ -83,7 +84,7 @@ function logCommand(name: string) {
 }
 
 async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void> {
-  await syncBalances(client);
+  //await syncBalances(client);
   await epochAutocompoundRewards(client);
   await stake(client);
   await unstake(client);

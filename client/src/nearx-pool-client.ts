@@ -1,5 +1,5 @@
 import * as nearjs from 'near-api-js';
-import { Balance, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
+import { Balance, Epoch, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
 import * as os from 'os';
 import { isBrowser } from './utils';
@@ -43,7 +43,7 @@ export const NearxPoolClient = {
       return await contract.get_validators({ args: {} });
     }
 
-    return {
+    const client = {
       near,
       config,
       contract,
@@ -79,6 +79,10 @@ export const NearxPoolClient = {
 
       async validators(): Promise<ValidatorInfo[]> {
         return contract.get_validators({ args: {} });
+      },
+
+      async currentEpoch(): Promise<Epoch> {
+        return contract.get_current_epoch({ args: {} });
       },
 
       // User-facing methods:
@@ -127,7 +131,7 @@ export const NearxPoolClient = {
       },
 
       async epochWithdraw(): Promise<any[]> {
-        const currentEpoch = BigInt(0);
+        const currentEpoch = await this.currentEpoch();
         const validators = await getValidators().then((a) =>
           a.filter((v) => v.unstaked !== BigInt(0) && v.last_unstake_start_epoch <= currentEpoch),
         );
@@ -153,6 +157,8 @@ export const NearxPoolClient = {
         );
       },
     };
+
+    return client;
   },
 };
 
