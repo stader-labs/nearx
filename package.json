@@ -16,7 +16,6 @@
   },
   "scripts": {
     "build": "tsc --build client/tsconfig.json cli/tsconfig.json",
-    "postinstall": "yarn workspace --silent nearx-js --silent run postinstall",
     "nearx": "yarn workspace --silent nearx-app --silent ts-node src/index.ts"
   }
 }

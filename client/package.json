@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "NearX stake pool client",
   "main": "src/index.ts",
+  "files": [
+    "src"
+  ],
   "repository": "git@github.com:stader-labs/near-liquid-token",
   "author": "Félix <felix@staderlabs.com>",
   "license": "UNLICENSED",
@@ -11,10 +14,10 @@
     "near-api-js": "^0.45.1"
   },
   "devDependencies": {
-    "types-bn": "^0.0.1"
+    "types-bn": "^0.0.1",
+    "tslib": "^2.4.0"
   },
   "scripts": {
-    "postinstall": "tsc --outDir ./build",
     "build": "yarn tsc --build"
   }
 }

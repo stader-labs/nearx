@@ -1,15 +1,26 @@
 {
+  "include": ["src/*", "../node_modules/types-bn/index.d.ts", "types"],
   "compilerOptions": {
     "composite": true,
-    "outDir": "dist",
-    "lib": ["es2015", "dom"],
+    "module": "esnext",
+    "lib": ["esnext", "dom"],
     "target": "es6",
     "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
     "strict": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noImplicitAny": true,
-    "allowSyntheticDefaultImports": true
-  },
-  "include": ["src/*", "../node_modules/types-bn/index.d.ts"]
+    "allowSyntheticDefaultImports": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "rootDir": "src",
+    "outDir": "dist",
+    "declaration": true,
+    "sourceMap": true,
+    "importHelpers": true,
+    "noEmit": true
+  }
 }
