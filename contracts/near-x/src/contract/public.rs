@@ -4,7 +4,7 @@ use crate::events::Event;
 use crate::{contract::*, errors, state::*};
 use near_sdk::json_types::U64;
 use near_sdk::near_bindgen;
-use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
+use near_sdk::{assert_one_yocto, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -43,6 +43,7 @@ impl NearxPool {
                 sync_validator_balance_paused: false,
             },
             treasury_account_id,
+            total_validator_weight: 0,
         }
     }
 
@@ -192,7 +193,7 @@ impl NearxPool {
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
 
-        validator_info.paused = true;
+        validator_info.weight = 0;
         self.internal_update_validator(&validator, &validator_info);
     }
 
@@ -200,7 +201,7 @@ impl NearxPool {
         self.assert_operator_or_owner();
 
         let mut validator_info = self.internal_get_validator(&validator);
-        validator_info.paused = false;
+        validator_info.weight = 0;
         self.internal_update_validator(&validator, &validator_info);
     }
 
@@ -211,14 +212,9 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
-        log!("validator is paused {:?}", validator_info.paused());
-        log!(
-            "validator is unbonding {:?}",
-            validator_info.pending_unstake_release()
-        );
-
         require!(validator_info.is_empty(), ERROR_INVALID_VALIDATOR_REMOVAL);
 
+        self.total_validator_weight -= validator_info.weight;
         self.validator_info_map.remove(&validator);
 
         Event::ValidatorRemoved {
@@ -228,17 +224,44 @@ impl NearxPool {
     }
 
     #[payable]
-    pub fn add_validator(&mut self, validator: AccountId) {
+    pub fn add_validator(&mut self, validator: AccountId, weight: u16) {
         self.assert_operator_or_owner();
         assert_one_yocto();
         if self.validator_info_map.get(&validator).is_some() {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
         self.validator_info_map
-            .insert(&validator, &ValidatorInfo::new(validator.clone()));
+            .insert(&validator, &ValidatorInfo::new(validator.clone(), weight));
+        self.total_validator_weight += weight;
 
         Event::ValidatorAdded {
             account_id: validator,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn update_validator(&mut self, validator: AccountId, weight: u16) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+        let mut validator_info = self
+            .validator_info_map
+            .get(&validator)
+            .expect(ERROR_VALIDATOR_DOES_NOT_EXIST);
+
+        if weight == 0 {
+            require!(true, ERROR_INVALID_VALIDATOR_WEIGHT);
+        }
+
+        // update total weight
+        self.total_validator_weight = self.total_validator_weight + weight - validator_info.weight;
+
+        validator_info.weight = weight;
+        self.validator_info_map.insert(&validator, &validator_info);
+
+        Event::ValidatorUpdated {
+            account_id: validator,
+            weight,
         }
         .emit();
     }
@@ -437,16 +460,16 @@ impl NearxPool {
         let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
             val_info
         } else {
-            ValidatorInfo::new(validator)
+            ValidatorInfo::new(validator, 0)
         };
 
         ValidatorInfoResponse {
             account_id: validator_info.account_id.clone(),
             staked: validator_info.staked.into(),
             unstaked: U128(validator_info.unstaked_amount),
+            weight: validator_info.weight,
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
-            paused: validator_info.paused,
         }
     }
 
@@ -458,10 +481,14 @@ impl NearxPool {
                 staked: U128::from(pool.1.staked),
                 last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
                 last_unstake_start_epoch: U64(pool.1.unstake_start_epoch),
-                paused: pool.1.paused,
                 unstaked: U128(pool.1.unstaked_amount),
+                weight: pool.1.weight,
             })
             .collect()
+    }
+
+    pub fn get_total_validator_weight(&self) -> u16 {
+        self.total_validator_weight
     }
 
     pub fn is_validator_unstake_pending(&self, validator: AccountId) -> bool {

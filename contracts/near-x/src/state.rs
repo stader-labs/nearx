@@ -60,9 +60,9 @@ pub struct ValidatorInfoResponse {
     pub account_id: AccountId,
     pub staked: U128,
     pub unstaked: U128,
+    pub weight: u16,
     pub last_asked_rewards_epoch_height: U64,
     pub last_unstake_start_epoch: U64,
-    pub paused: bool,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -70,9 +70,9 @@ pub struct ValidatorInfoResponse {
 pub struct ValidatorInfo {
     pub account_id: AccountId,
 
-    pub paused: bool,
-
     pub staked: u128,
+
+    pub weight: u16,
 
     pub last_redeemed_rewards_epoch: EpochHeight,
 
@@ -91,11 +91,11 @@ impl ValidatorInfo {
             && self.unstaked_amount == 0
     }
 
-    pub fn new(account_id: AccountId) -> Self {
+    pub fn new(account_id: AccountId, weight: u16) -> Self {
         Self {
             account_id,
-            paused: false,
             staked: 0,
+            weight,
             last_redeemed_rewards_epoch: 0,
             unstaked_amount: 0,
             unstake_start_epoch: 0,
@@ -108,7 +108,7 @@ impl ValidatorInfo {
     }
 
     pub fn paused(&self) -> bool {
-        self.paused == true
+        self.weight == 0
     }
 
     /// whether the validator is in unstake releasing period.

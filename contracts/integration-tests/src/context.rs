@@ -1,3 +1,4 @@
+use crate::constants::ONE_EPOCH;
 use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
@@ -47,6 +48,10 @@ impl IntegrationTestContext<Sandbox> {
         let nearx_operator = worker.dev_create_account().await?;
         let nearx_owner = worker.dev_create_account().await?;
         let nearx_treasury = worker.dev_create_account().await?;
+
+        println!("nearx_operator is {:?}", nearx_operator.id().clone());
+        println!("nearx_owner is {:?}", nearx_owner.id().clone());
+        println!("nearx_treasury is {:?}", nearx_treasury.id().clone());
 
         let user1 = worker.dev_create_account().await?;
         let user2 = worker.dev_create_account().await?;
@@ -111,7 +116,7 @@ impl IntegrationTestContext<Sandbox> {
         }
 
         println!("Fast forward to around 10 epochs");
-        worker.fast_forward(10000).await?;
+        worker.fast_forward(ONE_EPOCH).await?;
 
         Ok(IntegrationTestContext {
             worker,
@@ -127,18 +132,53 @@ impl IntegrationTestContext<Sandbox> {
         })
     }
 
+    pub async fn add_validator(&mut self) -> anyhow::Result<()> {
+        let new_validator_id = self.validator_count;
+        self.validator_count += 1;
+        let stake_pool_wasm = std::fs::read(STAKE_POOL_WASM)?;
+
+        let stake_pool_contract = self.worker.dev_deploy(&stake_pool_wasm).await?;
+        let validator_account_id = get_validator_account_id(new_validator_id);
+        // Initialized the stake pool contract
+        println!("Initializing the stake pool contract");
+        stake_pool_contract
+            .call(&self.worker, "new")
+            .max_gas()
+            .transact()
+            .await?;
+
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "add_validator")
+            .deposit(1)
+            .args_json(json!({ "validator": stake_pool_contract.id() }))?
+            .transact()
+            .await?;
+
+        self.validator_to_stake_pool_contract
+            .insert(validator_account_id, stake_pool_contract);
+
+        Ok(())
+    }
+
     pub async fn run_epoch_methods(&self) -> anyhow::Result<()> {
         let current_epoch = self.get_current_epoch().await?;
 
+        println!("Running epoch methods!");
+
         // Run the autocompounding epoch
-        for i in 0..self.validator_count {
-            let res = self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
-                .await?;
-            println!("autocompounding logs are {:?}", res.logs());
-        }
+        // for i in 0..self.validator_count {
+        //     let res = self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
+        //         .await?;
+        //     println!("autocompounding logs are {:?}", res.logs());
+        // }
 
         // Run the staking epoch
-        self.epoch_stake().await?;
+        let mut res = true;
+        while res {
+            let output = self.epoch_stake().await?;
+            res = output.json::<bool>().unwrap();
+            println!("output of epoch stake is {:?}", output.logs());
+        }
 
         // Run the unstaking epoch
         let mut res = true;
