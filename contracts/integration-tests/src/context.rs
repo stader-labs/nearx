@@ -132,8 +132,9 @@ impl IntegrationTestContext<Sandbox> {
 
         // Run the autocompounding epoch
         for i in 0..self.validator_count {
-            self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
+            let res = self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
                 .await?;
+            println!("autocompounding logs are {:?}", res.logs());
         }
 
         // Run the staking epoch
