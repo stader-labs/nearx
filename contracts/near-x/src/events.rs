@@ -96,6 +96,10 @@ pub enum Event {
     ValidatorRemoved {
         account_id: AccountId,
     },
+    ValidatorUpdated {
+        account_id: AccountId,
+        weight: u16,
+    },
     // Validator draining
     DrainUnstake {
         account_id: AccountId,

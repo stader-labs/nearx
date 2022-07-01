@@ -6,7 +6,9 @@ use crate::{
     contract::*,
     state::*,
 };
-use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
+use near_sdk::{
+    is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
+};
 
 #[near_bindgen]
 impl NearxPool {
@@ -17,10 +19,17 @@ impl NearxPool {
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
-        let selected_validator = self.get_validator_to_stake();
-        require!(selected_validator.is_some(), ERROR_ALL_VALIDATORS_ARE_BUSY);
+        let selected_validator_info = self
+            .validator_info_map
+            .values()
+            .filter(|v| !v.paused())
+            .min_by_key(|v| v.staked);
+        require!(
+            selected_validator_info.is_some(),
+            ERROR_ALL_VALIDATORS_ARE_BUSY
+        );
 
-        let selected_validator = selected_validator.unwrap();
+        let selected_validator = selected_validator_info.unwrap();
 
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(selected_validator.account_id.clone())
@@ -270,13 +279,40 @@ impl NearxPool {
         }
     }
 
-    pub fn get_validator_to_stake(&self) -> Option<ValidatorInfo> {
-        self.validator_info_map
-            .values()
-            .filter(|v| !v.paused())
-            .min_by_key(|v| v.staked)
+    #[private]
+    fn get_validator_expected_stake(&self, validator: &ValidatorInfo) -> Balance {
+        if validator.weight == 0 {
+            0
+        } else {
+            self.total_staked * (validator.weight as u128) / (self.total_validator_weight as u128)
+        }
     }
 
+    #[private]
+    pub fn get_validator_to_stake(&self, amount: Balance) -> (Option<ValidatorInfo>, Balance) {
+        let mut selected_validator = None;
+        let mut amount_to_stake: Balance = 0;
+
+        for validator in self.validator_info_map.values() {
+            let target_amount = self.get_validator_expected_stake(&validator);
+            if validator.staked < target_amount {
+                let delta = std::cmp::min(target_amount - validator.staked, amount);
+                if delta > amount_to_stake {
+                    amount_to_stake = delta;
+                    selected_validator = Some(validator);
+                }
+            }
+        }
+
+        if amount_to_stake > 0 && amount - amount_to_stake <= ONE_NEAR {
+            amount_to_stake = amount;
+        }
+
+        // Note that it's possible that no validator is available
+        (selected_validator, amount_to_stake)
+    }
+
+    #[private]
     pub fn get_validator_to_unstake(&self) -> Option<ValidatorInfo> {
         let mut max_validator_stake_amount: u128 = 0;
         let mut current_validator: Option<ValidatorInfo> = None;

@@ -44,6 +44,7 @@ pub const ERROR_VALIDATOR_IS_NOT_PRESENT: &str = "Validator is not present";
 pub const ERROR_VALIDATOR_IS_ALREADY_PRESENT: &str = "Validator is already present";
 pub const ERROR_VALIDATOR_IS_BUSY: &str = "Validator is busy";
 pub const ERROR_ALL_VALIDATORS_ARE_BUSY: &str = "All validators are busy";
+pub const ERROR_INVALID_VALIDATOR_WEIGHT: &str = "Invalid validator weight";
 
 /// Validator sync errors
 pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str =

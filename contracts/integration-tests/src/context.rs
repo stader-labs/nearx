@@ -1,3 +1,4 @@
+use crate::constants::ONE_EPOCH;
 use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
@@ -48,6 +49,10 @@ impl IntegrationTestContext<Sandbox> {
         let nearx_owner = worker.dev_create_account().await?;
         let nearx_treasury = worker.dev_create_account().await?;
 
+        println!("nearx_operator is {:?}", nearx_operator.id().clone());
+        println!("nearx_owner is {:?}", nearx_owner.id().clone());
+        println!("nearx_treasury is {:?}", nearx_treasury.id().clone());
+
         let user1 = worker.dev_create_account().await?;
         let user2 = worker.dev_create_account().await?;
         let user3 = worker.dev_create_account().await?;
@@ -87,13 +92,15 @@ impl IntegrationTestContext<Sandbox> {
 
             println!("Adding validator {:?}", stake_pool_contract.id());
             // Add the stake pool
+            // Initially give all validators equal weight
             println!("Adding validator");
-            nearx_operator
+            let res = nearx_operator
                 .call(&worker, nearx_contract.id(), "add_validator")
                 .deposit(1)
-                .args_json(json!({ "validator": stake_pool_contract.id() }))?
+                .args_json(json!({ "validator": stake_pool_contract.id() , "weight": 10 }))?
                 .transact()
                 .await?;
+            println!("add_validator res is {:?}", res);
             println!("Successfully Added the validator!");
 
             validator_to_stake_pool_contract.insert(validator_account_id, stake_pool_contract);
@@ -111,7 +118,7 @@ impl IntegrationTestContext<Sandbox> {
         }
 
         println!("Fast forward to around 10 epochs");
-        worker.fast_forward(10000).await?;
+        worker.fast_forward(10 * ONE_EPOCH).await?;
 
         Ok(IntegrationTestContext {
             worker,
@@ -127,25 +134,94 @@ impl IntegrationTestContext<Sandbox> {
         })
     }
 
+    pub async fn update_validator(
+        &mut self,
+        account_id: AccountId,
+        weight: u16,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "update_validator")
+            .deposit(1)
+            .args_json(json!({ "validator": account_id, "weight": weight }))?
+            .transact()
+            .await
+    }
+
+    pub async fn add_validator(&mut self, weight: u16) -> anyhow::Result<()> {
+        let new_validator_id = self.validator_count;
+        self.validator_count += 1;
+        let stake_pool_wasm = std::fs::read(STAKE_POOL_WASM)?;
+
+        let stake_pool_contract = self.worker.dev_deploy(&stake_pool_wasm).await?;
+        let validator_account_id = get_validator_account_id(new_validator_id);
+        // Initialized the stake pool contract
+        println!("Initializing the stake pool contract");
+        stake_pool_contract
+            .call(&self.worker, "new")
+            .max_gas()
+            .transact()
+            .await?;
+
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "add_validator")
+            .deposit(1)
+            .args_json(json!({ "validator": stake_pool_contract.id(), "weight": weight}))?
+            .transact()
+            .await?;
+
+        self.validator_to_stake_pool_contract
+            .insert(validator_account_id, stake_pool_contract);
+
+        Ok(())
+    }
+
     pub async fn run_epoch_methods(&self) -> anyhow::Result<()> {
         let current_epoch = self.get_current_epoch().await?;
 
+        println!("Running epoch methods!");
+
+        let MAX_LOOP_COUNT: u32 = 3 * self.validator_count;
+
         // Run the autocompounding epoch
         for i in 0..self.validator_count {
-            let res = self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
+            let res = self
+                .auto_compound_rewards(self.get_stake_pool_contract(i).id())
                 .await?;
             println!("autocompounding logs are {:?}", res.logs());
         }
 
         // Run the staking epoch
-        self.epoch_stake().await?;
+        let mut res = true;
+        let mut i = 0;
+        while res {
+            let output = self.epoch_stake().await;
+            if output.is_err() {
+                println!("epoch stake errored out!");
+                break;
+            }
+            println!("epoch_stake output is {:?}", output.as_ref().unwrap());
+            res = output.unwrap().json::<bool>().unwrap();
+            i += 1;
+            if i >= MAX_LOOP_COUNT {
+                break;
+            }
+        }
 
         // Run the unstaking epoch
         let mut res = true;
+        let mut i = 0;
         while res {
-            let output = self.epoch_unstake().await?;
+            let output = self.epoch_unstake().await;
+            if output.is_err() {
+                println!("epoch unstake errored out!");
+                break;
+            }
             println!("output of epoch unstake is {:?}", output);
-            res = output.json::<bool>().unwrap();
+            res = output.unwrap().json::<bool>().unwrap();
+            i += 1;
+            if i >= MAX_LOOP_COUNT {
+                break;
+            }
         }
 
         // Run the withdraw epoch
@@ -164,10 +240,10 @@ impl IntegrationTestContext<Sandbox> {
         }
 
         // Run the validator balance syncing epoch
-        for i in 0..self.validator_count {
-            self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
-                .await?;
-        }
+        // for i in 0..self.validator_count {
+        //     self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
+        //         .await?;
+        // }
 
         Ok(())
     }
@@ -448,6 +524,14 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<Vec<HumanReadableAccount>>()
+    }
+
+    pub async fn get_total_validator_weight(&self) -> anyhow::Result<u16> {
+        self.nearx_contract
+            .call(&self.worker, "get_total_validator_weight")
+            .view()
+            .await?
+            .json::<u16>()
     }
 
     pub async fn get_stake_pool_total_staked_balance(

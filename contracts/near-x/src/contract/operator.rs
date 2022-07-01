@@ -9,7 +9,7 @@ use crate::{
     errors::ERROR_VALIDATOR_IS_BUSY,
     state::*,
 };
-use near_sdk::{env, log, near_bindgen, require, ONE_NEAR};
+use near_sdk::{env, log, near_bindgen, require};
 
 #[near_bindgen]
 impl NearxPool {
@@ -31,17 +31,18 @@ impl NearxPool {
             return false;
         }
 
-        let validator = self.get_validator_to_stake();
-        require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
+        let validator_to_stake_info =
+            self.get_validator_to_stake(self.reconciled_epoch_stake_amount);
+        require!(
+            validator_to_stake_info.0.is_some(),
+            ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE
+        );
 
-        let validator = validator.unwrap();
+        let validator = validator_to_stake_info.0.unwrap();
 
-        let amount_to_stake = self.reconciled_epoch_stake_amount;
+        let amount_to_stake = validator_to_stake_info.1;
 
-        if self.reconciled_epoch_stake_amount < ONE_NEAR {
-            log!("stake amount too low: {}", amount_to_stake);
-            return false;
-        }
+        log!("amount to stake is {:?}", amount_to_stake);
 
         require!(
             env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
@@ -225,32 +226,36 @@ impl NearxPool {
         self.epoch_reconcilation();
 
         // after cleanup, there might be no need to unstake
-
         if self.reconciled_epoch_unstake_amount == 0 {
             log!("No amount to unstake");
             return false;
         }
 
-        let mut validator = self
-            .get_validator_to_unstake()
-            .expect(ERROR_NO_VALIDATOR_AVAILABLE_FOR_UNSTAKE);
-
-        let amount_to_unstake =
-            std::cmp::min(validator.staked, self.reconciled_epoch_unstake_amount);
+        let validator_to_unstake = self.get_validator_to_unstake();
 
         require!(
-            amount_to_unstake <= validator.staked,
+            validator_to_unstake.is_some(),
+            ERROR_NO_VALIDATOR_AVAILABLE_FOR_UNSTAKE
+        );
+
+        let mut validator_info = validator_to_unstake.unwrap();
+
+        let amount_to_unstake =
+            std::cmp::min(validator_info.staked, self.reconciled_epoch_unstake_amount);
+
+        require!(
+            amount_to_unstake <= validator_info.staked,
             ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT
         );
 
         self.reconciled_epoch_unstake_amount -= amount_to_unstake;
-        validator.staked -= amount_to_unstake;
-        validator.last_unstake_start_epoch = validator.unstake_start_epoch;
-        validator.unstake_start_epoch = env::epoch_height();
+        validator_info.staked -= amount_to_unstake;
+        validator_info.last_unstake_start_epoch = validator_info.unstake_start_epoch;
+        validator_info.unstake_start_epoch = env::epoch_height();
 
-        self.internal_update_validator(&validator.account_id, &validator);
+        self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-        ext_staking_pool::ext(validator.account_id.clone())
+        ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
             .with_attached_deposit(NO_DEPOSIT)
             .unstake(U128(amount_to_unstake))
@@ -258,11 +263,11 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
-                    .on_stake_pool_unstake(validator.account_id.clone(), amount_to_unstake),
+                    .on_stake_pool_unstake(validator_info.account_id.clone(), amount_to_unstake),
             );
 
         Event::EpochUnstakeAttempt {
-            validator_id: validator.account_id,
+            validator_id: validator_info.account_id,
             amount: U128(amount_to_unstake),
         }
         .emit();
@@ -350,13 +355,13 @@ impl NearxPool {
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-            Event::EpochWithdrawCallbackSuccess {
+            Event::EpochWithdrawCallbackFailed {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
             .emit();
         } else {
-            Event::EpochWithdrawCallbackFailed {
+            Event::EpochWithdrawCallbackSuccess {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
