@@ -147,7 +147,7 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn add_validator(&mut self) -> anyhow::Result<()> {
+    pub async fn add_validator(&mut self, weight: u16) -> anyhow::Result<()> {
         let new_validator_id = self.validator_count;
         self.validator_count += 1;
         let stake_pool_wasm = std::fs::read(STAKE_POOL_WASM)?;
@@ -165,7 +165,7 @@ impl IntegrationTestContext<Sandbox> {
         self.nearx_operator
             .call(&self.worker, self.nearx_contract.id(), "add_validator")
             .deposit(1)
-            .args_json(json!({ "validator": stake_pool_contract.id() }))?
+            .args_json(json!({ "validator": stake_pool_contract.id(), "weight": weight}))?
             .transact()
             .await?;
 
@@ -524,6 +524,14 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<Vec<HumanReadableAccount>>()
+    }
+
+    pub async fn get_total_validator_weight(&self) -> anyhow::Result<u16> {
+        self.nearx_contract
+            .call(&self.worker, "get_total_validator_weight")
+            .view()
+            .await?
+            .json::<u16>()
     }
 
     pub async fn get_stake_pool_total_staked_balance(
