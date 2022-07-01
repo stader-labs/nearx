@@ -92,13 +92,15 @@ impl IntegrationTestContext<Sandbox> {
 
             println!("Adding validator {:?}", stake_pool_contract.id());
             // Add the stake pool
+            // Initially give all validators equal weight
             println!("Adding validator");
-            nearx_operator
+            let res = nearx_operator
                 .call(&worker, nearx_contract.id(), "add_validator")
                 .deposit(1)
-                .args_json(json!({ "validator": stake_pool_contract.id() }))?
+                .args_json(json!({ "validator": stake_pool_contract.id() , "weight": 10 }))?
                 .transact()
                 .await?;
+            println!("add_validator res is {:?}", res);
             println!("Successfully Added the validator!");
 
             validator_to_stake_pool_contract.insert(validator_account_id, stake_pool_contract);
@@ -116,7 +118,7 @@ impl IntegrationTestContext<Sandbox> {
         }
 
         println!("Fast forward to around 10 epochs");
-        worker.fast_forward(ONE_EPOCH).await?;
+        worker.fast_forward(10 * ONE_EPOCH).await?;
 
         Ok(IntegrationTestContext {
             worker,
@@ -130,6 +132,19 @@ impl IntegrationTestContext<Sandbox> {
             user2,
             user3,
         })
+    }
+
+    pub async fn update_validator(
+        &mut self,
+        account_id: AccountId,
+        weight: u16,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "update_validator")
+            .deposit(1)
+            .args_json(json!({ "validator": account_id, "weight": weight }))?
+            .transact()
+            .await
     }
 
     pub async fn add_validator(&mut self) -> anyhow::Result<()> {
@@ -165,27 +180,48 @@ impl IntegrationTestContext<Sandbox> {
 
         println!("Running epoch methods!");
 
+        let MAX_LOOP_COUNT: u32 = 3 * self.validator_count;
+
         // Run the autocompounding epoch
-        // for i in 0..self.validator_count {
-        //     let res = self.auto_compound_rewards(self.get_stake_pool_contract(i).id())
-        //         .await?;
-        //     println!("autocompounding logs are {:?}", res.logs());
-        // }
+        for i in 0..self.validator_count {
+            let res = self
+                .auto_compound_rewards(self.get_stake_pool_contract(i).id())
+                .await?;
+            println!("autocompounding logs are {:?}", res.logs());
+        }
 
         // Run the staking epoch
         let mut res = true;
+        let mut i = 0;
         while res {
-            let output = self.epoch_stake().await?;
-            res = output.json::<bool>().unwrap();
-            println!("output of epoch stake is {:?}", output.logs());
+            let output = self.epoch_stake().await;
+            if output.is_err() {
+                println!("epoch stake errored out!");
+                break;
+            }
+            println!("epoch_stake output is {:?}", output.as_ref().unwrap());
+            res = output.unwrap().json::<bool>().unwrap();
+            i += 1;
+            if i >= MAX_LOOP_COUNT {
+                break;
+            }
         }
 
         // Run the unstaking epoch
         let mut res = true;
+        let mut i = 0;
         while res {
-            let output = self.epoch_unstake().await?;
+            let output = self.epoch_unstake().await;
+            if output.is_err() {
+                println!("epoch unstake errored out!");
+                break;
+            }
             println!("output of epoch unstake is {:?}", output);
-            res = output.json::<bool>().unwrap();
+            res = output.unwrap().json::<bool>().unwrap();
+            i += 1;
+            if i >= MAX_LOOP_COUNT {
+                break;
+            }
         }
 
         // Run the withdraw epoch
@@ -204,10 +240,10 @@ impl IntegrationTestContext<Sandbox> {
         }
 
         // Run the validator balance syncing epoch
-        for i in 0..self.validator_count {
-            self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
-                .await?;
-        }
+        // for i in 0..self.validator_count {
+        //     self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
+        //         .await?;
+        // }
 
         Ok(())
     }

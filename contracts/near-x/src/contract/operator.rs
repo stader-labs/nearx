@@ -42,6 +42,8 @@ impl NearxPool {
 
         let amount_to_stake = validator_to_stake_info.1;
 
+        log!("amount to stake is {:?}", amount_to_stake);
+
         require!(
             env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
             ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
@@ -353,13 +355,13 @@ impl NearxPool {
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-            Event::EpochWithdrawCallbackSuccess {
+            Event::EpochWithdrawCallbackFailed {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
             .emit();
         } else {
-            Event::EpochWithdrawCallbackFailed {
+            Event::EpochWithdrawCallbackSuccess {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }

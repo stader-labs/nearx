@@ -729,8 +729,8 @@ fn test_get_validator_to_stake() {
         ]
     ));
 
-    contract.total_staked = 600;
-    contract.total_stake_shares = 600;
+    contract.total_staked = 700;
+    contract.total_stake_shares = 700;
 
     /*
        Get stake pool to stake into
@@ -791,8 +791,8 @@ fn test_get_validator_to_stake() {
         ]
     ));
 
-    contract.total_staked = ntoy(600);
-    contract.total_stake_shares = ntoy(600);
+    contract.total_staked = ntoy(700);
+    contract.total_stake_shares = ntoy(700);
 
     /*
        Get stake pool to stake into
@@ -805,6 +805,73 @@ fn test_get_validator_to_stake() {
     let validator = contract.get_validator_to_stake(ntoy(101));
     assert!(validator.0.is_some());
     assert_eq!(validator.0.unwrap().account_id, stake_public_key_2);
+    assert_eq!(validator.1, ntoy(101));
+
+    // Validators with equal weights and equal amounts
+
+    let mut validator_1 = get_validator(&contract, stake_public_key_1.clone());
+    let mut validator_2 = get_validator(&contract, stake_public_key_2.clone());
+    let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
+
+    validator_1.staked = ntoy(100);
+    validator_1.weight = 10;
+    validator_2.staked = ntoy(100);
+    validator_2.weight = 10;
+    validator_3.staked = ntoy(100);
+    validator_3.weight = 10;
+    contract.total_validator_weight = 30;
+
+    update_validator(&mut contract, stake_public_key_1.clone(), &validator_1);
+    update_validator(&mut contract, stake_public_key_2.clone(), &validator_2);
+    update_validator(&mut contract, stake_public_key_3.clone(), &validator_3);
+
+    let validators = contract.get_validators();
+
+    assert_eq!(validators.len(), 3);
+    assert!(check_equal_vec(
+        validators,
+        vec![
+            ValidatorInfoResponse {
+                account_id: stake_public_key_1.clone(),
+                staked: U128(ntoy(100)),
+                unstaked: U128(0),
+                weight: 10,
+                last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
+            },
+            ValidatorInfoResponse {
+                account_id: stake_public_key_2.clone(),
+                staked: U128(ntoy(100)),
+                unstaked: U128(0),
+                weight: 10,
+                last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
+            },
+            ValidatorInfoResponse {
+                account_id: stake_public_key_3.clone(),
+                staked: U128(ntoy(100)),
+                unstaked: U128(0),
+                weight: 10,
+                last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
+            }
+        ]
+    ));
+
+    contract.total_staked = ntoy(700);
+    contract.total_stake_shares = ntoy(700);
+
+    /*
+       Get stake pool to stake into
+    */
+    let validator = contract.get_validator_to_stake(ntoy(100));
+    assert!(validator.0.is_some());
+    assert_eq!(validator.0.unwrap().account_id, stake_public_key_1);
+    assert_eq!(validator.1, ntoy(100));
+
+    let validator = contract.get_validator_to_stake(ntoy(101));
+    assert!(validator.0.is_some());
+    assert_eq!(validator.0.unwrap().account_id, stake_public_key_1);
     assert_eq!(validator.1, ntoy(101));
 }
 

@@ -1,9 +1,10 @@
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LookupMap;
+use near_sdk::env::log;
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    env, near_bindgen, require, serde_json, AccountId, PanicOnDefault, Promise, PromiseOrValue,
+    env, log, near_bindgen, require, serde_json, AccountId, PanicOnDefault, Promise, PromiseOrValue,
 };
 
 pub fn ntoy(near_amount: u128) -> u128 {
@@ -116,8 +117,8 @@ impl StakingPool for MockStakingPool {
 
         self.internal_deposit();
 
-        let amount = self.internal_get_unstaked_deposit(&account_id);
-        self.internal_stake(amount);
+        // let amount = self.internal_get_unstaked_deposit(&account_id);
+        self.internal_stake(env::attached_deposit());
     }
 
     fn withdraw(&mut self, amount: U128) {
@@ -217,10 +218,15 @@ impl MockStakingPool {
     fn internal_stake(&mut self, amount: u128) {
         let account_id = env::predecessor_account_id();
         let unstaked_deposit = self.internal_get_unstaked_deposit(&account_id);
+        log!("amount is {}", amount);
+        log!("unstaked deposit is {}", unstaked_deposit);
         assert!(unstaked_deposit >= amount);
 
         let new_deposit = unstaked_deposit - amount;
         let new_staked = self.internal_get_staked(&account_id) + amount;
+
+        log!("New deposit amount is {}", new_deposit);
+        log!("New staked amount is {}", new_staked);
 
         self.deposits.insert(&account_id, &new_deposit);
         self.staked.insert(&account_id, &new_staked);

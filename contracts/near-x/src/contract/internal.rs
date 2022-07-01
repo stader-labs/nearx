@@ -19,14 +19,17 @@ impl NearxPool {
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
-        let selected_validator_info = self.get_validator_to_stake(user_amount);
+        let selected_validator_info = self
+            .validator_info_map
+            .values()
+            .filter(|v| !v.paused())
+            .min_by_key(|v| v.staked);
         require!(
-            selected_validator_info.0.is_some(),
+            selected_validator_info.is_some(),
             ERROR_ALL_VALIDATORS_ARE_BUSY
         );
 
-        let selected_validator = selected_validator_info.0.unwrap();
-        let user_amount = selected_validator_info.1;
+        let selected_validator = selected_validator_info.unwrap();
 
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(selected_validator.account_id.clone())
@@ -290,7 +293,7 @@ impl NearxPool {
         let mut selected_validator = None;
         let mut amount_to_stake: Balance = 0;
 
-        for (_, validator) in self.validator_info_map.iter() {
+        for validator in self.validator_info_map.values() {
             let target_amount = self.get_validator_expected_stake(&validator);
             if validator.staked < target_amount {
                 let delta = std::cmp::min(target_amount - validator.staked, amount);
