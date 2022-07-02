@@ -249,7 +249,6 @@ impl NearxPool {
 
         // update total weight
         self.total_validator_weight = self.total_validator_weight + weight - validator_info.weight;
-
         validator_info.weight = weight;
         self.validator_info_map.insert(&validator, &validator_info);
 

@@ -186,8 +186,11 @@ impl IntegrationTestContext<Sandbox> {
         for i in 0..self.validator_count {
             let res = self
                 .auto_compound_rewards(self.get_stake_pool_contract(i).id())
-                .await?;
-            println!("autocompounding logs are {:?}", res.logs());
+                .await;
+            if res.is_err() {
+                continue;
+            }
+            println!("autocompounding logs are {:?}", res.unwrap().logs());
         }
 
         // Run the staking epoch
@@ -234,8 +237,11 @@ impl IntegrationTestContext<Sandbox> {
                 && validator_info.last_unstake_start_epoch.0 + NUM_EPOCHS_TO_UNLOCK
                     < current_epoch.0
             {
-                self.epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
-                    .await?;
+                let res = self.epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
+                    .await;
+                if res.is_err() {
+                    continue;
+                }
             }
         }
 

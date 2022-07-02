@@ -2823,6 +2823,16 @@ async fn test_validator_removal() -> anyhow::Result<()> {
 
     context.worker.fast_forward(ONE_EPOCH * 10).await?;
 
+    // normal withdraw
+    println!("epoch_withdraw");
+    context.run_epoch_methods().await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(0));
+    assert_eq!(validator1_info.unstaked, U128(ntoy(15)));
+
     // drain withdraw from validator 1
     let contract_balance_before_drain_withdraw = context
         .nearx_contract
