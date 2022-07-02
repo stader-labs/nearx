@@ -193,14 +193,8 @@ impl NearxPool {
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
 
-        validator_info.weight = 0;
-        self.internal_update_validator(&validator, &validator_info);
-    }
-
-    pub fn un_pause_validator(&mut self, validator: AccountId) {
-        self.assert_operator_or_owner();
-
-        let mut validator_info = self.internal_get_validator(&validator);
+        let current_validator_weight = validator_info.weight;
+        self.total_validator_weight -= current_validator_weight;
         validator_info.weight = 0;
         self.internal_update_validator(&validator, &validator_info);
     }

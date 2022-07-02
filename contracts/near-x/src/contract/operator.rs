@@ -112,8 +112,6 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
-        require!(!validator_info.paused(), ERROR_VALIDATOR_IS_BUSY);
-
         let epoch_height = env::epoch_height();
 
         if validator_info.staked == 0 {
