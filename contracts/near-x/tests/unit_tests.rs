@@ -1438,6 +1438,30 @@ fn test_epoch_withdraw_fail_validator_in_unbonding() {
 }
 
 #[test]
+#[should_panic]
+fn test_epoch_withdraw_fail_validator_paused() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.epoch_height = 20;
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone(), 10);
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.unstaked_amount = ntoy(100);
+    val1_info.unstake_start_epoch = 9;
+    val1_info.weight = 0;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.epoch_withdraw(validator1.clone());
+}
+
+#[test]
 fn test_epoch_withdraw_success() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());

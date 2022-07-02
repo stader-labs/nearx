@@ -312,6 +312,8 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator);
 
+        require!(!validator_info.paused(), ERROR_VALIDATOR_IS_PAUSED);
+
         require!(
             validator_info.unstaked_amount > 0,
             ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
