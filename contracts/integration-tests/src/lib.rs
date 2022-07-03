@@ -22,6 +22,33 @@ use workspaces::network::DevAccountDeployer;
 /// 5. actual staked info
 /// 6. actual unstaked info
 
+/// TODO - bchain owner set commit test doesn't work because AccountId struct in workspace is not
+/// the same as the one in near-sdk. fix sometime in the future. there is already a unit test so we are fine
+// #[tokio::test]
+// async fn test_owner_set_commit() -> anyhow::Result<()> {
+//     let context = IntegrationTestContext::new(3).await?;
+//
+//     let new_owner = context.worker.dev_create_account().await?;
+//
+//     let roles = context.get_roles().await?;
+//     assert_eq!(roles.temp_owner, None);
+//     assert_eq!(roles.owner_account, context.nearx_owner.id().clone());
+//
+//     context.set_owner(new_owner.id()).await?;
+//
+//     let roles = context.get_roles().await?;
+//     assert_eq!(roles.temp_owner, Some(new_owner.id().clone()));
+//     assert_eq!(roles.owner_account, context.nearx_owner.id().clone());
+//
+//     context.commit_owner(&new_owner).await?;
+//
+//     let roles = context.get_roles().await?;
+//     assert_eq!(roles.temp_owner, None);
+//     assert_eq!(roles.owner_account, new_owner.id().clone());
+//
+//     Ok(())
+// }
+
 #[tokio::test]
 async fn test_system_with_no_validators() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(0).await?;

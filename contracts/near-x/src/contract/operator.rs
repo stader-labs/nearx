@@ -6,7 +6,6 @@ use crate::utils::*;
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
-    errors::ERROR_VALIDATOR_IS_BUSY,
     state::*,
 };
 use near_sdk::{env, log, near_bindgen, require};
@@ -419,18 +418,20 @@ impl NearxPool {
             ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC
         );
 
+        Event::BalanceSyncedFromValidator {
+            validator_id: validator_id.clone(),
+            old_staked_balance: U128(validator.staked),
+            old_unstaked_balance: U128(validator.unstaked_amount),
+            staked_balance: account.staked_balance,
+            unstaked_balance: account.unstaked_balance,
+        }
+        .emit();
+
         // update balance
         validator.staked = account.staked_balance.0;
         validator.unstaked_amount = account.unstaked_balance.0;
 
         self.internal_update_validator(&validator_id, &validator);
-
-        Event::BalanceSyncedFromValidator {
-            validator_id,
-            staked_balance: account.staked_balance,
-            unstaked_balance: account.unstaked_balance,
-        }
-        .emit();
     }
 
     #[private]

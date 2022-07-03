@@ -4,7 +4,7 @@ use crate::events::Event;
 use crate::{contract::*, errors, state::*};
 use near_sdk::json_types::U64;
 use near_sdk::near_bindgen;
-use near_sdk::{assert_one_yocto, require, ONE_NEAR};
+use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -52,15 +52,20 @@ impl NearxPool {
     */
     /// Asserts that the method was called by the owner.
     pub fn assert_owner_calling(&self) {
+        log!("predecessor account id {}", env::predecessor_account_id());
+        log!("signer account id {}", env::signer_account_id());
         require!(
-            env::predecessor_account_id() == self.owner_account_id,
+            env::predecessor_account_id() == self.owner_account_id
+                && env::signer_account_id() == self.owner_account_id,
             errors::ERROR_UNAUTHORIZED
         )
     }
     pub fn assert_operator_or_owner(&self) {
         require!(
-            env::predecessor_account_id() == self.owner_account_id
-                || env::predecessor_account_id() == self.operator_account_id,
+            (env::predecessor_account_id() == self.owner_account_id
+                && env::signer_account_id() == self.owner_account_id)
+                || (env::predecessor_account_id() == self.operator_account_id
+                    && env::signer_account_id() == self.operator_account_id),
             errors::ERROR_UNAUTHORIZED
         );
     }
@@ -181,13 +186,15 @@ impl NearxPool {
     }
 
     /*
-       Staking pool addition and deletion
+       Validator pool addition and deletion
     */
     pub fn pause_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
 
         let mut validator_info = self.internal_get_validator(&validator);
 
+        // Need to check for this as drain_withdraw and epoch_withdraw are not the same
+        // drain_withdraw places the withdrawn amount back to the batched deposit
         require!(
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
@@ -197,6 +204,12 @@ impl NearxPool {
         self.total_validator_weight -= current_validator_weight;
         validator_info.weight = 0;
         self.internal_update_validator(&validator, &validator_info);
+
+        Event::ValidatorPaused {
+            account_id: validator,
+            old_weight: current_validator_weight,
+        }
+        .emit();
     }
 
     #[payable]
@@ -230,6 +243,7 @@ impl NearxPool {
 
         Event::ValidatorAdded {
             account_id: validator,
+            weight,
         }
         .emit();
     }
@@ -267,7 +281,12 @@ impl NearxPool {
             env::predecessor_account_id() == self.owner_account_id,
             ERROR_UNAUTHORIZED
         );
-        self.temp_owner = Some(new_owner)
+        self.temp_owner = Some(new_owner.clone());
+        Event::SetOwner {
+            old_owner: self.owner_account_id.clone(),
+            new_owner,
+        }
+        .emit();
     }
 
     #[payable]
@@ -281,6 +300,11 @@ impl NearxPool {
             );
             self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();
             self.temp_owner = None;
+            Event::CommitOwner {
+                new_owner: self.owner_account_id.clone(),
+                caller: env::predecessor_account_id(),
+            }
+            .emit();
         } else {
             panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }
@@ -291,6 +315,12 @@ impl NearxPool {
         assert_one_yocto();
         self.assert_owner_calling();
 
+        Event::UpdateOperator {
+            old_operator: self.operator_account_id.clone(),
+            new_operator: new_operator_account_id.clone(),
+        }
+        .emit();
+
         self.operator_account_id = new_operator_account_id;
     }
 
@@ -298,6 +328,12 @@ impl NearxPool {
     pub fn set_treasury_id(&mut self, new_treasury_account_id: AccountId) {
         assert_one_yocto();
         self.assert_owner_calling();
+
+        Event::UpdateTreasury {
+            old_treasury_account: self.treasury_account_id.clone(),
+            new_treasury_account: new_treasury_account_id.clone(),
+        }
+        .emit();
 
         self.treasury_account_id = new_treasury_account_id;
     }
@@ -334,6 +370,22 @@ impl NearxPool {
         self.operations_control.sync_validator_balance_paused = update_operations_control_request
             .sync_validator_balance_paused
             .unwrap_or(self.operations_control.sync_validator_balance_paused);
+
+        Event::UpdateOperationsControl {
+            operations_control: OperationControls {
+                stake_paused: self.operations_control.stake_paused,
+                unstaked_paused: self.operations_control.unstaked_paused,
+                withdraw_paused: self.operations_control.withdraw_paused,
+                epoch_stake_paused: self.operations_control.epoch_stake_paused,
+                epoch_unstake_paused: self.operations_control.epoch_unstake_paused,
+                epoch_withdraw_paused: self.operations_control.epoch_withdraw_paused,
+                epoch_autocompounding_paused: self.operations_control.epoch_autocompounding_paused,
+                sync_validator_balance_paused: self
+                    .operations_control
+                    .sync_validator_balance_paused,
+            },
+        }
+        .emit();
     }
 
     #[payable]
@@ -341,7 +393,15 @@ impl NearxPool {
         self.assert_owner_calling();
         assert_one_yocto();
         require!((numerator * 100 / denominator) < 20); // less than 20%
+
+        let old_reward_fee = self.rewards_fee;
         self.rewards_fee = Fraction::new(numerator, denominator);
+
+        Event::SetRewardFee {
+            old_reward_fee,
+            new_reward_fee: self.rewards_fee,
+        }
+        .emit();
     }
 
     #[payable]
@@ -351,7 +411,14 @@ impl NearxPool {
 
         require!(min_deposit < 100 * ONE_NEAR, ERROR_MIN_DEPOSIT_TOO_HIGH);
 
+        let old_min_deposit = self.min_deposit_amount;
         self.min_deposit_amount = min_deposit;
+
+        Event::SetMinDeposit {
+            old_min_deposit: U128(old_min_deposit),
+            new_min_deposit: U128(self.min_deposit_amount),
+        }
+        .emit();
     }
 
     // View methods

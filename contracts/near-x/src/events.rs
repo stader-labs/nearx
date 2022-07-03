@@ -1,3 +1,5 @@
+use crate::contract::OperationControls;
+use crate::state::Fraction;
 use near_sdk::{json_types::U128, log, serde::Serialize, serde_json::json, AccountId};
 
 const EVENT_STANDARD: &str = "linear";
@@ -66,6 +68,8 @@ pub enum Event {
     },
     BalanceSyncedFromValidator {
         validator_id: AccountId,
+        old_staked_balance: U128,
+        old_unstaked_balance: U128,
         staked_balance: U128,
         unstaked_balance: U128,
     },
@@ -92,6 +96,7 @@ pub enum Event {
     // Validators
     ValidatorAdded {
         account_id: AccountId,
+        weight: u16,
     },
     ValidatorRemoved {
         account_id: AccountId,
@@ -99,6 +104,10 @@ pub enum Event {
     ValidatorUpdated {
         account_id: AccountId,
         weight: u16,
+    },
+    ValidatorPaused {
+        account_id: AccountId,
+        old_weight: u16,
     },
     // Validator draining
     DrainUnstake {
@@ -140,6 +149,34 @@ pub enum Event {
     FtBurn {
         account_id: AccountId,
         amount: U128,
+    },
+    // Owner events
+    SetOwner {
+        old_owner: AccountId,
+        new_owner: AccountId,
+    },
+    CommitOwner {
+        new_owner: AccountId,
+        caller: AccountId,
+    },
+    UpdateOperator {
+        old_operator: AccountId,
+        new_operator: AccountId,
+    },
+    UpdateTreasury {
+        old_treasury_account: AccountId,
+        new_treasury_account: AccountId,
+    },
+    UpdateOperationsControl {
+        operations_control: OperationControls,
+    },
+    SetRewardFee {
+        old_reward_fee: Fraction,
+        new_reward_fee: Fraction,
+    },
+    SetMinDeposit {
+        old_min_deposit: U128,
+        new_min_deposit: U128,
     },
 }
 

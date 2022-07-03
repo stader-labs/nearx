@@ -255,6 +255,25 @@ impl IntegrationTestContext<Sandbox> {
         Ok(())
     }
 
+    pub async fn set_owner(&self, new_owner: &AccountId) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "set_owner")
+            .args_json(json!({ "new_owner": new_owner.clone() }))?
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn commit_owner(&self, new_owner: &Account) -> anyhow::Result<CallExecutionDetails> {
+        new_owner
+            .call(&self.worker, self.nearx_contract.id(), "commit_owner")
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
     pub fn get_stake_pool_contract(&self, validator_idx: u32) -> &Contract {
         let validator_account_id = get_validator_account_id(validator_idx);
         self.validator_to_stake_pool_contract
@@ -698,5 +717,13 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<Vec<ValidatorInfoResponse>>()
+    }
+
+    pub async fn get_roles(&self) -> anyhow::Result<RolesResponse> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "get_roles")
+            .view()
+            .await?
+            .json::<RolesResponse>()
     }
 }

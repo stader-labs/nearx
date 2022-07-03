@@ -159,6 +159,7 @@ fn test_update_operations_control_success() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -226,6 +227,7 @@ fn test_update_validator_success() {
        owner adding stake pool
     */
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context); // this updates the context
 
@@ -328,6 +330,7 @@ fn test_add_validator_success() {
        add a stake pool
     */
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context); // this updates the context
 
@@ -394,6 +397,7 @@ fn test_remove_validator_success() {
     let stake_public_key_3 = AccountId::from_str("stake_public_key_3").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.epoch_height = 40;
     context.attached_deposit = 1;
     testing_env!(context); // this updates the context
@@ -533,6 +537,7 @@ fn test_get_validator_to_unstake() {
     let stake_public_key_3 = AccountId::from_str("stake_public_key_3").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     context.epoch_height = 100;
     testing_env!(context); // this updates the context
@@ -677,6 +682,7 @@ fn test_get_validator_to_stake() {
     let stake_public_key_3 = AccountId::from_str("stake_public_key_3").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context); // this updates the context
 
@@ -914,6 +920,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
        Add stake pool
     */
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
@@ -969,6 +976,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1178,6 +1186,7 @@ fn test_epoch_stake() {
     context.epoch_height = 100;
     context.attached_deposit = 1;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     testing_env!(context);
 
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
@@ -1214,6 +1223,7 @@ fn test_on_validator_deposit_and_stake_failed() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1244,6 +1254,7 @@ fn test_on_validator_deposit_and_stake_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1276,6 +1287,7 @@ fn test_get_unstake_release_epoch() {
     let validator3 = AccountId::from_str("stake_public_key_3").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.epoch_height = 10;
     context.attached_deposit = 1;
     testing_env!(context.clone());
@@ -1445,6 +1457,7 @@ fn test_epoch_withdraw_fail_validator_paused() {
 
     context.epoch_height = 20;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1468,6 +1481,7 @@ fn test_epoch_withdraw_success() {
 
     context.epoch_height = 4;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1494,6 +1508,7 @@ fn test_on_stake_pool_withdraw_all_fail() {
 
     context.epoch_height = 4;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1548,6 +1563,7 @@ fn test_unstake_success_diff_epoch_than_reconcilation_epoch() {
 
     context.epoch_height = 10;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1594,6 +1610,7 @@ fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
 
     context.epoch_height = 10;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1641,6 +1658,7 @@ fn test_epoch_unstake_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1770,6 +1788,7 @@ fn test_drain_unstake_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1802,6 +1821,7 @@ fn test_on_stake_pool_drain_unstake_promise_fail() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1835,6 +1855,7 @@ fn test_on_stake_pool_drain_unstake_promise_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1948,6 +1969,7 @@ fn test_drain_withdraw_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -1979,6 +2001,7 @@ fn test_on_stake_pool_drain_withdraw_failure() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2011,6 +2034,7 @@ fn test_on_stake_pool_drain_withdraw_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2055,6 +2079,7 @@ fn test_sync_balance_from_validator_success() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2077,6 +2102,7 @@ fn test_on_stake_pool_get_account_total_balance_off() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2115,6 +2141,7 @@ fn test_on_stake_pool_get_account() {
 
     context.epoch_height = 100;
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2276,6 +2303,7 @@ fn test_set_operator_account() {
     let new_operator_account = AccountId::from_str("new_operator").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2292,6 +2320,7 @@ fn test_set_treasury_account() {
     let new_treasury_account = AccountId::from_str("new_treasury").unwrap();
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2318,6 +2347,7 @@ fn test_set_min_deposit_more_than_100_near() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2330,6 +2360,7 @@ fn test_set_min_deposit() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
@@ -2345,6 +2376,7 @@ fn test_pause_validator_unauthorized() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     context.epoch_height = 100;
     testing_env!(context.clone());
@@ -2376,6 +2408,7 @@ fn test_pause_validator() {
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
     context.epoch_height = 100;
     testing_env!(context.clone());
