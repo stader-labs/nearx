@@ -237,7 +237,8 @@ impl IntegrationTestContext<Sandbox> {
                 && validator_info.last_unstake_start_epoch.0 + NUM_EPOCHS_TO_UNLOCK
                     < current_epoch.0
             {
-                let res = self.epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
+                let res = self
+                    .epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
                     .await;
                 if res.is_err() {
                     continue;
@@ -281,6 +282,22 @@ impl IntegrationTestContext<Sandbox> {
         amount: u128,
     ) -> anyhow::Result<CallExecutionDetails> {
         user.call(&self.worker, self.nearx_contract.id(), "deposit_and_stake")
+            .max_gas()
+            .deposit(amount)
+            .transact()
+            .await
+    }
+
+    pub async fn manager_deposit_and_stake(
+        &self,
+        amount: u128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "manager_deposit_and_stake",
+            )
             .max_gas()
             .deposit(amount)
             .transact()

@@ -23,6 +23,52 @@ use workspaces::network::DevAccountDeployer;
 /// 6. actual unstaked info
 
 #[tokio::test]
+async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3).await?;
+
+    context.manager_deposit_and_stake(ntoy(10)).await?;
+    context.manager_deposit_and_stake(ntoy(10)).await?;
+    context.manager_deposit_and_stake(ntoy(10)).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+
+    context.run_epoch_methods().await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(validator1_info.staked, U128(ntoy(15)));
+    assert_eq!(validator2_info.staked, U128(ntoy(15)));
+    assert_eq!(validator3_info.staked, U128(ntoy(15)));
+
+    let stake_pool_1_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
+        .await?;
+    let stake_pool_2_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(1))
+        .await?;
+    let stake_pool_3_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
+        .await?;
+    println!("got stake pool staked amount");
+
+    assert_eq!(stake_pool_1_amount, U128(ntoy(15)));
+    assert_eq!(stake_pool_2_amount, U128(ntoy(15)));
+    assert_eq!(stake_pool_3_amount, U128(ntoy(15)));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_validator_selection_with_0_weight() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3).await?;
 
@@ -276,6 +322,12 @@ async fn test_validator_selection_with_0_weight() -> anyhow::Result<()> {
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(10)));
 
     context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(225)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(225)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(10)));
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
