@@ -313,75 +313,78 @@ fn test_remove_validator_validator_not_empty() {
 }
 
 #[test]
-fn test_add_validator_success() {
+#[should_panic]
+fn test_remove_validator_validator_in_unbonding_period() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    /*
-       initial staking pools should be empty
-    */
-    let stake_pools = contract.get_validators();
-    assert!(
-        stake_pools.is_empty(),
-        "Stake pools should initially be empty!"
-    );
-
-    /*
-       add a stake pool
-    */
     context.predecessor_account_id = owner_account();
-    context.signer_account_id = owner_account();
     context.attached_deposit = 1;
+    context.epoch_height = 11;
     testing_env!(context); // this updates the context
 
     let stake_public_key_1 = AccountId::from_str("stake_public_key_1").unwrap();
 
     contract.add_validator(stake_public_key_1.clone(), 10);
-    let stake_pools = contract.get_validators();
-    assert_eq!(stake_pools.len(), 1);
-    assert_eq!(contract.total_validator_weight, 10);
-    assert!(check_equal_vec(
-        stake_pools,
-        vec![ValidatorInfoResponse {
-            account_id: stake_public_key_1.clone(),
-            staked: U128(0),
-            unstaked: U128(0),
-            weight: 10,
-            last_asked_rewards_epoch_height: U64(0),
-            last_unstake_start_epoch: U64(0),
-        }]
-    ));
 
-    /*
-       add another stake pool
-    */
-    let stake_public_key_2 = AccountId::from_str("stake_public_key_2").unwrap();
+    let mut val1 = get_validator(&contract, stake_public_key_1.clone());
+    val1.weight = 0;
+    val1.staked = ntoy(0);
+    val1.unstaked_amount = ntoy(0);
+    val1.unstake_start_epoch = 10;
+    update_validator(&mut contract, stake_public_key_1, &val1);
 
-    contract.add_validator(stake_public_key_2.clone(), 10);
-    let stake_pools = contract.get_validators();
-    assert_eq!(stake_pools.len(), 2);
-    assert_eq!(contract.total_validator_weight, 20);
-    assert!(check_equal_vec(
-        stake_pools,
-        vec![
-            ValidatorInfoResponse {
-                account_id: stake_public_key_1,
-                staked: U128(0),
-                unstaked: U128(0),
-                weight: 10,
-                last_asked_rewards_epoch_height: U64(0),
-                last_unstake_start_epoch: U64(0),
-            },
-            ValidatorInfoResponse {
-                account_id: stake_public_key_2,
-                staked: U128(0),
-                unstaked: U128(0),
-                weight: 10,
-                last_asked_rewards_epoch_height: U64(0),
-                last_unstake_start_epoch: U64(0),
-            }
-        ]
-    ));
+    contract.remove_validator(AccountId::from_str("stake_public_key_1").unwrap());
+}
+
+#[test]
+#[should_panic]
+fn test_remove_validator_validator_non_zero_weight() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    context.epoch_height = 11;
+    testing_env!(context); // this updates the context
+
+    let stake_public_key_1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(stake_public_key_1.clone(), 10);
+
+    let mut val1 = get_validator(&contract, stake_public_key_1.clone());
+    val1.weight = 10;
+    val1.staked = ntoy(10);
+    val1.unstaked_amount = ntoy(0);
+    val1.unstake_start_epoch = 10;
+    update_validator(&mut contract, stake_public_key_1, &val1);
+
+    contract.remove_validator(AccountId::from_str("stake_public_key_1").unwrap());
+}
+
+#[test]
+#[should_panic]
+fn test_remove_validator_validator_non_zero_staked_unstaked_amount() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    context.epoch_height = 11;
+    testing_env!(context); // this updates the context
+
+    let stake_public_key_1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(stake_public_key_1.clone(), 10);
+
+    let mut val1 = get_validator(&contract, stake_public_key_1.clone());
+    val1.weight = 0;
+    val1.staked = ntoy(10);
+    val1.unstaked_amount = ntoy(0);
+    val1.unstake_start_epoch = 10;
+    update_validator(&mut contract, stake_public_key_1, &val1);
+
+    contract.remove_validator(AccountId::from_str("stake_public_key_1").unwrap());
 }
 
 #[test]
@@ -516,6 +519,78 @@ fn test_remove_validator_success() {
 
     assert!(stake_pools.is_empty());
     assert_eq!(contract.total_validator_weight, 0);
+}
+
+#[test]
+fn test_add_validator_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    /*
+       initial staking pools should be empty
+    */
+    let stake_pools = contract.get_validators();
+    assert!(
+        stake_pools.is_empty(),
+        "Stake pools should initially be empty!"
+    );
+
+    /*
+       add a stake pool
+    */
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context); // this updates the context
+
+    let stake_public_key_1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(stake_public_key_1.clone(), 10);
+    let stake_pools = contract.get_validators();
+    assert_eq!(stake_pools.len(), 1);
+    assert_eq!(contract.total_validator_weight, 10);
+    assert!(check_equal_vec(
+        stake_pools,
+        vec![ValidatorInfoResponse {
+            account_id: stake_public_key_1.clone(),
+            staked: U128(0),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+        }]
+    ));
+
+    /*
+       add another stake pool
+    */
+    let stake_public_key_2 = AccountId::from_str("stake_public_key_2").unwrap();
+
+    contract.add_validator(stake_public_key_2.clone(), 10);
+    let stake_pools = contract.get_validators();
+    assert_eq!(stake_pools.len(), 2);
+    assert_eq!(contract.total_validator_weight, 20);
+    assert!(check_equal_vec(
+        stake_pools,
+        vec![
+            ValidatorInfoResponse {
+                account_id: stake_public_key_1,
+                staked: U128(0),
+                unstaked: U128(0),
+                weight: 10,
+                last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
+            },
+            ValidatorInfoResponse {
+                account_id: stake_public_key_2,
+                staked: U128(0),
+                unstaked: U128(0),
+                weight: 10,
+                last_asked_rewards_epoch_height: U64(0),
+                last_unstake_start_epoch: U64(0),
+            }
+        ]
+    ));
 }
 
 #[test]
