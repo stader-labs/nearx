@@ -23,6 +23,35 @@ use workspaces::network::DevAccountDeployer;
 /// 6. actual unstaked info
 
 #[tokio::test]
+async fn test_system_with_no_validators() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(0).await?;
+
+    // deposit and unstake
+    context.deposit(&context.user1, ntoy(10)).await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
+    context.unstake(&context.user1, U128(ntoy(5))).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(25)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(25)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(5)));
+
+    context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(25)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(25)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(25)));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3).await?;
 
