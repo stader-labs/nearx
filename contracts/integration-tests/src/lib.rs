@@ -65,6 +65,19 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(5)));
 
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+
+    println!("user1_account is {:?}", user1_account);
+    println!("user2_account is {:?}", user2_account);
+    println!("user3_account is {:?}", user3_account);
+
+    assert_eq!(user1_account.staked_balance, U128(ntoy(5)));
+    assert_eq!(user1_account.unstaked_balance, U128(ntoy(5)));
+    assert_eq!(user2_account.staked_balance, U128(ntoy(10)));
+    assert_eq!(user3_account.staked_balance, U128(ntoy(10)));
+
     context.run_epoch_methods().await?;
 
     let nearx_state = context.get_nearx_state().await?;
@@ -73,6 +86,44 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(25)));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+
+    context.worker.fast_forward(ONE_EPOCH).await?;
+
+    context.unstake(&context.user1, U128(ntoy(5))).await?;
+    context.unstake(&context.user2, U128(ntoy(5))).await?;
+    context.unstake(&context.user3, U128(ntoy(5))).await?;
+    context.unstake(&context.user3, U128(ntoy(5))).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(5)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(5)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(20)));
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+
+    println!("user1_account is {:?}", user1_account);
+    println!("user2_account is {:?}", user2_account);
+    println!("user3_account is {:?}", user3_account);
+
+    assert_eq!(user1_account.staked_balance, U128(ntoy(0)));
+    assert_eq!(user1_account.unstaked_balance, U128(ntoy(10)));
+    assert_eq!(user2_account.staked_balance, U128(ntoy(5)));
+    assert_eq!(user2_account.unstaked_balance, U128(ntoy(5)));
+    assert_eq!(user3_account.staked_balance, U128(ntoy(0)));
+    assert_eq!(user3_account.unstaked_balance, U128(ntoy(10)));
+
+    context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(5)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(5)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
+    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(5)));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
 
     Ok(())

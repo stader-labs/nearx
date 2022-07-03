@@ -311,6 +311,8 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator);
 
+        // If we run epoch_withdraw before drain_withdraw for a validator, we will loose the drained funds.
+        // So don't run epoch_withdraw for a paused validator
         require!(!validator_info.paused(), ERROR_VALIDATOR_IS_PAUSED);
 
         require!(
@@ -486,6 +488,8 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
+        // TODO - Due to precision issues in core contracts, unstaked amount for a validator can be around a few yoctoNEAR even though
+        // we have not unstaked.
         require!(
             validator_info.unstaked_amount == 0,
             ERROR_NON_POSITIVE_UNSTAKE_AMOUNT

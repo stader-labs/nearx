@@ -188,8 +188,10 @@ impl NearxPool {
     /*
        Validator pool addition and deletion
     */
+    #[payable]
     pub fn pause_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let mut validator_info = self.internal_get_validator(&validator);
 
