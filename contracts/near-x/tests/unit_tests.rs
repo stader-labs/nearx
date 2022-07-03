@@ -1061,7 +1061,7 @@ fn test_deposit_and_stake_success() {
 
     context.attached_deposit = ntoy(100);
     context.predecessor_account_id = user1.clone();
-    testing_env!(context);
+    testing_env!(context.clone());
 
     contract.min_deposit_amount = ntoy(1);
     contract.total_staked = ntoy(10);
@@ -1071,11 +1071,34 @@ fn test_deposit_and_stake_success() {
     contract.deposit_and_stake();
 
     let user1_account = contract.get_account(user1.clone());
-
     assert_eq!(user1_account.staked_balance, U128(ntoy(100)));
+
     assert_eq!(contract.total_staked, ntoy(110));
     assert_eq!(contract.total_stake_shares, ntoy(110));
     assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(110));
+
+    // Test when price > 1
+    // price is 1.5
+    contract.total_staked = ntoy(15);
+    contract.total_stake_shares = ntoy(10);
+    contract.user_amount_to_stake_in_epoch = ntoy(20);
+
+    context.attached_deposit = ntoy(100);
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context.clone());
+
+    contract.deposit_and_stake();
+
+    let user1_account = contract.get_account(user1.clone());
+
+    assert_eq!(
+        user1_account.staked_balance,
+        U128(250000000000000000000000001)
+    );
+
+    assert_eq!(contract.total_staked, ntoy(115));
+    assert_eq!(contract.total_stake_shares, 76666666666666666666666666);
+    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(120));
 }
 
 #[test]
