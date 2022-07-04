@@ -126,8 +126,6 @@ impl NearxPool {
             validator_info.account_id
         );
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
-
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
             .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
@@ -185,12 +183,9 @@ impl NearxPool {
             validator_info.staked = new_total_balance;
 
             let operator_fee = rewards * self.rewards_fee;
-            log!(format!("operator_fee is {:?}", operator_fee));
             self.total_staked += rewards;
             let treasury_account_shares =
                 self.num_shares_from_staked_amount_rounded_down(operator_fee);
-            log!(format!("total_staked is {:?}", self.total_staked));
-            log!(format!("total shares is {:?}", self.total_stake_shares));
 
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
@@ -199,7 +194,6 @@ impl NearxPool {
                 let treasury_account_id = self.treasury_account_id.clone();
                 let mut treasury_account = self.internal_get_account(&treasury_account_id);
                 treasury_account.stake_shares += treasury_account_shares;
-                println!("treasury_account shares are {:?}", treasury_account_shares);
                 self.total_stake_shares += treasury_account_shares;
                 self.internal_update_account(&treasury_account_id, &treasury_account);
 

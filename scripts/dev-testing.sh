@@ -17,9 +17,9 @@ STAKE_POOL_1=kosmos_and_p2p.poolv1.near
 STAKE_POOL_2=rekt.poolv1.near
 
 # add some validators
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'", "weight": 10}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID
 
 # manager deposit
 for i in {1..3};

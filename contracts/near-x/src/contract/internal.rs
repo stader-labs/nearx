@@ -175,6 +175,7 @@ impl NearxPool {
         .emit();
     }
 
+    // Make this return a promise
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         let account_id = env::predecessor_account_id();
 

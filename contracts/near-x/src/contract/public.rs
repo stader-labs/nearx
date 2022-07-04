@@ -14,8 +14,6 @@ impl NearxPool {
         operator_account_id: AccountId,
         treasury_account_id: AccountId,
     ) -> Self {
-        require!(!env::state_exists(), ERROR_CONTRACT_ALREADY_INITIALIZED);
-
         Self {
             owner_account_id,
             operator_account_id,

@@ -26,7 +26,6 @@ pub struct IntegrationTestContext<T> {
     pub validator_count: u32,
     pub nearx_contract: Contract,
     pub validator_to_stake_pool_contract: HashMap<AccountId, Contract>,
-    // pub stake_pool_contract: Contract,
     pub nearx_operator: Account,
     pub nearx_owner: Account,
     pub nearx_treasury: Account,
