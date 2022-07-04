@@ -6,7 +6,11 @@ near view $CONTRACT_NAME get_total_staked
 
 near view $CONTRACT_NAME get_validators
 
+near view $CONTRACT_NAME get_total_validator_weight
+
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
+
+near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
 
 near view $CONTRACT_NAME get_current_epoch
 

@@ -48,99 +48,8 @@ impl NearxPool {
     }
 
     /*
-       Utility stuff
-    */
-    /// Asserts that the method was called by the owner.
-    pub fn assert_owner_calling(&self) {
-        log!("predecessor account id {}", env::predecessor_account_id());
-        log!("signer account id {}", env::signer_account_id());
-        require!(
-            env::predecessor_account_id() == self.owner_account_id
-                && env::signer_account_id() == self.owner_account_id,
-            errors::ERROR_UNAUTHORIZED
-        )
-    }
-    pub fn assert_operator_or_owner(&self) {
-        require!(
-            (env::predecessor_account_id() == self.owner_account_id
-                && env::signer_account_id() == self.owner_account_id)
-                || (env::predecessor_account_id() == self.operator_account_id
-                    && env::signer_account_id() == self.operator_account_id),
-            errors::ERROR_UNAUTHORIZED
-        );
-    }
-
-    pub fn assert_min_deposit_amount(&self, amount: u128) {
-        require!(amount >= self.min_deposit_amount, errors::ERROR_MIN_DEPOSIT);
-    }
-
-    pub fn assert_staking_not_paused(&self) {
-        require!(
-            !self.operations_control.stake_paused,
-            errors::ERROR_STAKING_PAUSED
-        );
-    }
-
-    pub fn assert_unstaking_not_paused(&self) {
-        require!(
-            !self.operations_control.unstaked_paused,
-            errors::ERROR_UNSTAKING_PAUSED
-        );
-    }
-
-    pub fn assert_withdraw_not_paused(&self) {
-        require!(
-            !self.operations_control.withdraw_paused,
-            errors::ERROR_UNSTAKING_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_stake_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_stake_paused,
-            errors::ERROR_EPOCH_STAKE_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_unstake_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_unstake_paused,
-            errors::ERROR_EPOCH_UNSTAKE_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_withdraw_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_withdraw_paused,
-            errors::ERROR_EPOCH_WITHDRAW_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_autocompounding_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_autocompounding_paused,
-            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
-        );
-    }
-
-    pub fn assert_sync_validator_balance_not_paused(&self) {
-        require!(
-            !self.operations_control.sync_validator_balance_paused,
-            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
-        );
-    }
-
-    /*
        Main staking pool api
     */
-
-    /// Rewards claiming
-    pub fn ping(&mut self) {}
-
-    #[payable]
-    pub fn deposit(&mut self) {
-        unimplemented!();
-    }
 
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {
@@ -188,8 +97,10 @@ impl NearxPool {
     /*
        Validator pool addition and deletion
     */
+    #[payable]
     pub fn pause_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let mut validator_info = self.internal_get_validator(&validator);
 
@@ -295,7 +206,8 @@ impl NearxPool {
 
         if let Some(temp_owner) = self.temp_owner.clone() {
             require!(
-                env::predecessor_account_id() == temp_owner,
+                env::predecessor_account_id() == temp_owner
+                    && env::signer_account_id() == temp_owner,
                 ERROR_UNAUTHORIZED
             );
             self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();

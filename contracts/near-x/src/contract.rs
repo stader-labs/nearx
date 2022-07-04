@@ -1,3 +1,4 @@
+mod contract_util;
 mod empty_storage_spec;
 mod internal;
 mod metadata;

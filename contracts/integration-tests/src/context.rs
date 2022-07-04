@@ -361,6 +361,7 @@ impl IntegrationTestContext<Sandbox> {
         self.nearx_owner
             .call(&self.worker, self.nearx_contract.id(), "pause_validator")
             .max_gas()
+            .deposit(1)
             .args_json(json!({ "validator": validator }))?
             .transact()
             .await
