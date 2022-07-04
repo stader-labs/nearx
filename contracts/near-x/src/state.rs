@@ -217,3 +217,9 @@ pub struct ContractSummary {
     pub treasury_unstaked_balance: U128,
     pub nearx_price: U128,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct Snapshot {
+    pub nearx_balances: borsh::maybestd::collections::HashMap<AccountId, Balance>,
+}
