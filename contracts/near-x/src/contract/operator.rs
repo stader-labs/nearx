@@ -199,6 +199,7 @@ impl NearxPool {
                 let treasury_account_id = self.treasury_account_id.clone();
                 let mut treasury_account = self.internal_get_account(&treasury_account_id);
                 treasury_account.stake_shares += treasury_account_shares;
+                println!("treasury_account shares are {:?}", treasury_account_shares);
                 self.total_stake_shares += treasury_account_shares;
                 self.internal_update_account(&treasury_account_id, &treasury_account);
 
