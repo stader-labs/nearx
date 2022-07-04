@@ -4,3 +4,4 @@ target/
 neardev/
 res/
 .env
+.DS_Store
