@@ -3,3 +3,6 @@ target/
 .vscode/
 neardev/
 res/
+**/dist/
+node_modules/
+**/yarn-error.log

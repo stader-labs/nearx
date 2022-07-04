@@ -1,0 +1,21 @@
+{
+  "private": true,
+  "workspaces": [
+    "cli",
+    "client"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
+    "eslint": "^8.5.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.3.5"
+  },
+  "scripts": {
+    "build": "tsc --build client/tsconfig.json cli/tsconfig.json",
+    "nearx": "yarn workspace --silent nearx-app --silent ts-node src/index.ts"
+  }
+}
