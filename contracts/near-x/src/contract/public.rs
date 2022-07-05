@@ -3,8 +3,8 @@ use crate::errors::*;
 use crate::events::Event;
 use crate::{contract::*, errors, state::*};
 use near_sdk::json_types::U64;
-use near_sdk::near_bindgen;
-use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
+use near_sdk::{Gas, near_bindgen};
+use near_sdk::{assert_one_yocto, log, require, ONE_NEAR, Promise};
 
 #[near_bindgen]
 impl NearxPool {
@@ -48,6 +48,11 @@ impl NearxPool {
     /*
        Main staking pool api
     */
+
+    pub fn test_fn_2(&self) -> String {
+        log!("This is a test fun 2");
+        "this is a test fun 2".to_string()
+    }
 
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {

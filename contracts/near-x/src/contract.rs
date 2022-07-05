@@ -4,6 +4,7 @@ mod metadata;
 mod operator;
 mod public;
 mod util;
+mod upgrade;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
