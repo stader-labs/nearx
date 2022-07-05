@@ -14,8 +14,6 @@ impl NearxPool {
         operator_account_id: AccountId,
         treasury_account_id: AccountId,
     ) -> Self {
-        require!(!env::state_exists(), ERROR_CONTRACT_ALREADY_INITIALIZED);
-
         Self {
             owner_account_id,
             operator_account_id,
@@ -43,98 +41,13 @@ impl NearxPool {
                 sync_validator_balance_paused: false,
             },
             treasury_account_id,
+            total_validator_weight: 0,
         }
-    }
-
-    /*
-       Utility stuff
-    */
-    /// Asserts that the method was called by the owner.
-    pub fn assert_owner_calling(&self) {
-        require!(
-            env::predecessor_account_id() == self.owner_account_id,
-            errors::ERROR_UNAUTHORIZED
-        )
-    }
-    pub fn assert_operator_or_owner(&self) {
-        require!(
-            env::predecessor_account_id() == self.owner_account_id
-                || env::predecessor_account_id() == self.operator_account_id,
-            errors::ERROR_UNAUTHORIZED
-        );
-    }
-
-    pub fn assert_min_deposit_amount(&self, amount: u128) {
-        require!(amount >= self.min_deposit_amount, errors::ERROR_MIN_DEPOSIT);
-    }
-
-    pub fn assert_staking_not_paused(&self) {
-        require!(
-            !self.operations_control.stake_paused,
-            errors::ERROR_STAKING_PAUSED
-        );
-    }
-
-    pub fn assert_unstaking_not_paused(&self) {
-        require!(
-            !self.operations_control.unstaked_paused,
-            errors::ERROR_UNSTAKING_PAUSED
-        );
-    }
-
-    pub fn assert_withdraw_not_paused(&self) {
-        require!(
-            !self.operations_control.withdraw_paused,
-            errors::ERROR_UNSTAKING_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_stake_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_stake_paused,
-            errors::ERROR_EPOCH_STAKE_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_unstake_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_unstake_paused,
-            errors::ERROR_EPOCH_UNSTAKE_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_withdraw_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_withdraw_paused,
-            errors::ERROR_EPOCH_WITHDRAW_PAUSED
-        );
-    }
-
-    pub fn assert_epoch_autocompounding_not_paused(&self) {
-        require!(
-            !self.operations_control.epoch_autocompounding_paused,
-            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
-        );
-    }
-
-    pub fn assert_sync_validator_balance_not_paused(&self) {
-        require!(
-            !self.operations_control.sync_validator_balance_paused,
-            errors::ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
-        );
     }
 
     /*
        Main staking pool api
     */
-
-    /// Rewards claiming
-    pub fn ping(&mut self) {}
-
-    #[payable]
-    pub fn deposit(&mut self) {
-        unimplemented!();
-    }
 
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {
@@ -180,43 +93,44 @@ impl NearxPool {
     }
 
     /*
-       Staking pool addition and deletion
+       Validator pool addition and deletion
     */
+    #[payable]
     pub fn pause_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let mut validator_info = self.internal_get_validator(&validator);
 
+        // Need to check for this as drain_withdraw and epoch_withdraw are not the same
+        // drain_withdraw places the withdrawn amount back to the batched deposit
         require!(
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
 
-        validator_info.paused = true;
+        let current_validator_weight = validator_info.weight;
+        self.total_validator_weight -= current_validator_weight;
+        validator_info.weight = 0;
         self.internal_update_validator(&validator, &validator_info);
+
+        Event::ValidatorPaused {
+            account_id: validator,
+            old_weight: current_validator_weight,
+        }
+        .emit();
     }
 
-    pub fn un_pause_validator(&mut self, validator: AccountId) {
-        self.assert_operator_or_owner();
-
-        let mut validator_info = self.internal_get_validator(&validator);
-        validator_info.paused = false;
-        self.internal_update_validator(&validator, &validator_info);
-    }
-
+    #[payable]
     pub fn remove_validator(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let validator_info = self.internal_get_validator(&validator);
 
-        log!("validator is paused {:?}", validator_info.paused());
-        log!(
-            "validator is unbonding {:?}",
-            validator_info.pending_unstake_release()
-        );
-
         require!(validator_info.is_empty(), ERROR_INVALID_VALIDATOR_REMOVAL);
 
+        self.total_validator_weight -= validator_info.weight;
         self.validator_info_map.remove(&validator);
 
         Event::ValidatorRemoved {
@@ -225,16 +139,45 @@ impl NearxPool {
         .emit();
     }
 
-    pub fn add_validator(&mut self, validator: AccountId) {
+    #[payable]
+    pub fn add_validator(&mut self, validator: AccountId, weight: u16) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
         if self.validator_info_map.get(&validator).is_some() {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
         self.validator_info_map
-            .insert(&validator, &ValidatorInfo::new(validator.clone()));
+            .insert(&validator, &ValidatorInfo::new(validator.clone(), weight));
+        self.total_validator_weight += weight;
 
         Event::ValidatorAdded {
             account_id: validator,
+            weight,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn update_validator(&mut self, validator: AccountId, weight: u16) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+        let mut validator_info = self
+            .validator_info_map
+            .get(&validator)
+            .expect(ERROR_VALIDATOR_DOES_NOT_EXIST);
+
+        if weight == 0 {
+            require!(true, ERROR_INVALID_VALIDATOR_WEIGHT);
+        }
+
+        // update total weight
+        self.total_validator_weight = self.total_validator_weight + weight - validator_info.weight;
+        validator_info.weight = weight;
+        self.validator_info_map.insert(&validator, &validator_info);
+
+        Event::ValidatorUpdated {
+            account_id: validator,
+            weight,
         }
         .emit();
     }
@@ -247,7 +190,12 @@ impl NearxPool {
             env::predecessor_account_id() == self.owner_account_id,
             ERROR_UNAUTHORIZED
         );
-        self.temp_owner = Some(new_owner)
+        self.temp_owner = Some(new_owner.clone());
+        Event::SetOwner {
+            old_owner: self.owner_account_id.clone(),
+            new_owner,
+        }
+        .emit();
     }
 
     #[payable]
@@ -256,9 +204,17 @@ impl NearxPool {
 
         if let Some(temp_owner) = self.temp_owner.clone() {
             require!(
-                env::predecessor_account_id() == temp_owner,
+                env::predecessor_account_id() == temp_owner
+                    && env::signer_account_id() == temp_owner,
                 ERROR_UNAUTHORIZED
-            )
+            );
+            self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();
+            self.temp_owner = None;
+            Event::CommitOwner {
+                new_owner: self.owner_account_id.clone(),
+                caller: env::predecessor_account_id(),
+            }
+            .emit();
         } else {
             panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
         }
@@ -269,6 +225,12 @@ impl NearxPool {
         assert_one_yocto();
         self.assert_owner_calling();
 
+        Event::UpdateOperator {
+            old_operator: self.operator_account_id.clone(),
+            new_operator: new_operator_account_id.clone(),
+        }
+        .emit();
+
         self.operator_account_id = new_operator_account_id;
     }
 
@@ -276,6 +238,12 @@ impl NearxPool {
     pub fn set_treasury_id(&mut self, new_treasury_account_id: AccountId) {
         assert_one_yocto();
         self.assert_owner_calling();
+
+        Event::UpdateTreasury {
+            old_treasury_account: self.treasury_account_id.clone(),
+            new_treasury_account: new_treasury_account_id.clone(),
+        }
+        .emit();
 
         self.treasury_account_id = new_treasury_account_id;
     }
@@ -312,6 +280,55 @@ impl NearxPool {
         self.operations_control.sync_validator_balance_paused = update_operations_control_request
             .sync_validator_balance_paused
             .unwrap_or(self.operations_control.sync_validator_balance_paused);
+
+        Event::UpdateOperationsControl {
+            operations_control: OperationControls {
+                stake_paused: self.operations_control.stake_paused,
+                unstaked_paused: self.operations_control.unstaked_paused,
+                withdraw_paused: self.operations_control.withdraw_paused,
+                epoch_stake_paused: self.operations_control.epoch_stake_paused,
+                epoch_unstake_paused: self.operations_control.epoch_unstake_paused,
+                epoch_withdraw_paused: self.operations_control.epoch_withdraw_paused,
+                epoch_autocompounding_paused: self.operations_control.epoch_autocompounding_paused,
+                sync_validator_balance_paused: self
+                    .operations_control
+                    .sync_validator_balance_paused,
+            },
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+        require!((numerator * 100 / denominator) < 20); // less than 20%
+
+        let old_reward_fee = self.rewards_fee;
+        self.rewards_fee = Fraction::new(numerator, denominator);
+
+        Event::SetRewardFee {
+            old_reward_fee,
+            new_reward_fee: self.rewards_fee,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn set_min_deposit(&mut self, min_deposit: u128) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+
+        require!(min_deposit < 100 * ONE_NEAR, ERROR_MIN_DEPOSIT_TOO_HIGH);
+
+        let old_min_deposit = self.min_deposit_amount;
+        self.min_deposit_amount = min_deposit;
+
+        Event::SetMinDeposit {
+            old_min_deposit: U128(old_min_deposit),
+            new_min_deposit: U128(self.min_deposit_amount),
+        }
+        .emit();
     }
 
     // View methods
@@ -334,18 +351,21 @@ impl NearxPool {
         self.rewards_fee
     }
 
-    pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
-        self.assert_owner_calling();
-        require!((numerator * 100 / denominator) < 20); // less than 20%
-        self.rewards_fee = Fraction::new(numerator, denominator);
-    }
-
     pub fn get_total_staked(&self) -> U128 {
         U128::from(self.total_staked)
     }
 
     pub fn get_staking_key(&self) -> PublicKey {
         panic!("{}", ERROR_NO_STAKING_KEY);
+    }
+
+    pub fn get_roles(&self) -> RolesResponse {
+        RolesResponse {
+            treasury_account: self.treasury_account_id.clone(),
+            operator_account: self.operator_account_id.clone(),
+            owner_account: self.owner_account_id.clone(),
+            temp_owner: self.temp_owner.clone(),
+        }
     }
 
     pub fn get_operations_control(&self) -> OperationControls {
@@ -410,16 +430,16 @@ impl NearxPool {
         let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
             val_info
         } else {
-            ValidatorInfo::new(validator)
+            ValidatorInfo::new(validator, 0)
         };
 
         ValidatorInfoResponse {
             account_id: validator_info.account_id.clone(),
             staked: validator_info.staked.into(),
             unstaked: U128(validator_info.unstaked_amount),
+            weight: validator_info.weight,
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
-            paused: validator_info.paused,
         }
     }
 
@@ -431,10 +451,14 @@ impl NearxPool {
                 staked: U128::from(pool.1.staked),
                 last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
                 last_unstake_start_epoch: U64(pool.1.unstake_start_epoch),
-                paused: pool.1.paused,
                 unstaked: U128(pool.1.unstaked_amount),
+                weight: pool.1.weight,
             })
             .collect()
+    }
+
+    pub fn get_total_validator_weight(&self) -> u16 {
+        self.total_validator_weight
     }
 
     pub fn is_validator_unstake_pending(&self, validator: AccountId) -> bool {

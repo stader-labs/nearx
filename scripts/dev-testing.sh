@@ -1,29 +1,37 @@
 near dev-deploy --wasmFile res/nearX.wasm
 
-# Deploy and init should be a batch call
-near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'"}' --accountId=$ID
+ID=staderlabs-test.near
+CONTRACT_NAME=nearx-rc-1.$ID
 
-STAKE_POOL_0=legends.pool.f863973.m0
-STAKE_POOL_1=masternode24.pool.f863973.m0
-STAKE_POOL_2=01node.pool.f863973.m0
+# Create contract account
+near create-account $CONTRACT_NAME --masterAccount=$ID
+
+# Deploy the contract
+near deploy $CONTRACT_NAME --wasmFile=res/near_x.wasm
+
+# Deploy and init should be a batch call
+near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'", "treasury_account_id": "'"$ID"'"}' --accountId=$ID
+
+STAKE_POOL_0=hashquark.poolv1.near
+STAKE_POOL_1=kosmos_and_p2p.poolv1.near
+STAKE_POOL_2=rekt.poolv1.near
 
 # add some validators
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'", "weight": 10}' --accountId=$ID
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID
 
 # manager deposit
-
 for i in {1..3};
 do near call $CONTRACT_NAME manager_deposit_and_stake --accountId=$ID --amount=3 --gas=300000000000000;
 done;
 
 # 10 deposits
-for i in {1..10};
+for i in {1..3};
 do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
 
-near call $CONTRACT_NAME unstake '{"amount": "3000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
+near call $CONTRACT_NAME unstake '{"amount": "1000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 # epoch stake
 near call $CONTRACT_NAME epoch_stake --accountId=$ID --gas=300000000000000;
@@ -43,7 +51,7 @@ near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_1"'"}'
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_2"'"}'
 
 # get user state
-near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
+near view $CONTRACT_NAME get_account '{"account_id":  "learning12345.testnet"}'
 
 # Reward distribution
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
