@@ -25,12 +25,12 @@ mod upgrade {
     use super::*;
 
     /// Gas for completing the upgrade call
-    pub const GAS_FOR_COMPLETING_UPGRADE_CALL: Gas = Gas(10_000_000_000);
+    pub const GAS_FOR_COMPLETING_UPGRADE_CALL: Gas = Gas(10 * 1_000_000_000_000);
     /// Minimum gas for calling state migration call. Please notice the gas cost will be higher
     /// if the number of accounts and validator pools grows.
-    pub const MIN_GAS_FOR_MIGRATE_CALL: Gas = Gas(15_000_000_000);
+    pub const MIN_GAS_FOR_MIGRATE_CALL: Gas = Gas(10 * 1_000_000_000_000);
     /// Gas for calling `get_summary` method
-    pub const GAS_FOR_GET_SUMMARY_CALL: Gas = Gas(30_000_000_000);
+    pub const GAS_FOR_GET_SUMMARY_CALL: Gas = Gas(15 * 1_000_000_000_000);
 
     /// Self upgrade and call migrate, optimizes gas by not loading into memory the code.
     /// Takes as input non serialized set of bytes of the code.
