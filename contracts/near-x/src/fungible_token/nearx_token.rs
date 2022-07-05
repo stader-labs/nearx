@@ -1,7 +1,5 @@
-use crate::constants::gas::{FT_TRANSFER, FT_TRANSFER_RESOLVE};
-use crate::constants::{gas, NO_DEPOSIT};
+use crate::constants::NO_DEPOSIT;
 use crate::contract::*;
-use crate::events::Event;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore, metadata::FungibleTokenMetadata,
 };
@@ -37,6 +35,8 @@ trait FungibleTokenResolver {
 
 const GAS_FOR_FT_TRANSFER_CALL: Gas = Gas(30_000_000_000_000);
 const GAS_FOR_RESOLVE_TRANSFER: Gas = Gas(11_000_000_000_000);
+const FIVE_TGAS: Gas = Gas(5_000_000_000_000);
+const ONE_TGAS: Gas = Gas(1_000_000_000_000);
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -59,12 +59,6 @@ impl FungibleTokenCore for NearxPool {
         #[allow(unused)] memo: Option<String>,
     ) {
         assert_one_yocto();
-        Event::FtTransfer {
-            receiver_id: receiver_id.clone(),
-            sender_id: env::predecessor_account_id(),
-            amount,
-        }
-        .emit();
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
     }
 
@@ -77,33 +71,25 @@ impl FungibleTokenCore for NearxPool {
         msg: String,
     ) -> PromiseOrValue<U128> {
         assert_one_yocto();
-        let min_gas =
-            gas::FT_TRANSFER + gas::FT_ON_TRANSFER + gas::FT_TRANSFER_RESOLVE + gas::TEN_T_GAS;
         assert!(
-            env::prepaid_gas() > min_gas,
+            env::prepaid_gas() > GAS_FOR_FT_TRANSFER_CALL + GAS_FOR_RESOLVE_TRANSFER + FIVE_TGAS,
             "require at least {:?} gas",
-            min_gas
+            GAS_FOR_FT_TRANSFER_CALL + GAS_FOR_RESOLVE_TRANSFER + FIVE_TGAS
         );
-
-        Event::FtTransferCall {
-            receiver_id: receiver_id.clone(),
-            sender_id: env::predecessor_account_id(),
-            msg: msg.clone(),
-            amount,
-        }
-        .emit();
 
         let receiver_id: AccountId = receiver_id;
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
 
         ext_ft_receiver::ext(receiver_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
-            .with_static_gas(gas::FT_ON_TRANSFER)
+            .with_static_gas(
+                env::prepaid_gas() - GAS_FOR_FT_TRANSFER_CALL - GAS_FOR_RESOLVE_TRANSFER - ONE_TGAS,
+            )
             .ft_on_transfer(env::predecessor_account_id(), amount, msg)
             .then(
                 ext_self::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::FT_TRANSFER_RESOLVE)
+                    .with_static_gas(GAS_FOR_RESOLVE_TRANSFER)
                     .ft_resolve_transfer(env::predecessor_account_id(), receiver_id, amount),
             )
             .into()
@@ -133,5 +119,77 @@ impl FungibleTokenResolver for NearxPool {
             log!("{} tokens burned", burned_amount);
         }
         used_amount.into()
+    }
+}
+
+#[near_bindgen]
+impl NearxPool {
+    pub fn internal_nearx_transfer(
+        &mut self,
+        sender_id: &AccountId,
+        receiver_id: &AccountId,
+        amount: u128,
+    ) {
+        assert!(amount > 0, "The amount should be a positive number");
+        let mut sender_acc = self.internal_get_account(sender_id);
+        let mut receiver_acc = self.internal_get_account(receiver_id);
+        assert!(
+            amount <= sender_acc.stake_shares,
+            "{} does not have enough NearX balance {}",
+            sender_id,
+            sender_acc.stake_shares
+        );
+
+        sender_acc.stake_shares -= amount;
+        receiver_acc.stake_shares += amount;
+
+        self.internal_update_account(sender_id, &sender_acc);
+        self.internal_update_account(receiver_id, &receiver_acc);
+    }
+
+    pub fn int_ft_resolve_transfer(
+        &mut self,
+        sender_id: &AccountId,
+        receiver_id: AccountId,
+        amount: U128,
+    ) -> (u128, u128) {
+        let receiver_id = receiver_id;
+        let amount: Balance = amount.into();
+
+        // Get the unused amount from the `ft_on_transfer` call result.
+        let unused_amount = match env::promise_result(0) {
+            PromiseResult::NotReady => unreachable!(),
+            PromiseResult::Successful(value) => {
+                if let Ok(unused_amount) = near_sdk::serde_json::from_slice::<U128>(&value) {
+                    std::cmp::min(amount, unused_amount.0)
+                } else {
+                    amount
+                }
+            }
+            PromiseResult::Failed => amount,
+        };
+
+        if unused_amount > 0 {
+            let mut receiver_acc = self.internal_get_account(&receiver_id);
+            let receiver_balance = receiver_acc.stake_shares;
+            if receiver_balance > 0 {
+                let refund_amount = std::cmp::min(receiver_balance, unused_amount);
+                receiver_acc.stake_shares -= refund_amount;
+                self.internal_update_account(&receiver_id, &receiver_acc);
+
+                let mut sender_acc = self.internal_get_account(sender_id);
+                sender_acc.stake_shares += refund_amount;
+                self.internal_update_account(sender_id, &sender_acc);
+
+                log!(
+                    "Refund {} from {} to {}",
+                    refund_amount,
+                    receiver_id,
+                    sender_id
+                );
+                return (amount - refund_amount, 0);
+            }
+        }
+        (amount, 0)
     }
 }

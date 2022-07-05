@@ -6,30 +6,22 @@ use crate::{
     contract::*,
     state::*,
 };
-use near_sdk::{
-    is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
-};
+use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue};
 
 #[near_bindgen]
 impl NearxPool {
-    pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
+    #[private]
+    pub fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
         let account_id = env::predecessor_account_id();
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
-        let selected_validator_info = self
-            .validator_info_map
-            .values()
-            .filter(|v| !v.paused())
-            .min_by_key(|v| v.staked);
-        require!(
-            selected_validator_info.is_some(),
-            ERROR_ALL_VALIDATORS_ARE_BUSY
-        );
+        let selected_validator = self.get_validator_to_stake();
+        require!(selected_validator.is_some(), ERROR_ALL_VALIDATORS_ARE_BUSY);
 
-        let selected_validator = selected_validator_info.unwrap();
+        let selected_validator = selected_validator.unwrap();
 
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(selected_validator.account_id.clone())
@@ -84,7 +76,7 @@ impl NearxPool {
     }
 
     #[private]
-    pub fn internal_deposit_and_stake(&mut self, amount: u128) {
+    pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();
 
         self.assert_min_deposit_amount(amount);
@@ -115,6 +107,7 @@ impl NearxPool {
         .emit();
     }
 
+    #[private]
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
         require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
 
@@ -159,7 +152,7 @@ impl NearxPool {
         self.user_amount_to_unstake_in_epoch += receive_amount;
 
         Event::Unstake {
-            account_id: account_id.clone(),
+            account_id,
             unstaked_amount: U128(amount),
             burnt_stake_shares: U128(num_shares),
             new_unstaked_balance: U128(account.unstaked_amount),
@@ -167,15 +160,9 @@ impl NearxPool {
             unstaked_available_epoch_height: account.withdrawable_epoch_height,
         }
         .emit();
-
-        Event::FtBurn {
-            account_id,
-            amount: U128(num_shares),
-        }
-        .emit();
     }
 
-    // Make this return a promise
+    #[private]
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         let account_id = env::predecessor_account_id();
 
@@ -210,6 +197,7 @@ impl NearxPool {
         Promise::new(account_id).transfer(amount);
     }
 
+    #[private]
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
         if let Some(val_info) = self.validator_info_map.get(validator) {
             val_info
@@ -218,6 +206,7 @@ impl NearxPool {
         }
     }
 
+    #[private]
     pub(crate) fn internal_update_validator(
         &mut self,
         validator: &AccountId,
@@ -226,6 +215,7 @@ impl NearxPool {
         self.validator_info_map.insert(validator, validator_info);
     }
 
+    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
         // At this point the er will be 1
         if self.total_stake_shares == 0 || self.total_staked == 0 {
@@ -236,6 +226,7 @@ impl NearxPool {
             .as_u128()
     }
 
+    #[private]
     pub(crate) fn num_shares_from_staked_amount_rounded_up(&self, amount: Balance) -> u128 {
         if self.total_stake_shares == 0 || self.total_staked == 0 {
             return amount;
@@ -247,6 +238,7 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_down(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -257,6 +249,7 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn staked_amount_from_num_shares_rounded_up(&self, num_shares: u128) -> Balance {
         if self.total_staked == 0 || self.total_stake_shares == 0 {
             return num_shares;
@@ -268,10 +261,12 @@ impl NearxPool {
         .as_u128()
     }
 
+    #[private]
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
     }
 
+    #[private]
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
         if account.is_empty() {
             self.accounts.remove(account_id);
@@ -281,36 +276,11 @@ impl NearxPool {
     }
 
     #[private]
-    fn get_validator_expected_stake(&self, validator: &ValidatorInfo) -> Balance {
-        if validator.weight == 0 {
-            0
-        } else {
-            self.total_staked * (validator.weight as u128) / (self.total_validator_weight as u128)
-        }
-    }
-
-    #[private]
-    pub fn get_validator_to_stake(&self, amount: Balance) -> (Option<ValidatorInfo>, Balance) {
-        let mut selected_validator = None;
-        let mut amount_to_stake: Balance = 0;
-
-        for validator in self.validator_info_map.values() {
-            let target_amount = self.get_validator_expected_stake(&validator);
-            if validator.staked < target_amount {
-                let delta = std::cmp::min(target_amount - validator.staked, amount);
-                if delta > amount_to_stake {
-                    amount_to_stake = delta;
-                    selected_validator = Some(validator);
-                }
-            }
-        }
-
-        if amount_to_stake > 0 && amount - amount_to_stake <= ONE_NEAR {
-            amount_to_stake = amount;
-        }
-
-        // Note that it's possible that no validator is available
-        (selected_validator, amount_to_stake)
+    pub fn get_validator_to_stake(&self) -> Option<ValidatorInfo> {
+        self.validator_info_map
+            .values()
+            .filter(|v| !v.paused())
+            .min_by_key(|v| v.staked)
     }
 
     #[private]

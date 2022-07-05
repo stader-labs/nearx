@@ -82,18 +82,6 @@ pub mod gas {
 
     pub const DRAIN_WITHDRAW: Gas = base_gas(3);
 
-    pub const FT_TRANSFER: Gas = base_gas(3);
-
-    pub const FT_ON_TRANSFER: Gas = base_gas(35);
-
-    pub const FT_TRANSFER_RESOLVE: Gas = base_gas(12);
-
-    pub const ONE_T_GAS: Gas = base_gas(1);
-
-    pub const FIVE_T_GAS: Gas = base_gas(5);
-
-    pub const TEN_T_GAS: Gas = base_gas(10);
-
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000 * 25 * n)
     }
