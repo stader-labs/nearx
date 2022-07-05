@@ -16,8 +16,9 @@ impl NearxPool {
     pub fn epoch_stake(&mut self) -> bool {
         self.assert_epoch_stake_not_paused();
 
-        let min_gas =
-            STAKE_EPOCH + ON_STAKE_POOL_DEPOSIT_AND_STAKE + ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
+        let min_gas = gas::STAKE_EPOCH
+            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE
+            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -101,9 +102,9 @@ impl NearxPool {
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_epoch_autocompounding_not_paused();
 
-        let min_gas = AUTOCOMPOUND_EPOCH
-            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
-            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
+        let min_gas = gas::AUTOCOMPOUND_EPOCH
+            + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
+            + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -128,12 +129,12 @@ impl NearxPool {
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
-            .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
+            .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
             .get_account_staked_balance(env::current_account_id())
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
+                    .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
 
@@ -209,7 +210,8 @@ impl NearxPool {
     pub fn epoch_unstake(&mut self) -> bool {
         self.assert_epoch_unstake_not_paused();
 
-        let min_gas = UNSTAKE_EPOCH + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
+        let min_gas =
+            gas::UNSTAKE_EPOCH + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -298,7 +300,9 @@ impl NearxPool {
         self.assert_epoch_withdraw_not_paused();
 
         // make sure enough gas was given
-        let min_gas = WITHDRAW_EPOCH + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        let min_gas = gas::WITHDRAW_EPOCH
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -368,9 +372,9 @@ impl NearxPool {
     pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
         self.assert_sync_validator_balance_not_paused();
 
-        let min_gas = SYNC_VALIDATOR_EPOCH
-            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
-            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
+        let min_gas = gas::SYNC_VALIDATOR_EPOCH
+            + gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
+            + gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -466,7 +470,8 @@ impl NearxPool {
     pub fn drain_unstake(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
 
-        let min_gas = DRAIN_UNSTAKE + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
+        let min_gas =
+            gas::DRAIN_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -553,7 +558,9 @@ impl NearxPool {
         self.assert_operator_or_owner();
 
         // make sure enough gas was given
-        let min_gas = DRAIN_WITHDRAW + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        let min_gas = gas::DRAIN_WITHDRAW
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)

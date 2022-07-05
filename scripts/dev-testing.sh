@@ -58,7 +58,7 @@ near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POO
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
 
-near view $CONTRACT_NAME ft_balance_of '{"account_id": "learning12345.testnet"}'
+near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
 near view $CONTRACT_NAME ft_total_supply
 
 # Checking stake in the stake pool contract

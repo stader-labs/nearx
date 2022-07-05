@@ -1,9 +1,9 @@
-mod contract_util;
 mod empty_storage_spec;
 mod internal;
 mod metadata;
 mod operator;
 mod public;
+mod util;
 
 use crate::state::*;
 use near_sdk::json_types::U128;

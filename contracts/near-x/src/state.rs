@@ -113,10 +113,8 @@ impl ValidatorInfo {
 
     /// whether the validator is in unstake releasing period.
     pub fn pending_unstake_release(&self) -> bool {
-        let current_epoch = env::epoch_height();
-        log!("unstake_start_epoch is {:?}", self.unstake_start_epoch);
-        current_epoch >= self.unstake_start_epoch
-            && current_epoch < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
+        env::epoch_height() >= self.unstake_start_epoch
+            && env::epoch_height() < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
     }
 }
 

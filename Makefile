@@ -6,7 +6,7 @@ integration-tests: all run-integration-tests
 
 unit-tests: run-unit-tests
 
-run-all-tests: run-unit-tests run-integration-tests
+run-all-tests: all run-unit-tests run-integration-tests
 
 near-x: contracts/near-x
 	rustup target add wasm32-unknown-unknown

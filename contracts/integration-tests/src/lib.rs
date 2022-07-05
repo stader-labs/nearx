@@ -10,7 +10,10 @@ use near_sdk::ONE_NEAR;
 use near_units::*;
 use near_x::constants::gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
-use near_x::state::{AccountResponse, Fraction, NearxPoolStateResponse, ValidatorInfoResponse};
+use near_x::state::{
+    AccountResponse, Fraction, NearxPoolStateResponse, OperationsControlUpdateRequest,
+    ValidatorInfoResponse,
+};
 use serde_json::json;
 use workspaces::network::DevAccountDeployer;
 
@@ -22,32 +25,84 @@ use workspaces::network::DevAccountDeployer;
 /// 5. actual staked info
 /// 6. actual unstaked info
 
-/// TODO - bchain owner set commit test doesn't work because AccountId struct in workspace is not
-/// the same as the one in near-sdk. fix sometime in the future. there is already a unit test so we are fine
-// #[tokio::test]
-// async fn test_owner_set_commit() -> anyhow::Result<()> {
-//     let context = IntegrationTestContext::new(3).await?;
-//
-//     let new_owner = context.worker.dev_create_account().await?;
-//
-//     let roles = context.get_roles().await?;
-//     assert_eq!(roles.temp_owner, None);
-//     assert_eq!(roles.owner_account, context.nearx_owner.id().clone());
-//
-//     context.set_owner(new_owner.id()).await?;
-//
-//     let roles = context.get_roles().await?;
-//     assert_eq!(roles.temp_owner, Some(new_owner.id().clone()));
-//     assert_eq!(roles.owner_account, context.nearx_owner.id().clone());
-//
-//     context.commit_owner(&new_owner).await?;
-//
-//     let roles = context.get_roles().await?;
-//     assert_eq!(roles.temp_owner, None);
-//     assert_eq!(roles.owner_account, new_owner.id().clone());
-//
-//     Ok(())
-// }
+#[tokio::test]
+async fn test_all_epochs_paused() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3).await?;
+
+    let current_epoch = context.get_current_epoch().await?;
+
+    context
+        .update_operation_controls(OperationsControlUpdateRequest {
+            stake_paused: None,
+            unstake_paused: None,
+            withdraw_paused: None,
+            epoch_stake_paused: Some(true),
+            epoch_unstake_paused: Some(true),
+            epoch_withdraw_paused: Some(true),
+            epoch_autocompounding_paused: Some(true),
+            sync_validator_balance_paused: Some(true),
+        })
+        .await?;
+
+    let operations_controls = context.get_operations_controls().await?;
+    assert_eq!(operations_controls.epoch_autocompounding_paused, true);
+    assert_eq!(operations_controls.epoch_stake_paused, true);
+    assert_eq!(operations_controls.epoch_unstake_paused, true);
+    assert_eq!(operations_controls.epoch_withdraw_paused, true);
+
+    context.deposit(&context.user1, ntoy(10)).await?;
+    context.deposit(&context.user2, ntoy(10)).await?;
+    context.deposit(&context.user3, ntoy(10)).await?;
+    context.unstake(&context.user1, U128(ntoy(5))).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(5)));
+
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+
+    println!("user1_account is {:?}", user1_account);
+    println!("user2_account is {:?}", user2_account);
+    println!("user3_account is {:?}", user3_account);
+
+    assert_eq!(user1_account.staked_balance, U128(ntoy(5)));
+    assert_eq!(user1_account.unstaked_balance, U128(ntoy(5)));
+    assert_eq!(
+        user1_account.withdrawable_epoch,
+        U64(current_epoch.0 + NUM_EPOCHS_TO_UNLOCK)
+    );
+    assert_eq!(user2_account.staked_balance, U128(ntoy(10)));
+    assert_eq!(user3_account.staked_balance, U128(ntoy(10)));
+
+    context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(5)));
+    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(0)));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+    assert_eq!(nearx_state.last_reconcilation_epoch, U64(0));
+
+    context.worker.fast_forward(6 * ONE_EPOCH).await?;
+
+    let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        (user1_balance_after_withdraw - user1_balance_before_withdraw),
+        ntoy(5),
+        100000000000000000000000
+    ));
+
+    Ok(())
+}
 
 #[tokio::test]
 async fn test_system_with_no_validators() -> anyhow::Result<()> {
@@ -95,6 +150,17 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
     context.unstake(&context.user3, U128(ntoy(5))).await?;
     context.unstake(&context.user3, U128(ntoy(5))).await?;
 
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
+
+    assert_eq!(user1_account.staked_balance, U128(0));
+    assert_eq!(user1_account.unstaked_balance, U128(ntoy(10)));
+    assert_eq!(user2_account.staked_balance, U128(ntoy(5)));
+    assert_eq!(user2_account.unstaked_balance, U128(ntoy(5)));
+    assert_eq!(user3_account.staked_balance, U128(0));
+    assert_eq!(user3_account.unstaked_balance, U128(ntoy(10)));
+
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(5)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(5)));
@@ -125,6 +191,40 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
     assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(ntoy(0)));
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(ntoy(5)));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(ntoy(0)));
+
+    context.worker.fast_forward(5 * ONE_EPOCH).await?;
+
+    context.run_epoch_methods().await?;
+
+    let user1_balance_before_withdraw = context.user1.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context.user1.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        (user1_balance_after_withdraw - user1_balance_before_withdraw),
+        ntoy(10),
+        ntoy(1)
+    ));
+
+    let user2_balance_before_withdraw = context.user2.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user2).await?;
+    let user2_balance_after_withdraw = context.user2.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        (user2_balance_after_withdraw - user2_balance_before_withdraw),
+        ntoy(5),
+        ntoy(1)
+    ));
+
+    let user3_balance_before_withdraw = context.user3.view_account(&context.worker).await?.balance;
+    context.withdraw_all(&context.user3).await?;
+    let user3_balance_after_withdraw = context.user3.view_account(&context.worker).await?.balance;
+
+    assert!(abs_diff_eq(
+        (user3_balance_after_withdraw - user3_balance_before_withdraw),
+        ntoy(10),
+        ntoy(1)
+    ));
 
     Ok(())
 }

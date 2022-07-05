@@ -3,9 +3,10 @@ use crate::helpers::ntoy;
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
+use near_x::contract::OperationControls;
 use near_x::state::{
-    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse, RolesResponse,
-    ValidatorInfoResponse,
+    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse,
+    OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -131,6 +132,24 @@ impl IntegrationTestContext<Sandbox> {
             user2,
             user3,
         })
+    }
+
+    pub async fn update_operation_controls(
+        &mut self,
+        operations_control: OperationsControlUpdateRequest,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "update_operations_control",
+            )
+            .deposit(1)
+            .args_json(json!({
+                "update_operations_control_request": operations_control
+            }))?
+            .transact()
+            .await
     }
 
     pub async fn update_validator(
@@ -725,5 +744,17 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<RolesResponse>()
+    }
+
+    pub async fn get_operations_controls(&self) -> anyhow::Result<OperationControls> {
+        self.nearx_operator
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "get_operations_control",
+            )
+            .view()
+            .await?
+            .json::<OperationControls>()
     }
 }
