@@ -6,18 +6,15 @@ impl NearxPool {
     /// Asserts that the method was called by the owner.
     pub fn assert_owner_calling(&self) {
         require!(
-            env::predecessor_account_id() == self.owner_account_id
-                && env::signer_account_id() == self.owner_account_id,
+            env::predecessor_account_id() == self.owner_account_id,
             ERROR_UNAUTHORIZED
         )
     }
 
     pub fn assert_operator_or_owner(&self) {
         require!(
-            (env::predecessor_account_id() == self.owner_account_id
-                && env::signer_account_id() == self.owner_account_id)
-                || (env::predecessor_account_id() == self.operator_account_id
-                    && env::signer_account_id() == self.operator_account_id),
+            env::predecessor_account_id() == self.owner_account_id
+                || env::predecessor_account_id() == self.operator_account_id,
             ERROR_UNAUTHORIZED
         );
     }
@@ -75,7 +72,7 @@ impl NearxPool {
     pub fn assert_sync_validator_balance_not_paused(&self) {
         require!(
             !self.operations_control.sync_validator_balance_paused,
-            ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
+            ERROR_SYNC_VALIDATOR_BALANCE_PAUSED
         );
     }
 }

@@ -4,15 +4,15 @@ use crate::events::Event;
 use near_contract_standards::fungible_token::{
     core::FungibleTokenCore, metadata::FungibleTokenMetadata,
 };
+use near_sdk::env::log;
 use near_sdk::{
-    assert_one_yocto, log,
+    assert_one_yocto,
     borsh::{self, BorshDeserialize, BorshSerialize},
     collections::{LazyOption, LookupMap},
     env, ext_contract,
     json_types::U128,
-    near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, StorageUsage,
+    log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, StorageUsage,
 };
-use near_sdk::env::log;
 
 #[ext_contract(ext_ft_receiver)]
 pub trait FungibleTokenReceiver {

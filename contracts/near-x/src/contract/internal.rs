@@ -117,6 +117,8 @@ impl NearxPool {
     }
 
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
+        self.assert_unstaking_not_paused();
+
         require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
 
         let account_id = env::predecessor_account_id();
@@ -178,6 +180,8 @@ impl NearxPool {
 
     // Make this return a promise
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
+        self.assert_withdraw_not_paused();
+
         let account_id = env::predecessor_account_id();
 
         require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);

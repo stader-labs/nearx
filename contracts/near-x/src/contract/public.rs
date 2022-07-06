@@ -203,8 +203,7 @@ impl NearxPool {
 
         if let Some(temp_owner) = self.temp_owner.clone() {
             require!(
-                env::predecessor_account_id() == temp_owner
-                    && env::signer_account_id() == temp_owner,
+                env::predecessor_account_id() == temp_owner,
                 ERROR_UNAUTHORIZED
             );
             self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();
