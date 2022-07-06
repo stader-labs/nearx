@@ -26,6 +26,25 @@ use workspaces::network::DevAccountDeployer;
 /// 6. actual unstaked info
 
 #[tokio::test]
+async fn test_contract_upgrade() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3).await?;
+
+    let new_contract = "./../../res/near_x_2.wasm";
+
+    let nearx_2_wasm = std::fs::read(new_contract)?;
+
+    let res = context.post_upgrade_function().await;
+    assert!(res.is_err());
+
+    context.upgrade(nearx_2_wasm).await?;
+
+    let res = context.post_upgrade_function().await?;
+    assert_eq!(res, "post upgrade function successfully run!".to_string());
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_all_epochs_paused() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3).await?;
 

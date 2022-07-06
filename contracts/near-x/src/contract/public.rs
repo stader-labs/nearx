@@ -3,8 +3,8 @@ use crate::errors::*;
 use crate::events::Event;
 use crate::{contract::*, errors, state::*};
 use near_sdk::json_types::U64;
-use near_sdk::{Gas, near_bindgen};
-use near_sdk::{assert_one_yocto, log, require, ONE_NEAR, Promise};
+use near_sdk::{assert_one_yocto, log, require, Promise, ONE_NEAR};
+use near_sdk::{near_bindgen, Gas};
 
 #[near_bindgen]
 impl NearxPool {
@@ -480,7 +480,7 @@ impl NearxPool {
             total_validators: U128(self.validator_info_map.len() as u128),
             treasury_staked_balance: treasury_account.staked_balance,
             treasury_unstaked_balance: treasury_account.unstaked_balance,
-            nearx_price: self.get_nearx_price()
+            nearx_price: self.get_nearx_price(),
         }
     }
 }

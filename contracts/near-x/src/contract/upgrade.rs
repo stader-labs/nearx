@@ -1,6 +1,6 @@
-use near_sdk::*;
 use crate::contract::*;
 use crate::*;
+use near_sdk::*;
 
 #[near_bindgen]
 impl NearxPool {
@@ -37,8 +37,7 @@ mod upgrade {
     #[no_mangle]
     pub fn upgrade() {
         env::setup_panic_hook();
-        let contract: NearxPool =
-            env::state_read().expect("ERR_CONTRACT_IS_NOT_INITIALIZED");
+        let contract: NearxPool = env::state_read().expect("ERR_CONTRACT_IS_NOT_INITIALIZED");
         contract.assert_owner_calling();
         let current_id = env::current_account_id().as_bytes().to_vec();
         let migrate_method_name = b"migrate".to_vec();
