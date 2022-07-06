@@ -26,7 +26,7 @@ impl NearxPool {
         self.internal_update_account(receiver_id, &receiver_acc);
     }
 
-    pub(crate) fn int_ft_resolve_transfer(
+    pub fn int_ft_resolve_transfer(
         &mut self,
         sender_id: &AccountId,
         receiver_id: AccountId,
