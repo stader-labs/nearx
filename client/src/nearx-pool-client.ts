@@ -195,7 +195,7 @@ function configFromNetwork(networkId: Network): nearjs.ConnectConfig {
       return {
         ...config,
         helperUrl: 'https://helper.near.org',
-        nodeUrl: 'https://rpc.near.org',
+        nodeUrl: 'https://rpc.mainnet.near.org',
         walletUrl: 'https://wallet.near.org',
       };
     default:
