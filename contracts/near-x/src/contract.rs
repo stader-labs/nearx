@@ -1,7 +1,9 @@
+mod empty_storage_spec;
 mod internal;
 mod metadata;
 mod operator;
 mod public;
+mod util;
 
 use crate::state::*;
 use near_sdk::json_types::U128;
@@ -58,6 +60,7 @@ pub struct NearxPool {
     pub accounts: UnorderedMap<AccountId, Account>,
 
     pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
+    pub total_validator_weight: u16,
 
     /// min amount accepted as deposit or stake
     pub min_deposit_amount: u128,
