@@ -1,10 +1,10 @@
 use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
-use crate::{contract::*, errors, state::*};
+use crate::{contract::*, state::*};
 use near_sdk::json_types::U64;
 use near_sdk::near_bindgen;
-use near_sdk::{assert_one_yocto, log, require, ONE_NEAR};
+use near_sdk::{assert_one_yocto, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -48,7 +48,6 @@ impl NearxPool {
     /*
        Main staking pool api
     */
-
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {
         self.assert_owner_calling();
@@ -204,8 +203,7 @@ impl NearxPool {
 
         if let Some(temp_owner) = self.temp_owner.clone() {
             require!(
-                env::predecessor_account_id() == temp_owner
-                    && env::signer_account_id() == temp_owner,
+                env::predecessor_account_id() == temp_owner,
                 ERROR_UNAUTHORIZED
             );
             self.owner_account_id = self.temp_owner.as_ref().unwrap().clone();
@@ -469,5 +467,18 @@ impl NearxPool {
 
     pub fn get_current_epoch(&self) -> U64 {
         U64(env::epoch_height())
+    }
+
+    pub fn get_contract_summary(&self) -> ContractSummary {
+        let treasury_account = self.get_account(self.treasury_account_id.clone());
+
+        ContractSummary {
+            total_staked: U128(self.total_staked),
+            total_shares: U128(self.total_stake_shares),
+            total_validators: U128(self.validator_info_map.len() as u128),
+            treasury_staked_balance: treasury_account.staked_balance,
+            treasury_unstaked_balance: treasury_account.unstaked_balance,
+            nearx_price: self.get_nearx_price(),
+        }
     }
 }

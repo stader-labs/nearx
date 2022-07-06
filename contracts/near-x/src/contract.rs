@@ -3,6 +3,7 @@ mod internal;
 mod metadata;
 mod operator;
 mod public;
+mod upgrade;
 mod util;
 
 use crate::state::*;

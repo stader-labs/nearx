@@ -1,7 +1,8 @@
+import { readFileSync } from 'fs';
 import * as nearjs from 'near-api-js';
+import * as os from 'os';
 import { Balance, Epoch, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
-import * as os from 'os';
 import { isBrowser } from './utils';
 //import * as bn from 'bn';
 
@@ -157,6 +158,11 @@ export const NearxPoolClient = {
           ),
         );
       },
+
+      async contractUpgrade(fileName: string): Promise<any> {
+        const code = readFileSync(fileName);
+        return contract.upgrade(code, gas);
+      },
     };
 
     return client;
@@ -189,7 +195,7 @@ function configFromNetwork(networkId: Network): nearjs.ConnectConfig {
       return {
         ...config,
         helperUrl: 'https://helper.near.org',
-        nodeUrl: 'https://rpc.near.org',
+        nodeUrl: 'https://rpc.mainnet.near.org',
         walletUrl: 'https://wallet.near.org',
       };
     default:

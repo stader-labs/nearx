@@ -462,6 +462,23 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn upgrade(&self, code: Vec<u8>) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, &self.nearx_contract.id(), "upgrade")
+            .max_gas()
+            .args(code)
+            .transact()
+            .await
+    }
+
+    pub async fn post_upgrade_function(&self) -> anyhow::Result<String> {
+        self.nearx_contract
+            .call(&self.worker, "test_post_upgrade")
+            .view()
+            .await?
+            .json::<String>()
+    }
+
     pub async fn ft_transfer(
         &self,
         sender: &Account,

@@ -2,7 +2,7 @@
   "include": ["src/*", "../node_modules/types-bn/index.d.ts", "types"],
   "compilerOptions": {
     "composite": true,
-    "module": "esnext",
+    "module": "commonjs",
     "lib": ["esnext", "dom"],
     "target": "es6",
     "moduleResolution": "node",

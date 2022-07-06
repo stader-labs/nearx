@@ -1770,6 +1770,7 @@ dependencies = [
  "anyhow",
  "near-contract-standards",
  "near-sdk",
+ "near-sys",
  "near-units",
  "serde_json",
  "tokio",

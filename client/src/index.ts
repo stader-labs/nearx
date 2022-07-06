@@ -1,5 +1,6 @@
 import * as nearjs from 'near-api-js';
 export * as nearjs from 'near-api-js';
+export { NearxPoolClient } from './nearx-pool-client';
 
 export type Balance = bigint;
 export type Epoch = bigint;
@@ -88,6 +89,8 @@ export interface NearxStakingPool {
    * Syncronize balance from validator.
    */
   syncBalances(): Promise<any[]>;
+
+  contractUpgrade(fileName: string): Promise<any>;
 }
 
 export interface NearxPoolClient extends NearxStakingPool {
@@ -95,7 +98,6 @@ export interface NearxPoolClient extends NearxStakingPool {
   config: nearjs.ConnectConfig;
   contract: nearjs.Contract;
 }
-export { NearxPoolClient } from './nearx-pool-client';
 
 // DTOs:
 

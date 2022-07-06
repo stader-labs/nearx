@@ -19,6 +19,7 @@ export interface RpcCallsStakingPool {
   withdraw_all(args: any): Promise<string>;
   unstake(args: any): Promise<string>;
   unstake_all(args: any): Promise<string>;
+  upgrade(code: any, gas: any): Promise<string>;
 }
 
 export interface RpcCallsOperator {
@@ -28,6 +29,7 @@ export interface RpcCallsOperator {
   epoch_unstake(args: any): Promise<string>;
   epoch_withdraw(args: any): Promise<string>;
   sync_balance_from_validator(args: any): Promise<string>;
+  upgrade(code: any, gas: any): Promise<any>;
 }
 
 export interface RpcCallsUtils {
@@ -70,6 +72,7 @@ export function createContract(account: nearjs.Account, contractName: string): N
         nameof<RpcCallsOperator>('epoch_unstake'),
         nameof<RpcCallsOperator>('epoch_withdraw'),
         nameof<RpcCallsOperator>('sync_balance_from_validator'),
+        nameof<RpcCallsOperator>('upgrade'),
       ],
       //sender: account, // account object to initialize and sign transactions.
     },

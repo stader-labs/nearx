@@ -13,6 +13,7 @@ use near_sdk::{
 #[near_bindgen]
 impl NearxPool {
     pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
+        // TODO - enforce min deposit and pausing
         let account_id = env::predecessor_account_id();
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
@@ -116,6 +117,8 @@ impl NearxPool {
     }
 
     pub(crate) fn internal_unstake(&mut self, amount: u128) {
+        self.assert_unstaking_not_paused();
+
         require!(amount > 0, ERROR_NON_POSITIVE_UNSTAKE_AMOUNT);
 
         let account_id = env::predecessor_account_id();
@@ -177,6 +180,8 @@ impl NearxPool {
 
     // Make this return a promise
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
+        self.assert_withdraw_not_paused();
+
         let account_id = env::predecessor_account_id();
 
         require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);

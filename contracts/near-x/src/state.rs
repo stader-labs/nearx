@@ -206,3 +206,14 @@ pub struct OperationsControlUpdateRequest {
     pub epoch_autocompounding_paused: Option<bool>,
     pub sync_validator_balance_paused: Option<bool>,
 }
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ContractSummary {
+    pub total_staked: U128,
+    pub total_shares: U128,
+    pub total_validators: U128,
+    pub treasury_staked_balance: U128,
+    pub treasury_unstaked_balance: U128,
+    pub nearx_price: U128,
+}
