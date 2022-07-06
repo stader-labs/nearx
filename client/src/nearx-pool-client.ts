@@ -1,7 +1,8 @@
+import { readFileSync } from 'fs';
 import * as nearjs from 'near-api-js';
+import * as os from 'os';
 import { Balance, Epoch, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
-import * as os from 'os';
 import { isBrowser } from './utils';
 //import * as bn from 'bn';
 
@@ -156,6 +157,11 @@ export const NearxPoolClient = {
             contract.sync_balance_from_validator({ args: { validator_id: v.account_id }, gas }),
           ),
         );
+      },
+
+      async contractUpgrade(fileName: string): Promise<any> {
+        const code = readFileSync(fileName);
+        return contract.upgrade(code, gas);
       },
     };
 
