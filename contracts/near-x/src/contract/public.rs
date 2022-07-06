@@ -49,11 +49,6 @@ impl NearxPool {
        Main staking pool api
     */
 
-    pub fn test_fn_2(&self) -> String {
-        log!("This is a test fun 2");
-        "this is a test fun 2".to_string()
-    }
-
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {
         self.assert_owner_calling();
@@ -474,5 +469,18 @@ impl NearxPool {
 
     pub fn get_current_epoch(&self) -> U64 {
         U64(env::epoch_height())
+    }
+
+    pub fn get_contract_summary(&self) -> ContractSummary {
+        let treasury_account = self.get_account(self.treasury_account_id.clone());
+
+        ContractSummary {
+            total_staked: U128(self.total_staked),
+            total_shares: U128(self.total_stake_shares),
+            total_validators: U128(self.validator_info_map.len() as u128),
+            treasury_staked_balance: treasury_account.staked_balance,
+            treasury_unstaked_balance: treasury_account.unstaked_balance,
+            nearx_price: self.get_nearx_price()
+        }
     }
 }

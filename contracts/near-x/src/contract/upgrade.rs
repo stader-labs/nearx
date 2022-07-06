@@ -42,7 +42,7 @@ mod upgrade {
         contract.assert_owner_calling();
         let current_id = env::current_account_id().as_bytes().to_vec();
         let migrate_method_name = b"migrate".to_vec();
-        let get_summary_method_name = b"test_fn".to_vec();
+        let get_summary_method_name = b"get_contract_summary".to_vec();
         unsafe {
             // Load input (wasm code) into register 0.
             sys::input(0);
@@ -68,9 +68,9 @@ mod upgrade {
                 0 as _,
                 migrate_attached_gas.0,
             );
-            // 3rd batch action in the Tx: call `get_summary()` in the contract to validate
+            // 3rd batch action in the Tx: call `get_contract_summary()` in the contract to validate
             // the contract state. If the validation failed, the entire `upgrade()` method
-            // will be rolled back. The `get_summary()` view call will access most of the
+            // will be rolled back. The `get_contract_summary()` view call will access most of the
             // states in the contract, so should guarantee the contract is working as expected
             sys::promise_batch_action_function_call(
                 promise_id,
