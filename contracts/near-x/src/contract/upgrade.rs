@@ -1,5 +1,4 @@
 use crate::contract::*;
-use crate::*;
 use near_sdk::*;
 
 #[near_bindgen]

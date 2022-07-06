@@ -1,4 +1,3 @@
-use crate::constants::gas::{FT_TRANSFER, FT_TRANSFER_RESOLVE};
 use crate::constants::{gas, NO_DEPOSIT};
 use crate::contract::*;
 use crate::events::Event;
@@ -11,8 +10,7 @@ use near_sdk::{
     collections::{LazyOption, LookupMap},
     env, ext_contract,
     json_types::U128,
-    log, near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, PromiseResult,
-    StorageUsage,
+    near_bindgen, AccountId, Balance, Gas, PanicOnDefault, PromiseOrValue, StorageUsage,
 };
 
 #[ext_contract(ext_ft_receiver)]
@@ -34,9 +32,6 @@ trait FungibleTokenResolver {
         amount: U128,
     ) -> U128;
 }
-
-const GAS_FOR_FT_TRANSFER_CALL: Gas = Gas(30_000_000_000_000);
-const GAS_FOR_RESOLVE_TRANSFER: Gas = Gas(11_000_000_000_000);
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]

@@ -1,10 +1,10 @@
 use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
-use crate::{contract::*, errors, state::*};
+use crate::{contract::*, state::*};
 use near_sdk::json_types::U64;
-use near_sdk::{assert_one_yocto, log, require, Promise, ONE_NEAR};
-use near_sdk::{near_bindgen, Gas};
+use near_sdk::near_bindgen;
+use near_sdk::{assert_one_yocto, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -48,7 +48,6 @@ impl NearxPool {
     /*
        Main staking pool api
     */
-
     #[payable]
     pub fn manager_deposit_and_stake(&mut self) {
         self.assert_owner_calling();
