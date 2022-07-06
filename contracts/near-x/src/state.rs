@@ -60,9 +60,9 @@ pub struct ValidatorInfoResponse {
     pub account_id: AccountId,
     pub staked: U128,
     pub unstaked: U128,
-    pub weight: u16,
     pub last_asked_rewards_epoch_height: U64,
     pub last_unstake_start_epoch: U64,
+    pub paused: bool,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -70,9 +70,9 @@ pub struct ValidatorInfoResponse {
 pub struct ValidatorInfo {
     pub account_id: AccountId,
 
-    pub staked: u128,
+    pub paused: bool,
 
-    pub weight: u16,
+    pub staked: u128,
 
     pub last_redeemed_rewards_epoch: EpochHeight,
 
@@ -91,11 +91,11 @@ impl ValidatorInfo {
             && self.unstaked_amount == 0
     }
 
-    pub fn new(account_id: AccountId, weight: u16) -> Self {
+    pub fn new(account_id: AccountId) -> Self {
         Self {
             account_id,
+            paused: false,
             staked: 0,
-            weight,
             last_redeemed_rewards_epoch: 0,
             unstaked_amount: 0,
             unstake_start_epoch: 0,
@@ -108,13 +108,15 @@ impl ValidatorInfo {
     }
 
     pub fn paused(&self) -> bool {
-        self.weight == 0
+        self.paused == true
     }
 
     /// whether the validator is in unstake releasing period.
     pub fn pending_unstake_release(&self) -> bool {
-        env::epoch_height() >= self.unstake_start_epoch
-            && env::epoch_height() < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
+        let current_epoch = env::epoch_height();
+        log!("unstake_start_epoch is {:?}", self.unstake_start_epoch);
+        current_epoch >= self.unstake_start_epoch
+            && current_epoch < self.unstake_start_epoch + NUM_EPOCHS_TO_UNLOCK
     }
 }
 
@@ -183,15 +185,6 @@ pub struct HumanReadableAccount {
     pub staked_balance: U128,
     /// Whether the unstaked balance is available for withdrawal now.
     pub can_withdraw: bool,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct RolesResponse {
-    pub owner_account: AccountId,
-    pub operator_account: AccountId,
-    pub treasury_account: AccountId,
-    pub temp_owner: Option<AccountId>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -6,9 +6,10 @@ use crate::utils::*;
 use crate::{
     constants::{gas, NO_DEPOSIT},
     contract::*,
+    errors::ERROR_VALIDATOR_IS_BUSY,
     state::*,
 };
-use near_sdk::{env, log, near_bindgen, require};
+use near_sdk::{env, log, near_bindgen, require, ONE_NEAR};
 
 #[near_bindgen]
 impl NearxPool {
@@ -16,9 +17,8 @@ impl NearxPool {
     pub fn epoch_stake(&mut self) -> bool {
         self.assert_epoch_stake_not_paused();
 
-        let min_gas = gas::STAKE_EPOCH
-            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE
-            + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
+        let min_gas =
+            STAKE_EPOCH + ON_STAKE_POOL_DEPOSIT_AND_STAKE + ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -31,18 +31,17 @@ impl NearxPool {
             return false;
         }
 
-        let validator_to_stake_info =
-            self.get_validator_to_stake(self.reconciled_epoch_stake_amount);
-        require!(
-            validator_to_stake_info.0.is_some(),
-            ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE
-        );
+        let validator = self.get_validator_to_stake();
+        require!(validator.is_some(), ERROR_NO_VALIDATOR_AVAILABLE_TO_STAKE);
 
-        let validator = validator_to_stake_info.0.unwrap();
+        let validator = validator.unwrap();
 
-        let amount_to_stake = validator_to_stake_info.1;
+        let amount_to_stake = self.reconciled_epoch_stake_amount;
 
-        log!("amount to stake is {:?}", amount_to_stake);
+        if self.reconciled_epoch_stake_amount < ONE_NEAR {
+            log!("stake amount too low: {}", amount_to_stake);
+            return false;
+        }
 
         require!(
             env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
@@ -102,15 +101,17 @@ impl NearxPool {
     pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
         self.assert_epoch_autocompounding_not_paused();
 
-        let min_gas = gas::AUTOCOMPOUND_EPOCH
-            + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
-            + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
+        let min_gas = AUTOCOMPOUND_EPOCH
+            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
+            + ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
         let validator_info = self.internal_get_validator(&validator);
+
+        require!(!validator_info.paused(), ERROR_VALIDATOR_IS_BUSY);
 
         let epoch_height = env::epoch_height();
 
@@ -127,21 +128,18 @@ impl NearxPool {
             validator_info.account_id
         );
 
+        self.internal_update_validator(&validator_info.account_id, &validator_info);
+
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
-            .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
+            .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE)
             .get_account_staked_balance(env::current_account_id())
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
+                    .with_static_gas(ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB)
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
-
-        Event::EpochAutocompoundRewardsAttempt {
-            validator_id: validator,
-        }
-        .emit();
     }
 
     #[private]
@@ -169,14 +167,6 @@ impl NearxPool {
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-        Event::EpochAutocompoundRewards {
-            validator_id: validator_info.account_id.clone(),
-            old_balance: U128(validator_info.staked),
-            new_balance: U128(new_total_balance),
-            rewards: U128(rewards),
-        }
-        .emit();
-
         if rewards > 0 {
             //updated accumulated_staked_rewards value for the contract
             self.accumulated_staked_rewards += rewards;
@@ -184,9 +174,12 @@ impl NearxPool {
             validator_info.staked = new_total_balance;
 
             let operator_fee = rewards * self.rewards_fee;
+            log!(format!("operator_fee is {:?}", operator_fee));
             self.total_staked += rewards;
             let treasury_account_shares =
                 self.num_shares_from_staked_amount_rounded_down(operator_fee);
+            log!(format!("total_staked is {:?}", self.total_staked));
+            log!(format!("total shares is {:?}", self.total_stake_shares));
 
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
@@ -210,8 +203,7 @@ impl NearxPool {
     pub fn epoch_unstake(&mut self) -> bool {
         self.assert_epoch_unstake_not_paused();
 
-        let min_gas =
-            gas::UNSTAKE_EPOCH + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
+        let min_gas = UNSTAKE_EPOCH + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -220,36 +212,37 @@ impl NearxPool {
         self.epoch_reconcilation();
 
         // after cleanup, there might be no need to unstake
+
         if self.reconciled_epoch_unstake_amount == 0 {
             log!("No amount to unstake");
             return false;
         }
 
-        let validator_to_unstake = self.get_validator_to_unstake();
-
-        require!(
-            validator_to_unstake.is_some(),
-            ERROR_NO_VALIDATOR_AVAILABLE_FOR_UNSTAKE
-        );
-
-        let mut validator_info = validator_to_unstake.unwrap();
+        let mut validator = self
+            .get_validator_to_unstake()
+            .expect(ERROR_NO_VALIDATOR_AVAILABLE_FOR_UNSTAKE);
 
         let amount_to_unstake =
-            std::cmp::min(validator_info.staked, self.reconciled_epoch_unstake_amount);
+            std::cmp::min(validator.staked, self.reconciled_epoch_unstake_amount);
 
         require!(
-            amount_to_unstake <= validator_info.staked,
+            amount_to_unstake <= validator.staked,
             ERROR_CANNOT_UNSTAKED_MORE_THAN_STAKED_AMOUNT
         );
 
+        if amount_to_unstake <= ONE_NEAR {
+            log!("unstake amount too low: {}", amount_to_unstake);
+            return false;
+        }
+
         self.reconciled_epoch_unstake_amount -= amount_to_unstake;
-        validator_info.staked -= amount_to_unstake;
-        validator_info.last_unstake_start_epoch = validator_info.unstake_start_epoch;
-        validator_info.unstake_start_epoch = env::epoch_height();
+        validator.staked -= amount_to_unstake;
+        validator.last_unstake_start_epoch = validator.unstake_start_epoch;
+        validator.unstake_start_epoch = env::epoch_height();
 
-        self.internal_update_validator(&validator_info.account_id, &validator_info);
+        self.internal_update_validator(&validator.account_id, &validator);
 
-        ext_staking_pool::ext(validator_info.account_id.clone())
+        ext_staking_pool::ext(validator.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
             .with_attached_deposit(NO_DEPOSIT)
             .unstake(U128(amount_to_unstake))
@@ -257,11 +250,11 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
-                    .on_stake_pool_unstake(validator_info.account_id.clone(), amount_to_unstake),
+                    .on_stake_pool_unstake(validator.account_id.clone(), amount_to_unstake),
             );
 
         Event::EpochUnstakeAttempt {
-            validator_id: validator_info.account_id,
+            validator_id: validator.account_id,
             amount: U128(amount_to_unstake),
         }
         .emit();
@@ -300,19 +293,13 @@ impl NearxPool {
         self.assert_epoch_withdraw_not_paused();
 
         // make sure enough gas was given
-        let min_gas = gas::WITHDRAW_EPOCH
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        let min_gas = WITHDRAW_EPOCH + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
         );
 
         let mut validator_info = self.internal_get_validator(&validator);
-
-        // If we run epoch_withdraw before drain_withdraw for a validator, we will loose the drained funds.
-        // So don't run epoch_withdraw for a paused validator
-        require!(!validator_info.paused(), ERROR_VALIDATOR_IS_PAUSED);
 
         require!(
             validator_info.unstaked_amount > 0,
@@ -355,13 +342,13 @@ impl NearxPool {
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-            Event::EpochWithdrawCallbackFailed {
+            Event::EpochWithdrawCallbackSuccess {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
             .emit();
         } else {
-            Event::EpochWithdrawCallbackSuccess {
+            Event::EpochWithdrawCallbackFailed {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
@@ -372,9 +359,9 @@ impl NearxPool {
     pub fn sync_balance_from_validator(&mut self, validator_id: AccountId) {
         self.assert_sync_validator_balance_not_paused();
 
-        let min_gas = gas::SYNC_VALIDATOR_EPOCH
-            + gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
-            + gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
+        let min_gas = SYNC_VALIDATOR_EPOCH
+            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE
+            + ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -392,8 +379,6 @@ impl NearxPool {
                     .with_static_gas(gas::ON_STAKE_POOL_GET_ACCOUNT_TOTAL_BALANCE_CB)
                     .on_stake_pool_get_account(validator_info.account_id),
             );
-
-        Event::BalanceSyncedFromValidatorAttempt { validator_id }.emit();
     }
 
     #[private]
@@ -406,7 +391,7 @@ impl NearxPool {
 
         let new_total_balance = account.staked_balance.0 + account.unstaked_balance.0;
         require!(
-            abs_diff_eq(new_total_balance, validator.total_balance(), 75),
+            abs_diff_eq(new_total_balance, validator.total_balance(), 1),
             ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC
         );
 
@@ -419,20 +404,18 @@ impl NearxPool {
             ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC
         );
 
-        Event::BalanceSyncedFromValidator {
-            validator_id: validator_id.clone(),
-            old_staked_balance: U128(validator.staked),
-            old_unstaked_balance: U128(validator.unstaked_amount),
-            staked_balance: account.staked_balance,
-            unstaked_balance: account.unstaked_balance,
-        }
-        .emit();
-
         // update balance
         validator.staked = account.staked_balance.0;
         validator.unstaked_amount = account.unstaked_balance.0;
 
         self.internal_update_validator(&validator_id, &validator);
+
+        Event::BalanceSyncedFromValidator {
+            validator_id,
+            staked_balance: account.staked_balance,
+            unstaked_balance: account.unstaked_balance,
+        }
+        .emit();
     }
 
     #[private]
@@ -459,10 +442,8 @@ impl NearxPool {
         self.reconciled_epoch_unstake_amount = reconciled_unstake_amount;
 
         Event::EpochReconcile {
-            actual_epoch_stake_amount: U128(self.user_amount_to_stake_in_epoch),
-            actual_epoch_unstake_amount: U128(self.user_amount_to_unstake_in_epoch),
-            reconciled_stake_amount: U128(self.reconciled_epoch_stake_amount),
-            reconciled_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
+            user_stake_amount: U128(self.reconciled_epoch_stake_amount),
+            user_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
         }
         .emit();
     }
@@ -470,8 +451,7 @@ impl NearxPool {
     pub fn drain_unstake(&mut self, validator: AccountId) {
         self.assert_operator_or_owner();
 
-        let min_gas =
-            gas::DRAIN_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
+        let min_gas = DRAIN_UNSTAKE + ON_STAKE_POOL_UNSTAKE + ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -488,8 +468,6 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        // TODO - Due to precision issues in core contracts, unstaked amount for a validator can be around a few yoctoNEAR even though
-        // we have not unstaked.
         require!(
             validator_info.unstaked_amount == 0,
             ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
@@ -516,11 +494,6 @@ impl NearxPool {
                         amount_to_unstake,
                     ),
             );
-        Event::DrainUnstake {
-            account_id: validator,
-            amount: U128(amount_to_unstake),
-        }
-        .emit();
     }
 
     #[private]
@@ -534,7 +507,7 @@ impl NearxPool {
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
 
-            Event::DrainUnstakeCallbackSuccess {
+            Event::EpochUnstakeCallbackSuccess {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -543,7 +516,7 @@ impl NearxPool {
             validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
 
-            Event::DrainUnstakeCallbackFail {
+            Event::EpochUnstakeCallbackFailed {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -558,9 +531,7 @@ impl NearxPool {
         self.assert_operator_or_owner();
 
         // make sure enough gas was given
-        let min_gas = gas::DRAIN_WITHDRAW
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        let min_gas = DRAIN_WITHDRAW + ON_STAKE_POOL_WITHDRAW_ALL + ON_STAKE_POOL_WITHDRAW_ALL_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -594,11 +565,6 @@ impl NearxPool {
                     .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL_CB)
                     .on_stake_pool_drain_withdraw(validator_info.account_id, amount),
             );
-        Event::DrainWithdraw {
-            validator_id: validator,
-            amount: U128(amount),
-        }
-        .emit();
     }
 
     #[private]
@@ -610,23 +576,13 @@ impl NearxPool {
         let mut validator_info = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
+            log!("Success!");
             // stake the drained amount into the next epoch
             self.user_amount_to_stake_in_epoch += amount_to_withdraw;
-
-            Event::DrainWithdrawCallbackSuccess {
-                validator_id,
-                amount: U128(amount_to_withdraw),
-            }
-            .emit();
         } else {
+            log!("Failure: bchain!");
             validator_info.unstaked_amount += amount_to_withdraw;
             self.internal_update_validator(&validator_id, &validator_info);
-
-            Event::DrainWithdrawCallbackFail {
-                validator_id,
-                amount: U128(amount_to_withdraw),
-            }
-            .emit();
         }
     }
 }
