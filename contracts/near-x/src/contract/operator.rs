@@ -161,7 +161,7 @@ impl NearxPool {
         log!(
             "validator account:{} old_balance:{} new_balance:{} rewards:{}",
             validator_info.account_id,
-            validator_info.total_balance(),
+            validator_info.staked,
             new_total_balance,
             rewards
         );

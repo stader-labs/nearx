@@ -49,9 +49,9 @@ impl NearxPool {
        Main staking pool api
     */
     #[payable]
-    pub fn manager_deposit_and_stake(&mut self) {
+    pub fn manager_deposit_and_stake(&mut self, validator: AccountId) {
         self.assert_owner_calling();
-        self.internal_manager_deposit_and_stake(env::attached_deposit());
+        self.internal_manager_deposit_and_stake(env::attached_deposit(), validator);
     }
 
     #[payable]

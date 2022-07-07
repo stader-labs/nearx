@@ -24,7 +24,7 @@ use workspaces::network::DevAccountDeployer;
 /// 4. validator account
 /// 5. actual staked info
 /// 6. actual unstaked info
-
+///
 #[tokio::test]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3).await?;
@@ -252,9 +252,15 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
 async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3).await?;
 
-    context.manager_deposit_and_stake(ntoy(10)).await?;
-    context.manager_deposit_and_stake(ntoy(10)).await?;
-    context.manager_deposit_and_stake(ntoy(10)).await?;
+    context
+        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    context
+        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    context
+        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(2).id().clone())
+        .await?;
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(45)));

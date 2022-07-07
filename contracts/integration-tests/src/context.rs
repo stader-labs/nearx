@@ -110,6 +110,7 @@ impl IntegrationTestContext<Sandbox> {
             println!("Seeding with manager deposit of 5N");
             let res = nearx_owner
                 .call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
+                .args_json(json!({ "validator": validator_to_stake_pool_contract.get(&get_validator_account_id(i)).unwrap().id().clone() }))?
                 .max_gas()
                 .deposit(parse_near!("5 N"))
                 .transact()
@@ -328,6 +329,7 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn manager_deposit_and_stake(
         &self,
         amount: u128,
+        stake_pool_contract: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
             .call(
@@ -335,6 +337,7 @@ impl IntegrationTestContext<Sandbox> {
                 self.nearx_contract.id(),
                 "manager_deposit_and_stake",
             )
+            .args_json(json!({ "validator": stake_pool_contract }))?
             .max_gas()
             .deposit(amount)
             .transact()

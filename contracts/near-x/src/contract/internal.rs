@@ -12,28 +12,17 @@ use near_sdk::{
 
 #[near_bindgen]
 impl NearxPool {
-    pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance) {
-        // TODO - enforce min deposit and pausing
+    pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance, validator: AccountId) {
         let account_id = env::predecessor_account_id();
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
-        let selected_validator_info = self
-            .validator_info_map
-            .values()
-            .filter(|v| !v.paused())
-            .min_by_key(|v| v.staked);
-        require!(
-            selected_validator_info.is_some(),
-            ERROR_ALL_VALIDATORS_ARE_BUSY
-        );
-
-        let selected_validator = selected_validator_info.unwrap();
+        let validator_info = self.internal_get_validator(&validator);
 
         //schedule async deposit_and_stake on that pool
-        ext_staking_pool::ext(selected_validator.account_id.clone())
+        ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
             .with_attached_deposit(user_amount)
             .deposit_and_stake()
@@ -42,7 +31,7 @@ impl NearxPool {
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
                     .on_stake_pool_deposit_and_stake_manager(
-                        selected_validator,
+                        validator_info,
                         user_amount,
                         num_shares,
                         account_id,
