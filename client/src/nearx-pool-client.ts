@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
 import * as nearjs from 'near-api-js';
 import * as os from 'os';
-import { Balance, Epoch, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
+import { Balance, Epoch, NearxPoolClient as Iface, Network, User, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
-import { isBrowser } from './utils';
+import { isBrowser, range } from './utils';
 //import * as bn from 'bn';
 
 const gas = '300000000000000';
@@ -42,7 +42,7 @@ export const NearxPoolClient = {
     }
 
     async function getValidators(): Promise<ValidatorInfo[]> {
-      return await contract.get_validators({ args: {} });
+      return await contract.get_validators({});
     }
 
     const client = {
@@ -54,42 +54,39 @@ export const NearxPoolClient = {
       async stakedBalance(): Promise<Balance> {
         return BigInt(
           await contract.get_account_staked_balance({
-            args: {
-              account_id: accountId,
-            },
-          }),
-        );
-      },
-      async unstakedBalance(): Promise<Balance> {
-        return BigInt(
-          await contract.get_account_unstaked_balance({
-            args: {
-              account_id: accountId,
-            },
+            account_id: accountId,
           }),
         );
       },
       async totalBalance(): Promise<Balance> {
         return BigInt(
           await contract.get_account_total_balance({
-            args: {
-              account_id: accountId,
-            },
+            account_id: accountId,
           }),
         );
       },
 
       async validators(): Promise<ValidatorInfo[]> {
-        return contract.get_validators({ args: {} });
+        return contract.get_validators({});
       },
 
       async currentEpoch(): Promise<Epoch> {
-        return contract.get_current_epoch({ args: {} });
+        return contract.get_current_epoch({});
+      },
+
+      async userAccounts(usersPerCall: number = 50): Promise<User[]> {
+        const nAccounts = await contract.get_number_of_accounts({});
+
+        return Promise.all(
+          range(0, nAccounts, usersPerCall).map((i) =>
+            contract.get_accounts({ from_index: i, limit: i + usersPerCall } as any),
+          ),
+        ).then((arrayOfUsers) => arrayOfUsers.flat());
       },
 
       // User-facing methods:
       async stake(amount: string): Promise<string> {
-        throw new Error('Not implemented');
+        return contract.deposit_and_stake({ amount });
       },
 
       async unstake(amount: string): Promise<string> {
@@ -110,7 +107,7 @@ export const NearxPoolClient = {
 
       // Operator methods:
       async epochStake(): Promise<string> {
-        return contract.epoch_stake({ args: {}, gas });
+        return contract.epoch_stake({ gas });
       },
 
       async epochAutocompoundRewards(): Promise<any[]> {
@@ -118,7 +115,7 @@ export const NearxPoolClient = {
 
         return promiseAllSettledErrors(
           validators.map((v) =>
-            contract.epoch_autocompound_rewards({ args: { validator: v.account_id }, gas }),
+            contract.epoch_autocompound_rewards({ validator: v.account_id, gas }),
           ),
         );
       },
@@ -126,7 +123,7 @@ export const NearxPoolClient = {
       async epochUnstake(): Promise<void> {
         let n = 0;
 
-        while (await contract.epoch_unstake({ args: {}, gas })) {
+        while (await contract.epoch_unstake({ gas })) {
           n += 1;
         }
         console.debug(`Epoch unstake has unstaked ${n} times.`);
@@ -143,9 +140,7 @@ export const NearxPoolClient = {
         );
 
         return promiseAllSettledErrors(
-          validators.map((v) =>
-            contract.epoch_withdraw({ args: { validator: v.account_id }, gas }),
-          ),
+          validators.map((v) => contract.epoch_withdraw({ validator: v.account_id, gas })),
         );
       },
 
@@ -154,7 +149,7 @@ export const NearxPoolClient = {
 
         return promiseAllSettledErrors(
           validators.map((v) =>
-            contract.sync_balance_from_validator({ args: { validator_id: v.account_id }, gas }),
+            contract.sync_balance_from_validator({ validator_id: v.account_id, gas }),
           ),
         );
       },

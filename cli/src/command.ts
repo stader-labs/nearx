@@ -1,7 +1,18 @@
 import * as nearx from 'nearx-js';
 
+function near(amount: number): string {
+  return Math.round(amount).toString() + '0'.repeat(24);
+}
+
 export async function displaySnapshot(client: nearx.NearxPoolClient): Promise<void> {
-  console.log(await client.contract.snapshot({ args: {} }));
+  console.log(await client.userAccounts());
+}
+
+export async function displayBalance(client: nearx.NearxPoolClient): Promise<void> {
+  console.log({
+    staked: (await client.stakedBalance()).toString(),
+    total: (await client.totalBalance()).toString(),
+  });
 }
 
 export async function displayValidators(client: nearx.NearxPoolClient): Promise<void> {
@@ -48,8 +59,8 @@ export async function withdraw(client: nearx.NearxPoolClient): Promise<void> {
   await client.epochWithdraw();
 }
 
-function logCommand(name: string) {
-  console.debug(`\n> Running '${name}'`);
+function logCommand(...name: any[]) {
+  console.debug('\n> Running', ...name);
 }
 
 export async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void> {
@@ -58,4 +69,12 @@ export async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void
   await stake(client);
   await unstake(client);
   await withdraw(client);
+}
+
+// User
+
+export async function userDeposit(client: nearx.NearxPoolClient): Promise<void> {
+  const amount = near(2);
+  logCommand('user deposit:', amount);
+  await client.stake(amount);
 }

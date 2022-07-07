@@ -8,6 +8,7 @@ const commands: {
   validators: command.displayValidators,
   epoch: async (client) => console.log(await client.currentEpoch()),
   snapshot: command.displaySnapshot,
+  balance: command.displayBalance,
   // Operation:
   init: command.runInit,
   'sync-balances': command.syncBalances,
@@ -16,6 +17,8 @@ const commands: {
   unstake: command.unstake,
   withdraw: command.withdraw,
   all: command.runWholeEpoch,
+  // User:
+  deposit: command.userDeposit,
 };
 
 async function run(networkContract: string, accountId: string, commandName: string) {

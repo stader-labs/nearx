@@ -1,5 +1,5 @@
 import * as nearjs from 'near-api-js';
-import { Epoch, ValidatorInfo } from '.';
+import { Epoch, User, ValidatorInfo } from '.';
 import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract &
@@ -7,37 +7,44 @@ export type NearxContract = nearjs.Contract &
   RpcCallsOperator &
   RpcCallsUtils;
 
+/**
+ * The parameters used for every RPC call to the contract.
+ */
 export interface RpcParams {
-  args: any;
+  /** The gas the caller is willing to pay for the transaction. */
   gas?: string;
+  /** The deposit joined to the call. */
+  amount?: string;
+  /** The contract arguments. */
+  [name: string]: any;
 }
 
 export interface RpcCallsStakingPool {
   get_account_staked_balance(params: RpcParams): Promise<string>;
-  get_account_unstaked_balance(params: RpcParams): Promise<string>;
   get_account_total_balance(params: RpcParams): Promise<string>;
-  deposit(args: any, gas: undefined, deposit: string): Promise<string>;
-  deposit_and_stake_direct_stake(args: any, gas: undefined, deposit: string): Promise<string>;
-  deposit_and_stake(args: any, gas: undefined, deposit: string): Promise<string>;
+  deposit(params: RpcParams): Promise<string>;
+  deposit_and_stake_direct_stake(params: RpcParams): Promise<string>;
+  deposit_and_stake(params: RpcParams): Promise<string>;
   stake(params: RpcParams): Promise<string>;
   withdraw(params: RpcParams): Promise<string>;
   withdraw_all(params: RpcParams): Promise<string>;
   unstake(params: RpcParams): Promise<string>;
   unstake_all(params: RpcParams): Promise<string>;
-  upgrade(code: any, gas: any): Promise<string>;
 }
 
 export interface RpcCallsOperator {
   'new'(params: RpcParams): Promise<ValidatorInfo[]>;
 
   get_validators(params: RpcParams): Promise<ValidatorInfo[]>;
-  snapshot(params: RpcParams): Promise<any>;
+  get_number_of_accounts(params: RpcParams): Promise<number>;
+  get_accounts(params: RpcParams): Promise<User[]>;
 
   epoch_stake(params: RpcParams): Promise<string>;
   epoch_autocompound_rewards(params: RpcParams): Promise<string>;
   epoch_unstake(params: RpcParams): Promise<string>;
   epoch_withdraw(params: RpcParams): Promise<string>;
   sync_balance_from_validator(params: RpcParams): Promise<string>;
+  upgrade(code: any, gas: any): Promise<string>;
 }
 
 export interface RpcCallsUtils {
@@ -57,11 +64,11 @@ export function createContract(account: nearjs.Account, contractName: string): N
       viewMethods: [
         // Staking Pool:
         nameof<RpcCallsStakingPool>('get_account_staked_balance'),
-        nameof<RpcCallsStakingPool>('get_account_unstaked_balance'),
         nameof<RpcCallsStakingPool>('get_account_total_balance'),
         // Operator:
         nameof<RpcCallsOperator>('get_validators'),
-        nameof<RpcCallsOperator>('snapshot'),
+        nameof<RpcCallsOperator>('get_number_of_accounts'),
+        nameof<RpcCallsOperator>('get_accounts'),
         // Utils:
         nameof<RpcCallsUtils>('get_current_epoch'),
       ],

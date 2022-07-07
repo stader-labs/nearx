@@ -13,11 +13,6 @@ export interface NearxStakingPool {
   // View methods:
 
   /**
-   * Returns the user's number of tokens unstaked inside the pool.
-   */
-  unstakedBalance(): Promise<Balance>;
-
-  /**
    * Returns the user's number of tokens staked inside the pool.
    */
   stakedBalance(): Promise<Balance>;
@@ -37,6 +32,11 @@ export interface NearxStakingPool {
    * Returns the current epoch.
    */
   currentEpoch(): Promise<Epoch>;
+
+  /**
+   * Get all the users' accounts.
+   */
+  userAccounts(): Promise<User[]>;
 
   // User-facing methods:
 
@@ -109,4 +109,11 @@ export interface ValidatorInfo {
   last_asked_rewards_epoch_height: Epoch;
   last_unstake_start_epoch: Epoch;
   paused: boolean;
+}
+
+export interface User {
+  account_id: AccountId;
+  unstaked_balance: bigint;
+  staked_balance: bigint;
+  withdrawable_epoch: bigint;
 }
