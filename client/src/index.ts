@@ -1,4 +1,5 @@
 import * as nearjs from 'near-api-js';
+import { NearxContract } from './contract';
 export * as nearjs from 'near-api-js';
 export { NearxPoolClient } from './nearx-pool-client';
 
@@ -96,7 +97,7 @@ export interface NearxStakingPool {
 export interface NearxPoolClient extends NearxStakingPool {
   near: nearjs.Near;
   config: nearjs.ConnectConfig;
-  contract: nearjs.Contract;
+  contract: NearxContract;
 }
 
 // DTOs:
