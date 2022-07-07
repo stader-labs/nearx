@@ -45,16 +45,6 @@ impl NearxPool {
         }
     }
 
-    pub fn snapshot(&self) -> Snapshot {
-        let nearx_balances = self
-            .accounts
-            .iter()
-            .map(|(account_id, account)| (account_id, account.stake_shares))
-            .collect();
-
-        Snapshot { nearx_balances }
-    }
-
     /*
        Main staking pool api
     */

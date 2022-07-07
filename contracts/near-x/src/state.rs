@@ -3,7 +3,6 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
     json_types::{U128, U64},
-    log,
     serde::{Deserialize, Serialize},
     AccountId, Balance, EpochHeight,
 };
@@ -216,10 +215,4 @@ pub struct ContractSummary {
     pub treasury_staked_balance: U128,
     pub treasury_unstaked_balance: U128,
     pub nearx_price: U128,
-}
-
-#[derive(Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Snapshot {
-    pub nearx_balances: borsh::maybestd::collections::HashMap<AccountId, Balance>,
 }
