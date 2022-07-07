@@ -378,6 +378,7 @@ impl NearxPool {
             staked_balance: self
                 .staked_amount_from_num_shares_rounded_down(account.stake_shares)
                 .into(),
+            nearx_balance: U128(account.stake_shares),
             withdrawable_epoch: U64(account.withdrawable_epoch_height),
         }
     }

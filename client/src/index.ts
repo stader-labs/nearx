@@ -113,7 +113,8 @@ export interface ValidatorInfo {
 
 export interface User {
   account_id: AccountId;
-  unstaked_balance: bigint;
-  staked_balance: bigint;
-  withdrawable_epoch: bigint;
+  unstaked_balance: Balance;
+  staked_balance: Balance;
+  nearx_balance: Balance;
+  withdrawable_epoch: Epoch;
 }
