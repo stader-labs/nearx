@@ -406,16 +406,16 @@ impl NearxPool {
 
         let new_total_balance = account.staked_balance.0 + account.unstaked_balance.0;
         require!(
-            abs_diff_eq(new_total_balance, validator.total_balance(), 75),
+            abs_diff_eq(new_total_balance, validator.total_balance(), 10000),
             ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC
         );
 
         require!(
-            abs_diff_eq(account.staked_balance.0, validator.staked, 200),
+            abs_diff_eq(account.staked_balance.0, validator.staked, 5000),
             ERROR_VALIDATOR_STAKED_BALANCE_OUT_OF_SYNC
         );
         require!(
-            abs_diff_eq(account.unstaked_balance.0, validator.unstaked_amount, 200),
+            abs_diff_eq(account.unstaked_balance.0, validator.unstaked_amount, 5000),
             ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC
         );
 

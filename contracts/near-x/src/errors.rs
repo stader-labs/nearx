@@ -49,7 +49,7 @@ pub const ERROR_VALIDATOR_IS_PAUSED: &str = "Validator is paused";
 
 /// Validator sync errors
 pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str =
-    "Total balance is out of sync by more than 1yNEAR";
+    "Total balance is out of sync";
 pub const ERROR_VALIDATOR_STAKED_BALANCE_OUT_OF_SYNC: &str =
     "Total staked balance is out of sync by more than 200yNEAR";
 pub const ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC: &str =
