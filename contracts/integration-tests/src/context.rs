@@ -110,6 +110,7 @@ impl IntegrationTestContext<Sandbox> {
             println!("Seeding with manager deposit of 5N");
             let res = nearx_owner
                 .call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
+                .args_json(json!({ "validator": validator_to_stake_pool_contract.get(&get_validator_account_id(i)).unwrap().id().clone() }))?
                 .max_gas()
                 .deposit(parse_near!("5 N"))
                 .transact()
@@ -203,7 +204,7 @@ impl IntegrationTestContext<Sandbox> {
         // Run the autocompounding epoch
         for i in 0..self.validator_count {
             let res = self
-                .auto_compound_rewards(self.get_stake_pool_contract(i).id())
+                .autocompounding_epoch(self.get_stake_pool_contract(i).id())
                 .await;
             if res.is_err() {
                 continue;
@@ -215,7 +216,7 @@ impl IntegrationTestContext<Sandbox> {
         let mut res = true;
         let mut i = 0;
         while res {
-            let output = self.epoch_stake().await;
+            let output = self.staking_epoch().await;
             if output.is_err() {
                 println!("epoch stake errored out!");
                 break;
@@ -232,7 +233,7 @@ impl IntegrationTestContext<Sandbox> {
         let mut res = true;
         let mut i = 0;
         while res {
-            let output = self.epoch_unstake().await;
+            let output = self.unstaking_epoch().await;
             if output.is_err() {
                 println!("epoch unstake errored out!");
                 break;
@@ -256,7 +257,7 @@ impl IntegrationTestContext<Sandbox> {
                     < current_epoch.0
             {
                 let res = self
-                    .epoch_withdraw(self.get_stake_pool_contract(i).id().clone())
+                    .withdraw_epoch(self.get_stake_pool_contract(i).id().clone())
                     .await;
                 if res.is_err() {
                     continue;
@@ -328,6 +329,7 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn manager_deposit_and_stake(
         &self,
         amount: u128,
+        stake_pool_contract: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
             .call(
@@ -335,6 +337,7 @@ impl IntegrationTestContext<Sandbox> {
                 self.nearx_contract.id(),
                 "manager_deposit_and_stake",
             )
+            .args_json(json!({ "validator": stake_pool_contract }))?
             .max_gas()
             .deposit(amount)
             .transact()
@@ -398,17 +401,17 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn epoch_stake(&self) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn staking_epoch(&self) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
-            .call(&self.worker, "epoch_stake")
+            .call(&self.worker, "staking_epoch")
             .max_gas()
             .transact()
             .await
     }
 
-    pub async fn epoch_unstake(&self) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn unstaking_epoch(&self) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
-            .call(&self.worker, "epoch_unstake")
+            .call(&self.worker, "unstaking_epoch")
             .max_gas()
             .transact()
             .await
@@ -426,12 +429,12 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn epoch_withdraw(
+    pub async fn withdraw_epoch(
         &self,
         validator: AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
-            .call(&self.worker, "epoch_withdraw")
+            .call(&self.worker, "withdraw_epoch")
             .max_gas()
             .args_json(json!({ "validator": validator }))?
             .transact()
@@ -450,12 +453,12 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn auto_compound_rewards(
+    pub async fn autocompounding_epoch(
         &self,
         validator: &AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_contract
-            .call(&self.worker, "epoch_autocompound_rewards")
+            .call(&self.worker, "autocompounding_epoch")
             .max_gas()
             .args_json(json!({ "validator": validator.clone() }))?
             .transact()

@@ -17,19 +17,25 @@ STAKE_POOL_1=kosmos_and_p2p.poolv1.near
 STAKE_POOL_2=rekt.poolv1.near
 
 # add some validators
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'", "weight": 10}' --accountId=$ID
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID
-near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_0"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
+near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
 
 # manager deposit
-for i in {1..3};
-do near call $CONTRACT_NAME manager_deposit_and_stake --accountId=$ID --amount=3 --gas=300000000000000;
-done;
+#for i in {1..3};
+#do near call $CONTRACT_NAME manager_deposit_and_stake  --accountId=$ID --amount=1 --gas=300000000000000;
+#done;
+
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_0"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_2"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
 
 # 10 deposits
 for i in {1..3};
 do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
+
+near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=10 --gas=300000000000000;
 
 near call $CONTRACT_NAME unstake '{"amount": "1000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
@@ -51,21 +57,26 @@ near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_1"'"}'
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_2"'"}'
 
 # get user state
-near view $CONTRACT_NAME get_account '{"account_id":  "learning12345.testnet"}'
+near view $CONTRACT_NAME get_account '{"account_id":  "elder_joy.near"}'
 
 # Reward distribution
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_3"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_4"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME epoch_autocompound_rewards '{"validator": "'"$STAKE_POOL_5"'"}' --accountId=$ID --gas=300000000000000
+
 
 near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
+near view $CONTRACT_NAME ft_balance_of '{"account_id": "elder_joy.near"}'
 near view $CONTRACT_NAME ft_total_supply
 
 # Checking stake in the stake pool contract
 near view $STAKE_POOL_0 get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 
-near view $STAKE_POOL_0 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
+near view $STAKE_POOL_10 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_2 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 

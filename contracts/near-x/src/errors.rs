@@ -48,8 +48,7 @@ pub const ERROR_INVALID_VALIDATOR_WEIGHT: &str = "Invalid validator weight";
 pub const ERROR_VALIDATOR_IS_PAUSED: &str = "Validator is paused";
 
 /// Validator sync errors
-pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str =
-    "Total balance is out of sync by more than 1yNEAR";
+pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str = "Total balance is out of sync";
 pub const ERROR_VALIDATOR_STAKED_BALANCE_OUT_OF_SYNC: &str =
     "Total staked balance is out of sync by more than 200yNEAR";
 pub const ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC: &str =
@@ -59,8 +58,8 @@ pub const ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC: &str =
 pub const ERROR_STAKING_PAUSED: &str = "Staking paused";
 pub const ERROR_UNSTAKING_PAUSED: &str = "Unstaking paused";
 pub const ERROR_WITHDRAW_PAUSED: &str = "Withdraw paused";
-pub const ERROR_EPOCH_STAKE_PAUSED: &str = "Staking epoch paused";
-pub const ERROR_EPOCH_UNSTAKE_PAUSED: &str = "Unstaking epoch paused";
-pub const ERROR_EPOCH_WITHDRAW_PAUSED: &str = "Withdraw epoch paused";
-pub const ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED: &str = "Autocompounding epoch paused";
+pub const ERROR_STAKING_EPOCH_PAUSED: &str = "Staking epoch paused";
+pub const ERROR_UNSTAKING_EPOCH_PAUSED: &str = "Unstaking epoch paused";
+pub const ERROR_WITHDRAW_EPOCH_PAUSED: &str = "Withdraw epoch paused";
+pub const ERROR_AUTOCOMPOUNDING_EPOCH_PAUSED: &str = "Autocompounding epoch paused";
 pub const ERROR_SYNC_VALIDATOR_BALANCE_PAUSED: &str = "Sync validator balance paused";
