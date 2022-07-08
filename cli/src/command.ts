@@ -25,7 +25,7 @@ export async function displayValidators(client: nearx.NearxPoolClient): Promise<
 export async function runInit(client: nearx.NearxPoolClient, accountId: string): Promise<void> {
   logCommand('init');
 
-  await (client.contract as any).new({
+  await client.contract.new({
     args: {
       owner_account_id: accountId,
       operator_account_id: accountId,

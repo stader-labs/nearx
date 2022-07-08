@@ -79,7 +79,7 @@ export const NearxPoolClient = {
 
         return Promise.all(
           range(0, nAccounts, usersPerCall).map((i) =>
-            contract.get_accounts({ from_index: i, limit: i + usersPerCall } as any),
+            contract.get_snapshot_users({ from: i, length: usersPerCall }),
           ),
         ).then((arrayOfUsers) => arrayOfUsers.flat());
       },

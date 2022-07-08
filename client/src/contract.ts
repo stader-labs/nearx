@@ -1,5 +1,5 @@
 import * as nearjs from 'near-api-js';
-import { Epoch, User, ValidatorInfo } from '.';
+import { Epoch, SnapshotUser, ValidatorInfo } from '.';
 import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract &
@@ -37,7 +37,7 @@ export interface RpcCallsOperator {
 
   get_validators(params: RpcParams): Promise<ValidatorInfo[]>;
   get_number_of_accounts(params: RpcParams): Promise<number>;
-  get_accounts(params: RpcParams): Promise<User[]>;
+  get_snapshot_users(params: RpcParams): Promise<SnapshotUser[]>;
 
   epoch_stake(params: RpcParams): Promise<string>;
   epoch_autocompound_rewards(params: RpcParams): Promise<string>;
@@ -68,7 +68,7 @@ export function createContract(account: nearjs.Account, contractName: string): N
         // Operator:
         nameof<RpcCallsOperator>('get_validators'),
         nameof<RpcCallsOperator>('get_number_of_accounts'),
-        nameof<RpcCallsOperator>('get_accounts'),
+        nameof<RpcCallsOperator>('get_snapshot_users'),
         // Utils:
         nameof<RpcCallsUtils>('get_current_epoch'),
       ],
