@@ -183,6 +183,7 @@ impl NearxPool {
             validator_info.staked = new_total_balance;
 
             let operator_fee = rewards * self.rewards_fee;
+            log!("operator fee is {}", operator_fee);
             self.total_staked += rewards;
             let treasury_account_shares =
                 self.num_shares_from_staked_amount_rounded_down(operator_fee);

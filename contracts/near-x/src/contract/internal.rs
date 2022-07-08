@@ -73,8 +73,7 @@ impl NearxPool {
         }
     }
 
-    #[private]
-    pub fn internal_deposit_and_stake(&mut self, amount: u128) {
+    pub(crate) fn internal_deposit_and_stake(&mut self, amount: u128) {
         self.assert_staking_not_paused();
 
         self.assert_min_deposit_amount(amount);
@@ -274,8 +273,7 @@ impl NearxPool {
         }
     }
 
-    #[private]
-    fn get_validator_expected_stake(&self, validator: &ValidatorInfo) -> Balance {
+    pub(crate) fn get_validator_expected_stake(&self, validator: &ValidatorInfo) -> Balance {
         if validator.weight == 0 {
             0
         } else {
