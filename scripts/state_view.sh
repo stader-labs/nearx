@@ -11,7 +11,7 @@ near view $CONTRACT_NAME get_total_validator_weight
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
-near view $CONTRACT_NAME get_account '{"account_id": "ae97284e7ebd60700cafb84b6fb1fdeeb0f6558b130bdcf6f25b3caa89c6ecc5"}'
+near view $CONTRACT_NAME get_account '{"account_id": "'"$ID"'"}'
 
 near view $CONTRACT_NAME get_current_epoch
 
