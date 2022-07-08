@@ -12,7 +12,11 @@ use near_sdk::{
 
 #[near_bindgen]
 impl NearxPool {
-    pub(crate) fn internal_manager_deposit_and_stake(&mut self, user_amount: Balance, validator: AccountId) {
+    pub(crate) fn internal_manager_deposit_and_stake(
+        &mut self,
+        user_amount: Balance,
+        validator: AccountId,
+    ) {
         let account_id = env::predecessor_account_id();
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.

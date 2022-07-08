@@ -12,10 +12,10 @@ use near_sdk::{env, log, near_bindgen, require};
 #[near_bindgen]
 impl NearxPool {
     // keep calling this method until false is return
-    pub fn epoch_stake(&mut self) -> bool {
-        self.assert_epoch_stake_not_paused();
+    pub fn staking_epoch(&mut self) -> bool {
+        self.assert_staking_epoch_not_paused();
 
-        let min_gas = gas::STAKE_EPOCH
+        let min_gas = gas::STAKING_EPOCH
             + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE
             + gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB;
         require!(
@@ -65,7 +65,7 @@ impl NearxPool {
                     .on_stake_pool_deposit_and_stake(validator.account_id.clone(), amount_to_stake),
             );
 
-        Event::EpochStakeAttempt {
+        Event::StakingEpochAttempt {
             validator_id: validator.account_id,
             amount: U128(amount_to_stake),
         }
@@ -80,7 +80,7 @@ impl NearxPool {
         if is_promise_success() {
             validator_info.staked += amount;
 
-            Event::EpochStakeCallbackSuccess {
+            Event::StakingEpochCallbackSuccess {
                 validator_id: validator.clone(),
                 amount: U128(amount),
             }
@@ -88,7 +88,7 @@ impl NearxPool {
         } else {
             self.reconciled_epoch_stake_amount += amount;
 
-            Event::EpochStakeCallbackFailed {
+            Event::StakingEpochCallbackFailed {
                 validator_id: validator.clone(),
                 amount: U128(amount),
             }
@@ -98,10 +98,10 @@ impl NearxPool {
         self.internal_update_validator(&validator, &validator_info);
     }
 
-    pub fn epoch_autocompound_rewards(&mut self, validator: AccountId) {
-        self.assert_epoch_autocompounding_not_paused();
+    pub fn autocompounding_epoch(&mut self, validator: AccountId) {
+        self.assert_autocompounding_epoch_not_paused();
 
-        let min_gas = gas::AUTOCOMPOUND_EPOCH
+        let min_gas = gas::AUTOCOMPOUNDING_EPOCH
             + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE
             + gas::ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE_CB;
         require!(
@@ -137,7 +137,7 @@ impl NearxPool {
                     .on_get_sp_staked_balance_for_rewards(validator_info),
             );
 
-        Event::EpochAutocompoundRewardsAttempt {
+        Event::AutocompoundingEpochRewardsAttempt {
             validator_id: validator,
         }
         .emit();
@@ -168,7 +168,7 @@ impl NearxPool {
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-        Event::EpochAutocompoundRewards {
+        Event::AutocompoundingEpochRewards {
             validator_id: validator_info.account_id.clone(),
             old_balance: U128(validator_info.staked),
             new_balance: U128(new_total_balance),
@@ -207,11 +207,11 @@ impl NearxPool {
         }
     }
 
-    pub fn epoch_unstake(&mut self) -> bool {
-        self.assert_epoch_unstake_not_paused();
+    pub fn unstaking_epoch(&mut self) -> bool {
+        self.assert_unstaking_epoch_not_paused();
 
         let min_gas =
-            gas::UNSTAKE_EPOCH + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
+            gas::UNSTAKING_EPOCH + gas::ON_STAKE_POOL_UNSTAKE + gas::ON_STAKE_POOL_UNSTAKE_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -260,7 +260,7 @@ impl NearxPool {
                     .on_stake_pool_unstake(validator_info.account_id.clone(), amount_to_unstake),
             );
 
-        Event::EpochUnstakeAttempt {
+        Event::UnstakingEpochAttempt {
             validator_id: validator_info.account_id,
             amount: U128(amount_to_unstake),
         }
@@ -276,7 +276,7 @@ impl NearxPool {
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
 
-            Event::EpochUnstakeCallbackSuccess {
+            Event::UnstakingEpochCallbackSuccess {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -286,7 +286,7 @@ impl NearxPool {
             validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
 
-            Event::EpochUnstakeCallbackFailed {
+            Event::UnstakingEpochCallbackFailed {
                 validator_id: validator_id.clone(),
                 amount: U128(amount_to_unstake),
             }
@@ -296,7 +296,7 @@ impl NearxPool {
         self.internal_update_validator(&validator_id, &validator);
     }
 
-    pub fn epoch_withdraw(&mut self, validator: AccountId) {
+    pub fn withdraw_epoch(&mut self, validator: AccountId) {
         self.assert_epoch_withdraw_not_paused();
 
         // make sure enough gas was given
@@ -341,7 +341,7 @@ impl NearxPool {
                     .on_stake_pool_withdraw_all(validator_info, amount),
             );
 
-        Event::EpochWithdrawAttempt {
+        Event::WithdrawEpochAttempt {
             validator_id: validator,
             amount: U128(amount),
         }
@@ -355,13 +355,13 @@ impl NearxPool {
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_info.account_id, &validator_info);
 
-            Event::EpochWithdrawCallbackFailed {
+            Event::WithdrawEpochCallbackFailed {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }
             .emit();
         } else {
-            Event::EpochWithdrawCallbackSuccess {
+            Event::WithdrawEpochCallbackSuccess {
                 validator_id: validator_info.account_id,
                 amount: U128(amount),
             }

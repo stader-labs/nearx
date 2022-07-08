@@ -34,10 +34,10 @@ impl NearxPool {
                 stake_paused: false,
                 unstaked_paused: false,
                 withdraw_paused: false,
-                epoch_stake_paused: false,
-                epoch_unstake_paused: false,
-                epoch_withdraw_paused: false,
-                epoch_autocompounding_paused: false,
+                staking_epoch_paused: false,
+                unstaking_epoch_paused: false,
+                withdraw_epoch_paused: false,
+                autocompounding_epoch_paused: false,
                 sync_validator_balance_paused: false,
             },
             treasury_account_id,
@@ -263,18 +263,18 @@ impl NearxPool {
         self.operations_control.withdraw_paused = update_operations_control_request
             .withdraw_paused
             .unwrap_or(self.operations_control.withdraw_paused);
-        self.operations_control.epoch_stake_paused = update_operations_control_request
-            .epoch_stake_paused
-            .unwrap_or(self.operations_control.epoch_stake_paused);
-        self.operations_control.epoch_unstake_paused = update_operations_control_request
-            .epoch_unstake_paused
-            .unwrap_or(self.operations_control.epoch_unstake_paused);
-        self.operations_control.epoch_withdraw_paused = update_operations_control_request
-            .epoch_withdraw_paused
-            .unwrap_or(self.operations_control.epoch_withdraw_paused);
-        self.operations_control.epoch_autocompounding_paused = update_operations_control_request
-            .epoch_autocompounding_paused
-            .unwrap_or(self.operations_control.epoch_autocompounding_paused);
+        self.operations_control.staking_epoch_paused = update_operations_control_request
+            .staking_epoch_paused
+            .unwrap_or(self.operations_control.staking_epoch_paused);
+        self.operations_control.unstaking_epoch_paused = update_operations_control_request
+            .unstaking_epoch_paused
+            .unwrap_or(self.operations_control.unstaking_epoch_paused);
+        self.operations_control.withdraw_epoch_paused = update_operations_control_request
+            .withdraw_epoch_paused
+            .unwrap_or(self.operations_control.withdraw_epoch_paused);
+        self.operations_control.autocompounding_epoch_paused = update_operations_control_request
+            .autocompounding_epoch_paused
+            .unwrap_or(self.operations_control.autocompounding_epoch_paused);
         self.operations_control.sync_validator_balance_paused = update_operations_control_request
             .sync_validator_balance_paused
             .unwrap_or(self.operations_control.sync_validator_balance_paused);
@@ -284,10 +284,10 @@ impl NearxPool {
                 stake_paused: self.operations_control.stake_paused,
                 unstaked_paused: self.operations_control.unstaked_paused,
                 withdraw_paused: self.operations_control.withdraw_paused,
-                epoch_stake_paused: self.operations_control.epoch_stake_paused,
-                epoch_unstake_paused: self.operations_control.epoch_unstake_paused,
-                epoch_withdraw_paused: self.operations_control.epoch_withdraw_paused,
-                epoch_autocompounding_paused: self.operations_control.epoch_autocompounding_paused,
+                staking_epoch_paused: self.operations_control.staking_epoch_paused,
+                unstaking_epoch_paused: self.operations_control.unstaking_epoch_paused,
+                withdraw_epoch_paused: self.operations_control.withdraw_epoch_paused,
+                autocompounding_epoch_paused: self.operations_control.autocompounding_epoch_paused,
                 sync_validator_balance_paused: self
                     .operations_control
                     .sync_validator_balance_paused,
@@ -480,5 +480,9 @@ impl NearxPool {
             treasury_unstaked_balance: treasury_account.unstaked_balance,
             nearx_price: self.get_nearx_price(),
         }
+    }
+
+    pub fn get_near_from_nearx(&self, nearx_amount: U128) -> U128 {
+        U128(self.staked_amount_from_num_shares_rounded_down(nearx_amount.0))
     }
 }
