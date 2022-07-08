@@ -378,13 +378,25 @@ impl NearxPool {
             staked_balance: self
                 .staked_amount_from_num_shares_rounded_down(account.stake_shares)
                 .into(),
-            nearx_balance: U128(account.stake_shares),
             withdrawable_epoch: U64(account.withdrawable_epoch_height),
         }
     }
 
     pub fn get_number_of_accounts(&self) -> u64 {
         self.accounts.len()
+    }
+
+    pub fn get_snapshot_users(&self, from: usize, length: usize) -> Vec<SnapshotUser> {
+        self.accounts
+            .keys_as_vector()
+            .iter()
+            .skip(from)
+            .take(length)
+            .map(|account_id| SnapshotUser {
+                account_id: account_id.clone(),
+                nearx_balance: U128(self.internal_get_account(&account_id).stake_shares),
+            })
+            .collect()
     }
 
     pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<AccountResponse> {

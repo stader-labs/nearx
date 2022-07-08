@@ -36,7 +36,7 @@ export interface NearxStakingPool {
   /**
    * Get all the users' accounts.
    */
-  userAccounts(): Promise<User[]>;
+  userAccounts(): Promise<SnapshotUser[]>;
 
   // User-facing methods:
 
@@ -111,10 +111,7 @@ export interface ValidatorInfo {
   paused: boolean;
 }
 
-export interface User {
-  account_id: AccountId;
-  unstaked_balance: Balance;
-  staked_balance: Balance;
-  nearx_balance: Balance;
-  withdrawable_epoch: Epoch;
+export interface SnapshotUser {
+  accountId: AccountId;
+  nearxBalance: Balance;
 }

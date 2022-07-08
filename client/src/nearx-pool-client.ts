@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import * as nearjs from 'near-api-js';
 import * as os from 'os';
-import { Balance, Epoch, NearxPoolClient as Iface, Network, User, ValidatorInfo } from '.';
+import { Balance, Epoch, NearxPoolClient as Iface, Network, SnapshotUser, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
 import { isBrowser, range } from './utils';
 //import * as bn from 'bn';
@@ -74,7 +74,7 @@ export const NearxPoolClient = {
         return contract.get_current_epoch({});
       },
 
-      async userAccounts(usersPerCall: number = 50): Promise<User[]> {
+      async userAccounts(usersPerCall: number = 50): Promise<SnapshotUser[]> {
         const nAccounts = await contract.get_number_of_accounts({});
 
         return Promise.all(
