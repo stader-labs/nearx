@@ -942,13 +942,39 @@ fn test_get_validator_to_stake() {
 #[test]
 #[should_panic]
 fn test_set_reward_fee_fail() {
-    let (mut _context, mut contract) =
+    let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 5;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
     /*
-       Set reward fee more than 10%
+       Set reward fee more than 20%
+    */
+    contract.set_reward_fee(25, 100);
+}
+
+#[test]
+fn test_set_reward_fee_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 5;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    /*
+       Set reward fee more than 20%
     */
     contract.set_reward_fee(15, 100);
+
+    assert_eq!(contract.rewards_fee.numerator, 15);
+    assert_eq!(contract.rewards_fee.denominator, 100);
 }
 
 #[test]
