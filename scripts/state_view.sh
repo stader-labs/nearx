@@ -10,8 +10,7 @@ near view $CONTRACT_NAME get_total_validator_weight
 
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 
-near view $CONTRACT_NAME get_account '{"account_id": "'"$ID"'"}'
-near view $CONTRACT_NAME get_account '{"account_id": "sumedh001.testnet"}'
+near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
 
 near view $CONTRACT_NAME get_accounts '{"from_index": 0, "limit": 10}'
 
