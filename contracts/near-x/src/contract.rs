@@ -24,10 +24,10 @@ pub struct OperationControls {
     pub stake_paused: bool,
     pub unstaked_paused: bool,
     pub withdraw_paused: bool,
-    pub epoch_stake_paused: bool,
-    pub epoch_unstake_paused: bool,
-    pub epoch_withdraw_paused: bool,
-    pub epoch_autocompounding_paused: bool,
+    pub staking_epoch_paused: bool,
+    pub unstaking_epoch_paused: bool,
+    pub withdraw_epoch_paused: bool,
+    pub autocompounding_epoch_paused: bool,
     pub sync_validator_balance_paused: bool,
 }
 

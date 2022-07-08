@@ -140,16 +140,17 @@ fn test_non_owner_calling_update_operations_control() {
 
     context.predecessor_account_id = operator_account();
     context.signer_account_id = operator_account();
+    context.attached_deposit = 1;
     testing_env!(context.clone());
 
     contract.update_operations_control(OperationsControlUpdateRequest {
         stake_paused: None,
         unstake_paused: None,
         withdraw_paused: None,
-        epoch_stake_paused: None,
-        epoch_unstake_paused: None,
-        epoch_withdraw_paused: None,
-        epoch_autocompounding_paused: None,
+        staking_epoch_paused: None,
+        unstaking_epoch_paused: None,
+        withdraw_epoch_paused: None,
+        autocompounding_epoch_paused: None,
         sync_validator_balance_paused: None,
     });
 }
@@ -168,10 +169,10 @@ fn test_update_operations_control_success() {
         stake_paused: Some(true),
         unstake_paused: Some(true),
         withdraw_paused: None,
-        epoch_stake_paused: Some(true),
-        epoch_unstake_paused: Some(true),
-        epoch_withdraw_paused: Some(true),
-        epoch_autocompounding_paused: None,
+        staking_epoch_paused: Some(true),
+        unstaking_epoch_paused: Some(true),
+        withdraw_epoch_paused: Some(true),
+        autocompounding_epoch_paused: None,
         sync_validator_balance_paused: Some(true),
     });
 
@@ -182,10 +183,10 @@ fn test_update_operations_control_success() {
             stake_paused: true,
             unstaked_paused: true,
             withdraw_paused: false,
-            epoch_stake_paused: true,
-            epoch_unstake_paused: true,
-            epoch_withdraw_paused: true,
-            epoch_autocompounding_paused: false,
+            staking_epoch_paused: true,
+            unstaking_epoch_paused: true,
+            withdraw_epoch_paused: true,
+            autocompounding_epoch_paused: false,
             sync_validator_balance_paused: true
         }
     );
@@ -941,13 +942,39 @@ fn test_get_validator_to_stake() {
 #[test]
 #[should_panic]
 fn test_set_reward_fee_fail() {
-    let (mut _context, mut contract) =
+    let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 5;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
     /*
-       Set reward fee more than 10%
+       Set reward fee more than 20%
+    */
+    contract.set_reward_fee(25, 100);
+}
+
+#[test]
+fn test_set_reward_fee_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 5;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    /*
+       Set reward fee more than 20%
     */
     contract.set_reward_fee(15, 100);
+
+    assert_eq!(contract.rewards_fee.numerator, 15);
+    assert_eq!(contract.rewards_fee.denominator, 100);
 }
 
 #[test]
@@ -956,7 +983,7 @@ fn test_autocompound_rewards_contract_busy() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
+    contract.autocompounding_epoch(AccountId::from_str("random_validator").unwrap());
 }
 
 #[test]
@@ -965,7 +992,7 @@ fn test_autocompound_rewards_invalid_validator() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.epoch_autocompound_rewards(AccountId::from_str("invalid_validator").unwrap());
+    contract.autocompounding_epoch(AccountId::from_str("invalid_validator").unwrap());
 }
 
 #[test]
@@ -1000,7 +1027,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     ));
 
     // Redeeming rewards with no stake amount with validators
-    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
+    contract.autocompounding_epoch(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
 
@@ -1012,7 +1039,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     validator1.staked = ntoy(100);
 
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
-    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
+    contract.autocompounding_epoch(stake_public_key_1.clone());
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
 
@@ -1025,7 +1052,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
     validator1.staked = ntoy(100);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
-    contract.epoch_autocompound_rewards(stake_public_key_1.clone());
+    contract.autocompounding_epoch(stake_public_key_1.clone());
 }
 
 #[test]
@@ -1188,9 +1215,9 @@ fn test_epoch_stake_paused() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.operations_control.epoch_stake_paused = true;
+    contract.operations_control.staking_epoch_paused = true;
 
-    contract.epoch_stake();
+    contract.staking_epoch();
 }
 
 #[test]
@@ -1199,9 +1226,9 @@ fn test_epoch_unstake_paused() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.operations_control.epoch_unstake_paused = true;
+    contract.operations_control.unstaking_epoch_paused = true;
 
-    contract.epoch_unstake();
+    contract.unstaking_epoch();
 }
 
 #[test]
@@ -1210,9 +1237,9 @@ fn test_epoch_withdraw_paused() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.operations_control.epoch_withdraw_paused = true;
+    contract.operations_control.withdraw_epoch_paused = true;
 
-    contract.epoch_withdraw(AccountId::from_str("random_validator").unwrap());
+    contract.withdraw_epoch(AccountId::from_str("random_validator").unwrap());
 }
 
 #[test]
@@ -1221,9 +1248,9 @@ fn test_epoch_autocompounding_paused() {
     let (mut _context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
-    contract.operations_control.epoch_autocompounding_paused = true;
+    contract.operations_control.autocompounding_epoch_paused = true;
 
-    contract.epoch_autocompound_rewards(AccountId::from_str("random_validator").unwrap());
+    contract.autocompounding_epoch(AccountId::from_str("random_validator").unwrap());
 }
 
 #[test]
@@ -1272,7 +1299,7 @@ fn test_epoch_stake_no_validator() {
     contract.reconciled_epoch_stake_amount = ntoy(10);
     contract.reconciled_epoch_unstake_amount = ntoy(10);
 
-    while contract.epoch_stake() {}
+    while contract.staking_epoch() {}
 
     assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(0));
     assert_eq!(contract.last_reconcilation_epoch, 100);
@@ -1310,7 +1337,7 @@ fn test_epoch_stake() {
     contract.reconciled_epoch_stake_amount = ntoy(10);
     contract.reconciled_epoch_unstake_amount = ntoy(10);
 
-    while contract.epoch_stake() {}
+    while contract.staking_epoch() {}
 
     assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(0));
     assert_eq!(contract.last_reconcilation_epoch, 100);
@@ -1345,6 +1372,77 @@ fn test_on_validator_deposit_and_stake_failed() {
     contract.on_stake_pool_deposit_and_stake(validator1.clone(), ntoy(10));
 
     assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(20));
+}
+
+#[test]
+fn test_on_validator_unstake_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone(), 10);
+
+    context.predecessor_account_id = contract_account();
+    testing_env!(context.clone());
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(90);
+    val1_info.unstake_start_epoch = 10;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    testing_env_with_promise_results(context.clone(), PromiseResult::Successful(Vec::default()));
+
+    contract.on_stake_pool_unstake(val1_info.account_id, ntoy(10));
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    assert_eq!(val1_info.staked, ntoy(90));
+    assert_eq!(val1_info.unstaked_amount, ntoy(10));
+    assert_eq!(val1_info.unstake_start_epoch, 10);
+}
+
+#[test]
+fn test_on_validator_unstake_fail() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.epoch_height = 100;
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone(), 10);
+
+    context.predecessor_account_id = contract_account();
+    testing_env!(context.clone());
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(90);
+    val1_info.unstake_start_epoch = 10;
+    val1_info.last_unstake_start_epoch = 5;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.reconciled_epoch_unstake_amount = ntoy(10);
+
+    testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
+
+    contract.on_stake_pool_unstake(val1_info.account_id, ntoy(10));
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    assert_eq!(val1_info.staked, ntoy(100));
+    assert_eq!(val1_info.unstaked_amount, ntoy(0));
+    assert_eq!(val1_info.unstake_start_epoch, 5);
+
+    assert_eq!(contract.reconciled_epoch_unstake_amount, ntoy(20));
 }
 
 #[test]
@@ -1547,7 +1645,7 @@ fn test_epoch_withdraw_fail_validator_in_unbonding() {
     val1_info.unstake_start_epoch = 9;
     update_validator(&mut contract, validator1.clone(), &val1_info);
 
-    contract.epoch_withdraw(validator1.clone());
+    contract.withdraw_epoch(validator1.clone());
 }
 
 #[test]
@@ -1572,7 +1670,7 @@ fn test_epoch_withdraw_fail_validator_paused() {
     val1_info.weight = 0;
     update_validator(&mut contract, validator1.clone(), &val1_info);
 
-    contract.epoch_withdraw(validator1.clone());
+    contract.withdraw_epoch(validator1.clone());
 }
 
 #[test]
@@ -1596,7 +1694,7 @@ fn test_epoch_withdraw_success() {
     val1_info.unstake_start_epoch = 9;
     update_validator(&mut contract, validator1.clone(), &val1_info);
 
-    contract.epoch_withdraw(validator1.clone());
+    contract.withdraw_epoch(validator1.clone());
 
     let val1_info = get_validator(&contract, validator1.clone());
     assert_eq!(val1_info.unstaked_amount, ntoy(0));
@@ -1791,7 +1889,7 @@ fn test_epoch_unstake_success() {
     contract.reconciled_epoch_stake_amount = ntoy(10);
     contract.reconciled_epoch_unstake_amount = ntoy(10);
 
-    contract.epoch_unstake();
+    contract.unstaking_epoch();
 
     assert_eq!(contract.last_reconcilation_epoch, 100);
     let val3_info = get_validator(&contract, validator3.clone());

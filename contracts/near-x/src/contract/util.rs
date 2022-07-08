@@ -41,31 +41,31 @@ impl NearxPool {
         );
     }
 
-    pub fn assert_epoch_stake_not_paused(&self) {
+    pub fn assert_staking_epoch_not_paused(&self) {
         require!(
-            !self.operations_control.epoch_stake_paused,
-            ERROR_EPOCH_STAKE_PAUSED
+            !self.operations_control.staking_epoch_paused,
+            ERROR_STAKING_EPOCH_PAUSED
         );
     }
 
-    pub fn assert_epoch_unstake_not_paused(&self) {
+    pub fn assert_unstaking_epoch_not_paused(&self) {
         require!(
-            !self.operations_control.epoch_unstake_paused,
-            ERROR_EPOCH_UNSTAKE_PAUSED
+            !self.operations_control.unstaking_epoch_paused,
+            ERROR_UNSTAKING_EPOCH_PAUSED
         );
     }
 
     pub fn assert_epoch_withdraw_not_paused(&self) {
         require!(
-            !self.operations_control.epoch_withdraw_paused,
-            ERROR_EPOCH_WITHDRAW_PAUSED
+            !self.operations_control.withdraw_epoch_paused,
+            ERROR_WITHDRAW_EPOCH_PAUSED
         );
     }
 
-    pub fn assert_epoch_autocompounding_not_paused(&self) {
+    pub fn assert_autocompounding_epoch_not_paused(&self) {
         require!(
-            !self.operations_control.epoch_autocompounding_paused,
-            ERROR_EPOCH_AUTOCOMPOUNDING_PAUSED
+            !self.operations_control.autocompounding_epoch_paused,
+            ERROR_AUTOCOMPOUNDING_EPOCH_PAUSED
         );
     }
 

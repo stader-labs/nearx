@@ -11,46 +11,46 @@ const EVENT_STANDARD_VERSION: &str = "1.0.0";
 #[serde(rename_all = "snake_case")]
 pub enum Event {
     // Epoch Actions
-    EpochStakeAttempt {
+    StakingEpochAttempt {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochStakeCallbackSuccess {
+    StakingEpochCallbackSuccess {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochStakeCallbackFailed {
+    StakingEpochCallbackFailed {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochUnstakeAttempt {
+    UnstakingEpochAttempt {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochUnstakeCallbackSuccess {
+    UnstakingEpochCallbackSuccess {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochUnstakeCallbackFailed {
+    UnstakingEpochCallbackFailed {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochWithdrawAttempt {
+    WithdrawEpochAttempt {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochWithdrawCallbackSuccess {
+    WithdrawEpochCallbackSuccess {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochWithdrawCallbackFailed {
+    WithdrawEpochCallbackFailed {
         validator_id: AccountId,
         amount: U128,
     },
-    EpochAutocompoundRewardsAttempt {
+    AutocompoundingEpochRewardsAttempt {
         validator_id: AccountId,
     },
-    EpochAutocompoundRewards {
+    AutocompoundingEpochRewards {
         validator_id: AccountId,
         old_balance: U128,
         new_balance: U128,

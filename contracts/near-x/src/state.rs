@@ -200,10 +200,10 @@ pub struct OperationsControlUpdateRequest {
     pub stake_paused: Option<bool>,
     pub unstake_paused: Option<bool>,
     pub withdraw_paused: Option<bool>,
-    pub epoch_stake_paused: Option<bool>,
-    pub epoch_unstake_paused: Option<bool>,
-    pub epoch_withdraw_paused: Option<bool>,
-    pub epoch_autocompounding_paused: Option<bool>,
+    pub staking_epoch_paused: Option<bool>,
+    pub unstaking_epoch_paused: Option<bool>,
+    pub withdraw_epoch_paused: Option<bool>,
+    pub autocompounding_epoch_paused: Option<bool>,
     pub sync_validator_balance_paused: Option<bool>,
 }
 

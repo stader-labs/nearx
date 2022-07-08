@@ -70,11 +70,11 @@ pub mod gas {
 
     pub const WITHDRAW_EPOCH: Gas = base_gas(3);
 
-    pub const UNSTAKE_EPOCH: Gas = base_gas(3);
+    pub const UNSTAKING_EPOCH: Gas = base_gas(3);
 
-    pub const STAKE_EPOCH: Gas = base_gas(3);
+    pub const STAKING_EPOCH: Gas = base_gas(3);
 
-    pub const AUTOCOMPOUND_EPOCH: Gas = base_gas(3);
+    pub const AUTOCOMPOUNDING_EPOCH: Gas = base_gas(3);
 
     pub const SYNC_VALIDATOR_EPOCH: Gas = base_gas(3);
 
