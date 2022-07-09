@@ -59,10 +59,6 @@ export async function withdraw(client: nearx.NearxPoolClient): Promise<void> {
   await client.epochWithdraw();
 }
 
-function logCommand(...name: any[]) {
-  console.debug('\n> Running', ...name);
-}
-
 export async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void> {
   //await syncBalances(client);
   await epochAutocompoundRewards(client);
@@ -77,4 +73,10 @@ export async function userDeposit(client: nearx.NearxPoolClient): Promise<void> 
   const amount = near(2);
   logCommand('user deposit:', amount);
   await client.stake(amount);
+}
+
+// Utils
+
+function logCommand(...name: any[]) {
+  console.debug('\n> Running', ...name);
 }

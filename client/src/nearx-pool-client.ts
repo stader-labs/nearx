@@ -86,7 +86,7 @@ export const NearxPoolClient = {
 
       // User-facing methods:
       async stake(amount: string): Promise<string> {
-        return contract.deposit_and_stake({ amount });
+        return contract.deposit_and_stake({ args: {}, amount });
       },
 
       async unstake(amount: string): Promise<string> {
@@ -107,7 +107,7 @@ export const NearxPoolClient = {
 
       // Operator methods:
       async epochStake(): Promise<string> {
-        return contract.epoch_stake({ gas });
+        return contract.epoch_stake({ args: {}, gas });
       },
 
       async epochAutocompoundRewards(): Promise<any[]> {
@@ -115,7 +115,7 @@ export const NearxPoolClient = {
 
         return promiseAllSettledErrors(
           validators.map((v) =>
-            contract.epoch_autocompound_rewards({ validator: v.account_id, gas }),
+            contract.epoch_autocompound_rewards({ args: { validator: v.account_id }, gas }),
           ),
         );
       },
@@ -123,7 +123,7 @@ export const NearxPoolClient = {
       async epochUnstake(): Promise<void> {
         let n = 0;
 
-        while (await contract.epoch_unstake({ gas })) {
+        while (await contract.epoch_unstake({ args: {}, gas })) {
           n += 1;
         }
         console.debug(`Epoch unstake has unstaked ${n} times.`);
@@ -140,7 +140,9 @@ export const NearxPoolClient = {
         );
 
         return promiseAllSettledErrors(
-          validators.map((v) => contract.epoch_withdraw({ validator: v.account_id, gas })),
+          validators.map((v) =>
+            contract.epoch_withdraw({ args: { validator: v.account_id }, gas }),
+          ),
         );
       },
 
@@ -149,7 +151,7 @@ export const NearxPoolClient = {
 
         return promiseAllSettledErrors(
           validators.map((v) =>
-            contract.sync_balance_from_validator({ validator_id: v.account_id, gas }),
+            contract.sync_balance_from_validator({ args: { validator_id: v.account_id }, gas }),
           ),
         );
       },
