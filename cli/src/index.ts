@@ -1,18 +1,24 @@
 import * as nearx from 'nearx-js';
+import * as command from './command';
 
 const commands: {
-  [name: string]: (client: nearx.NearxPoolClient) => Promise<void>;
+  [name: string]: (client: nearx.NearxPoolClient, accountId: string) => Promise<void>;
 } = {
   // Read:
-  validators: displayValidators,
+  validators: command.displayValidators,
   epoch: async (client) => console.log(await client.currentEpoch()),
+  snapshot: command.displaySnapshot,
+  balance: command.displayBalance,
   // Operation:
-  'sync-balances': syncBalances,
-  autocompound: epochAutocompoundRewards,
-  stake: stake,
-  unstake: unstake,
-  withdraw: withdraw,
-  all: runWholeEpoch,
+  init: command.runInit,
+  'sync-balances': command.syncBalances,
+  autocompound: command.epochAutocompoundRewards,
+  stake: command.stake,
+  unstake: command.unstake,
+  withdraw: command.withdraw,
+  all: command.runWholeEpoch,
+  // User:
+  deposit: command.userDeposit,
 };
 
 async function run(networkContract: string, accountId: string, commandName: string) {
@@ -29,7 +35,7 @@ async function run(networkContract: string, accountId: string, commandName: stri
 
     const client = await nearx.NearxPoolClient.new(network, contractName, accountId);
 
-    await commands[commandName](client);
+    await commands[commandName](client, accountId);
   } else {
     if (commandName != null) {
       console.error('Undefined command:', commandName);
@@ -47,49 +53,6 @@ const help: string = `Usage:
 
 ./nearx <network>:<contract name> <account ID> COMMAND
     COMMAND: ${Object.keys(commands).join(' | ')}`;
-
-async function displayValidators(client: nearx.NearxPoolClient): Promise<void> {
-  for (const validator of await client.validators()) {
-    console.log(validator);
-  }
-}
-
-async function syncBalances(client: nearx.NearxPoolClient): Promise<void> {
-  logCommand('sync balances');
-  await client.syncBalances();
-}
-
-async function epochAutocompoundRewards(client: nearx.NearxPoolClient): Promise<void> {
-  logCommand('epoch autocompound');
-  await client.epochAutocompoundRewards();
-}
-
-async function stake(client: nearx.NearxPoolClient): Promise<void> {
-  logCommand('epoch stake');
-  await client.epochStake();
-}
-
-async function unstake(client: nearx.NearxPoolClient): Promise<void> {
-  logCommand('epoch unstake');
-  await client.epochUnstake();
-}
-
-async function withdraw(client: nearx.NearxPoolClient): Promise<void> {
-  logCommand('epoch withdraw');
-  await client.epochWithdraw();
-}
-
-function logCommand(name: string) {
-  console.debug(`\n> Running '${name}'`);
-}
-
-async function runWholeEpoch(client: nearx.NearxPoolClient): Promise<void> {
-  //await syncBalances(client);
-  await epochAutocompoundRewards(client);
-  await stake(client);
-  await unstake(client);
-  await withdraw(client);
-}
 
 run(process.argv[2], process.argv[3], process.argv[4]).then(() =>
   console.log('Command successfully executed'),

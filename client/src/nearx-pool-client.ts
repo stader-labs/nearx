@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
 import * as nearjs from 'near-api-js';
 import * as os from 'os';
-import { Balance, Epoch, NearxPoolClient as Iface, Network, ValidatorInfo } from '.';
+import { Balance, Epoch, NearxPoolClient as Iface, Network, SnapshotUser, ValidatorInfo } from '.';
 import { createContract, NearxContract } from './contract';
-import { isBrowser } from './utils';
+import { isBrowser, range } from './utils';
 //import * as bn from 'bn';
 
 const gas = '300000000000000';
@@ -42,7 +42,7 @@ export const NearxPoolClient = {
     }
 
     async function getValidators(): Promise<ValidatorInfo[]> {
-      return await contract.get_validators({ args: {} });
+      return await contract.get_validators({});
     }
 
     const client = {
@@ -54,42 +54,60 @@ export const NearxPoolClient = {
       async stakedBalance(): Promise<Balance> {
         return BigInt(
           await contract.get_account_staked_balance({
-            args: {
-              account_id: accountId,
-            },
-          }),
-        );
-      },
-      async unstakedBalance(): Promise<Balance> {
-        return BigInt(
-          await contract.get_account_unstaked_balance({
-            args: {
-              account_id: accountId,
-            },
+            account_id: accountId,
           }),
         );
       },
       async totalBalance(): Promise<Balance> {
         return BigInt(
           await contract.get_account_total_balance({
-            args: {
-              account_id: accountId,
-            },
+            account_id: accountId,
           }),
         );
       },
 
       async validators(): Promise<ValidatorInfo[]> {
-        return contract.get_validators({ args: {} });
+        return contract.get_validators({});
       },
 
       async currentEpoch(): Promise<Epoch> {
-        return contract.get_current_epoch({ args: {} });
+        return contract.get_current_epoch({});
+      },
+
+      async userAccounts(usersPerCall: number = 200): Promise<SnapshotUser[]> {
+        const nAccounts = await contract.get_number_of_accounts({});
+
+        // Impl with snapshot method:
+        //return Promise.all(
+        //  range(0, nAccounts, usersPerCall).map((i) =>
+        //    contract.get_snapshot_users({ from: i, length: usersPerCall }),
+        //  ),
+        //).then((arrayOfUsers) => arrayOfUsers.flat());
+
+        // Temporary impl with `ft_balance_of` call for each account:
+        const accounts = await Promise.all(
+          range(0, nAccounts, usersPerCall).map((i) =>
+            contract.get_accounts({ from_index: i, limit: i + usersPerCall }),
+          ),
+        ).then((arrayOfUsers) => arrayOfUsers.flat());
+
+        const accounts_ = await Promise.all(
+          accounts.map((account) =>
+            contract
+              .ft_balance_of({ account_id: account.account_id })
+              .then((balance) => [balance, account.account_id]),
+          ),
+        );
+
+        return accounts_.map(([balance, accountId]) => ({
+          accountId,
+          nearxBalance: BigInt(balance),
+        }));
       },
 
       // User-facing methods:
       async stake(amount: string): Promise<string> {
-        throw new Error('Not implemented');
+        return contract.deposit_and_stake({ args: {}, amount });
       },
 
       async unstake(amount: string): Promise<string> {

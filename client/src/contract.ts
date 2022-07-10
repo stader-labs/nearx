@@ -1,39 +1,64 @@
 import * as nearjs from 'near-api-js';
-import { Epoch, ValidatorInfo } from '.';
+import { Epoch, NearxAccount, SnapshotUser, ValidatorInfo } from '.';
 import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract &
   RpcCallsStakingPool &
   RpcCallsOperator &
-  RpcCallsUtils;
+  RpcCallsUtils &
+  RpcCallsFt;
+
+/**
+ * The parameters used for every RPC call to the contract.
+ */
+export interface CallRpcParams {
+  /** The gas the caller is willing to pay for the transaction. */
+  gas?: string;
+  /** The deposit joined to the call. */
+  amount?: string;
+  /** The contract arguments. */
+  args: any;
+}
+
+export interface ViewRpcParams {
+  [name: string]: any;
+}
+
+export interface RpcCallsFt {
+  ft_balance_of(params: ViewRpcParams): Promise<string>;
+}
 
 export interface RpcCallsStakingPool {
-  get_account_staked_balance(args: any): Promise<string>;
-  get_account_unstaked_balance(args: any): Promise<string>;
-  get_account_total_balance(args: any): Promise<string>;
-  deposit(args: any, gas: undefined, deposit: string): Promise<string>;
-  deposit_and_stake_direct_stake(args: any, gas: undefined, deposit: string): Promise<string>;
-  deposit_and_stake(args: any, gas: undefined, deposit: string): Promise<string>;
-  stake(args: any): Promise<string>;
-  withdraw(args: any): Promise<string>;
-  withdraw_all(args: any): Promise<string>;
-  unstake(args: any): Promise<string>;
-  unstake_all(args: any): Promise<string>;
-  upgrade(code: any, gas: any): Promise<string>;
+  get_account_staked_balance(params: ViewRpcParams): Promise<string>;
+  get_account_total_balance(params: ViewRpcParams): Promise<string>;
+
+  deposit(params: CallRpcParams): Promise<string>;
+  deposit_and_stake_direct_stake(params: CallRpcParams): Promise<string>;
+  deposit_and_stake(params: CallRpcParams): Promise<string>;
+  stake(params: CallRpcParams): Promise<string>;
+  withdraw(params: CallRpcParams): Promise<string>;
+  withdraw_all(params: CallRpcParams): Promise<string>;
+  unstake(params: CallRpcParams): Promise<string>;
+  unstake_all(params: CallRpcParams): Promise<string>;
 }
 
 export interface RpcCallsOperator {
-  get_validators(args: any): Promise<ValidatorInfo[]>;
-  epoch_stake(args: any): Promise<string>;
-  epoch_autocompound_rewards(args: any): Promise<string>;
-  epoch_unstake(args: any): Promise<string>;
-  epoch_withdraw(args: any): Promise<string>;
-  sync_balance_from_validator(args: any): Promise<string>;
-  upgrade(code: any, gas: any): Promise<any>;
+  get_validators(params: ViewRpcParams): Promise<ValidatorInfo[]>;
+  get_number_of_accounts(params: ViewRpcParams): Promise<number>;
+  get_accounts(params: ViewRpcParams): Promise<NearxAccount[]>;
+  get_snapshot_users(params: ViewRpcParams): Promise<SnapshotUser[]>;
+
+  'new'(params: CallRpcParams): Promise<ValidatorInfo[]>;
+  upgrade(code: any, gas: any): Promise<string>;
+  epoch_stake(params: CallRpcParams): Promise<string>;
+  epoch_autocompound_rewards(params: CallRpcParams): Promise<string>;
+  epoch_unstake(params: CallRpcParams): Promise<string>;
+  epoch_withdraw(params: CallRpcParams): Promise<string>;
+  sync_balance_from_validator(params: CallRpcParams): Promise<string>;
 }
 
 export interface RpcCallsUtils {
-  get_current_epoch(args: any): Promise<Epoch>;
+  get_current_epoch(params: ViewRpcParams): Promise<Epoch>;
 }
 
 export function createContract(account: nearjs.Account, contractName: string): NearxContract {
@@ -47,16 +72,21 @@ export function createContract(account: nearjs.Account, contractName: string): N
     // Options:
     {
       viewMethods: [
+        // Fungible Token:
+        nameof<RpcCallsFt>('ft_balance_of'),
         // Staking Pool:
         nameof<RpcCallsStakingPool>('get_account_staked_balance'),
-        nameof<RpcCallsStakingPool>('get_account_unstaked_balance'),
         nameof<RpcCallsStakingPool>('get_account_total_balance'),
         // Operator:
         nameof<RpcCallsOperator>('get_validators'),
+        nameof<RpcCallsOperator>('get_number_of_accounts'),
+        nameof<RpcCallsOperator>('get_snapshot_users'),
+        nameof<RpcCallsOperator>('get_accounts'),
         // Utils:
         nameof<RpcCallsUtils>('get_current_epoch'),
       ],
       changeMethods: [
+        nameof<RpcCallsOperator>('new'),
         // Staking Pool:
         nameof<RpcCallsStakingPool>('deposit'),
         nameof<RpcCallsStakingPool>('deposit_and_stake_direct_stake'),

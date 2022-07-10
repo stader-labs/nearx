@@ -3,7 +3,6 @@ use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
     json_types::{U128, U64},
-    log,
     serde::{Deserialize, Serialize},
     AccountId, Balance, EpochHeight,
 };
@@ -15,6 +14,14 @@ pub struct AccountResponse {
     pub unstaked_balance: U128,
     pub staked_balance: U128,
     pub withdrawable_epoch: U64,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+#[serde(rename_all = "camelCase")]
+pub struct SnapshotUser {
+    pub account_id: AccountId,
+    pub nearx_balance: U128,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

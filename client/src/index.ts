@@ -1,4 +1,5 @@
 import * as nearjs from 'near-api-js';
+import { NearxContract } from './contract';
 export * as nearjs from 'near-api-js';
 export { NearxPoolClient } from './nearx-pool-client';
 
@@ -10,11 +11,6 @@ export type Network = 'testnet' | 'mainnet';
 
 export interface NearxStakingPool {
   // View methods:
-
-  /**
-   * Returns the user's number of tokens unstaked inside the pool.
-   */
-  unstakedBalance(): Promise<Balance>;
 
   /**
    * Returns the user's number of tokens staked inside the pool.
@@ -36,6 +32,11 @@ export interface NearxStakingPool {
    * Returns the current epoch.
    */
   currentEpoch(): Promise<Epoch>;
+
+  /**
+   * Get all the users' accounts.
+   */
+  userAccounts(): Promise<SnapshotUser[]>;
 
   // User-facing methods:
 
@@ -96,7 +97,7 @@ export interface NearxStakingPool {
 export interface NearxPoolClient extends NearxStakingPool {
   near: nearjs.Near;
   config: nearjs.ConnectConfig;
-  contract: nearjs.Contract;
+  contract: NearxContract;
 }
 
 // DTOs:
@@ -108,4 +109,16 @@ export interface ValidatorInfo {
   last_asked_rewards_epoch_height: Epoch;
   last_unstake_start_epoch: Epoch;
   paused: boolean;
+}
+
+export interface SnapshotUser {
+  accountId: AccountId;
+  nearxBalance: Balance;
+}
+
+export interface NearxAccount {
+  account_id: AccountId;
+  unstaked_balance: Balance;
+  staked_balance: Balance;
+  withdrawable_epoch: Epoch;
 }
