@@ -115,3 +115,10 @@ export interface SnapshotUser {
   accountId: AccountId;
   nearxBalance: Balance;
 }
+
+export interface NearxAccount {
+  account_id: AccountId;
+  unstaked_balance: Balance;
+  staked_balance: Balance;
+  withdrawable_epoch: Epoch;
+}

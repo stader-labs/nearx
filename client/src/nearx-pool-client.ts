@@ -74,14 +74,35 @@ export const NearxPoolClient = {
         return contract.get_current_epoch({});
       },
 
-      async userAccounts(usersPerCall: number = 50): Promise<SnapshotUser[]> {
+      async userAccounts(usersPerCall: number = 200): Promise<SnapshotUser[]> {
         const nAccounts = await contract.get_number_of_accounts({});
 
-        return Promise.all(
+        // Impl with snapshot method:
+        //return Promise.all(
+        //  range(0, nAccounts, usersPerCall).map((i) =>
+        //    contract.get_snapshot_users({ from: i, length: usersPerCall }),
+        //  ),
+        //).then((arrayOfUsers) => arrayOfUsers.flat());
+
+        // Temporary impl with `ft_balance_of` call for each account:
+        const accounts = await Promise.all(
           range(0, nAccounts, usersPerCall).map((i) =>
-            contract.get_snapshot_users({ from: i, length: usersPerCall }),
+            contract.get_accounts({ from_index: i, limit: i + usersPerCall }),
           ),
         ).then((arrayOfUsers) => arrayOfUsers.flat());
+
+        const accounts_ = await Promise.all(
+          accounts.map((account) =>
+            contract
+              .ft_balance_of({ account_id: account.account_id })
+              .then((balance) => [balance, account.account_id]),
+          ),
+        );
+
+        return accounts_.map(([balance, accountId]) => ({
+          accountId,
+          nearxBalance: BigInt(balance),
+        }));
       },
 
       // User-facing methods:

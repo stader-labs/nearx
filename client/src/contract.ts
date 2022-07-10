@@ -1,11 +1,12 @@
 import * as nearjs from 'near-api-js';
-import { Epoch, SnapshotUser, ValidatorInfo } from '.';
+import { Epoch, NearxAccount, SnapshotUser, ValidatorInfo } from '.';
 import { nameof } from './utils';
 
 export type NearxContract = nearjs.Contract &
   RpcCallsStakingPool &
   RpcCallsOperator &
-  RpcCallsUtils;
+  RpcCallsUtils &
+  RpcCallsFt;
 
 /**
  * The parameters used for every RPC call to the contract.
@@ -21,6 +22,10 @@ export interface CallRpcParams {
 
 export interface ViewRpcParams {
   [name: string]: any;
+}
+
+export interface RpcCallsFt {
+  ft_balance_of(params: ViewRpcParams): Promise<string>;
 }
 
 export interface RpcCallsStakingPool {
@@ -40,6 +45,7 @@ export interface RpcCallsStakingPool {
 export interface RpcCallsOperator {
   get_validators(params: ViewRpcParams): Promise<ValidatorInfo[]>;
   get_number_of_accounts(params: ViewRpcParams): Promise<number>;
+  get_accounts(params: ViewRpcParams): Promise<NearxAccount[]>;
   get_snapshot_users(params: ViewRpcParams): Promise<SnapshotUser[]>;
 
   'new'(params: CallRpcParams): Promise<ValidatorInfo[]>;
@@ -66,6 +72,8 @@ export function createContract(account: nearjs.Account, contractName: string): N
     // Options:
     {
       viewMethods: [
+        // Fungible Token:
+        nameof<RpcCallsFt>('ft_balance_of'),
         // Staking Pool:
         nameof<RpcCallsStakingPool>('get_account_staked_balance'),
         nameof<RpcCallsStakingPool>('get_account_total_balance'),
@@ -73,6 +81,7 @@ export function createContract(account: nearjs.Account, contractName: string): N
         nameof<RpcCallsOperator>('get_validators'),
         nameof<RpcCallsOperator>('get_number_of_accounts'),
         nameof<RpcCallsOperator>('get_snapshot_users'),
+        nameof<RpcCallsOperator>('get_accounts'),
         // Utils:
         nameof<RpcCallsUtils>('get_current_epoch'),
       ],
