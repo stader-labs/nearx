@@ -73,8 +73,7 @@ impl FungibleTokenCore for NearxPool {
         msg: String,
     ) -> PromiseOrValue<U128> {
         assert_one_yocto();
-        let min_gas =
-            gas::FT_TRANSFER + gas::FT_ON_TRANSFER + gas::FT_TRANSFER_RESOLVE + gas::TEN_T_GAS;
+        let min_gas = gas::FT_TRANSFER + gas::FT_TRANSFER_RESOLVE;
         assert!(
             env::prepaid_gas() > min_gas,
             "require at least {:?} gas",
@@ -94,7 +93,7 @@ impl FungibleTokenCore for NearxPool {
 
         ext_ft_receiver::ext(receiver_id.clone())
             .with_attached_deposit(NO_DEPOSIT)
-            .with_static_gas(gas::FT_ON_TRANSFER)
+            .with_static_gas(env::prepaid_gas() - gas::FT_TRANSFER - gas::FT_TRANSFER_RESOLVE)
             .ft_on_transfer(env::predecessor_account_id(), amount, msg)
             .then(
                 ext_self::ext(env::current_account_id())
