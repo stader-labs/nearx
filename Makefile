@@ -14,6 +14,9 @@ near-x: contracts/near-x
 	mkdir -p res
 	cp target/wasm32-unknown-unknown/release/near_x.wasm ./res/near_x.wasm
 
+promote-nearx-to-migratable:
+	cp res/near_x.wasm live_wasms/near_x.wasm
+
 mock-stake-pool: contracts/mock-stake-pool
 	rustup target add wasm32-unknown-unknown
 	RUSTFLAGS=$(RFLAGS) cargo build -p mock-stake-pool --target wasm32-unknown-unknown --release
