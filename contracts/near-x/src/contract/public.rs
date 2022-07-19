@@ -300,7 +300,7 @@ impl NearxPool {
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
         assert_one_yocto();
-        require!((numerator * 100 / denominator) < 20); // less than 20%
+        require!((numerator * 100 / denominator) <= 10); // less than or equal to 10%
 
         let old_reward_fee = self.rewards_fee;
         self.rewards_fee = Fraction::new(numerator, denominator);
