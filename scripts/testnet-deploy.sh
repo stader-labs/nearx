@@ -1,1 +1,0 @@
-near create-account
