@@ -952,9 +952,9 @@ fn test_set_reward_fee_fail() {
     testing_env!(context.clone()); // this updates the context
 
     /*
-       Set reward fee more than 20%
+       Set reward fee more than 10%
     */
-    contract.set_reward_fee(25, 100);
+    contract.set_reward_fee(15, 100);
 }
 
 #[test]
@@ -969,11 +969,19 @@ fn test_set_reward_fee_success() {
     testing_env!(context.clone()); // this updates the context
 
     /*
-       Set reward fee more than 20%
+       Set reward fee to 9%
     */
-    contract.set_reward_fee(15, 100);
+    contract.set_reward_fee(9, 100);
 
-    assert_eq!(contract.rewards_fee.numerator, 15);
+    assert_eq!(contract.rewards_fee.numerator, 9);
+    assert_eq!(contract.rewards_fee.denominator, 100);
+
+    /*
+        Set reward fee to 10%
+    */
+    contract.set_reward_fee(10, 100);
+
+    assert_eq!(contract.rewards_fee.numerator, 10);
     assert_eq!(contract.rewards_fee.denominator, 100);
 }
 
