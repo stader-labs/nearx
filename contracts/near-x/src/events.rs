@@ -2,7 +2,7 @@ use crate::contract::OperationControls;
 use crate::state::Fraction;
 use near_sdk::{json_types::U128, log, serde::Serialize, serde_json::json, AccountId};
 
-const EVENT_STANDARD: &str = "linear";
+const EVENT_STANDARD: &str = "nearx";
 const EVENT_STANDARD_VERSION: &str = "1.0.0";
 
 #[derive(Serialize, Debug, Clone)]
