@@ -10,10 +10,12 @@ Building the project
 
 `make all
 `
+
 it moves all wasm files to res/ directory
 
 Running unit and integration tests
 
 `make run-all-tests
 `
-Miro Board with documentation: https://miro.com/app/board/uXjVOzCp74g=/
+
+Miro Board with product documentation: https://miro.com/app/board/uXjVOzCp74g=/
