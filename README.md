@@ -1,3 +1,19 @@
 # near-liquid-token
 
-Miro Board: https://miro.com/app/board/uXjVOzCp74g=/
+The contracts directory contains 3 crates which are:
+
+1. nearx: The main nearx contract.
+2. mock-stake-pool: A mock validator stake pool contract which is used in the integration tests
+3. integration-tests: A set of integration tests
+
+Building the project
+
+`make all
+`
+it moves all wasm files to res/ directory
+
+Running unit and integration tests
+
+`make run-all-tests
+`
+Miro Board with documentation: https://miro.com/app/board/uXjVOzCp74g=/
