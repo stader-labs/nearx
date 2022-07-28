@@ -37,10 +37,13 @@ pub struct IntegrationTestContext<T> {
 
 impl IntegrationTestContext<Sandbox> {
     // Return type is the worker, nearx liquid token contract and stake pool contract with 3 users and operator, owner account
-    pub async fn new(validator_count: u32) -> anyhow::Result<IntegrationTestContext<Sandbox>> {
+    pub async fn new(
+        validator_count: u32,
+        nearx_wasm_file: Option<&str>,
+    ) -> anyhow::Result<IntegrationTestContext<Sandbox>> {
         println!("Connecting to sandbox!");
         let worker = workspaces::sandbox().await?;
-        let nearx_wasm = std::fs::read(NEARX_WASM_FILEPATH)?;
+        let nearx_wasm = std::fs::read(nearx_wasm_file.unwrap_or(NEARX_WASM_FILEPATH))?;
         let stake_pool_wasm = std::fs::read(STAKE_POOL_WASM)?;
         let nearx_contract = worker.dev_deploy(&nearx_wasm).await?;
         let mut validator_to_stake_pool_contract = HashMap::default();
@@ -287,6 +290,44 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn commit_owner(&self, new_owner: &Account) -> anyhow::Result<CallExecutionDetails> {
         new_owner
             .call(&self.worker, self.nearx_contract.id(), "commit_owner")
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn set_operator(&self, new_operator: &AccountId) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "set_operator_id")
+            .args_json(json!({ "new_operator_account_id": new_operator.clone() }))?
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn commit_operator(&self, new_operator: &Account) -> anyhow::Result<CallExecutionDetails> {
+        new_operator
+            .call(&self.worker, self.nearx_contract.id(), "commit_operator_id")
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn set_treasury(&self, new_treasury_id: &AccountId) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "set_treasury_id")
+            .args_json(json!({ "new_treasury_account_id": new_treasury_id.clone() }))?
+            .deposit(1)
+            .max_gas()
+            .transact()
+            .await
+    }
+
+    pub async fn commit_treasury(&self, new_treasury_id: &Account) -> anyhow::Result<CallExecutionDetails> {
+        new_treasury_id
+            .call(&self.worker, self.nearx_contract.id(), "commit_treasury_id")
             .deposit(1)
             .max_gas()
             .transact()
@@ -575,6 +616,15 @@ impl IntegrationTestContext<Sandbox> {
             .args_json(
                 json!({ "numerator": reward_fee.numerator, "denominator": reward_fee.denominator }),
             )?
+            .transact()
+            .await
+    }
+
+    pub async fn commit_reward_fee(&self) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, &self.nearx_contract.id(), "commit_reward_fee")
+            .max_gas()
+            .deposit(1)
             .transact()
             .await
     }

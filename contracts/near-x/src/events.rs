@@ -159,12 +159,18 @@ pub enum Event {
         new_owner: AccountId,
         caller: AccountId,
     },
-    UpdateOperator {
+    SetOperator {
         old_operator: AccountId,
         new_operator: AccountId,
     },
-    UpdateTreasury {
+    CommitOperator {
+        new_operator: AccountId,
+    },
+    SetTreasury {
         old_treasury_account: AccountId,
+        new_treasury_account: AccountId,
+    },
+    CommitTreasury {
         new_treasury_account: AccountId,
     },
     UpdateOperationsControl {
@@ -173,6 +179,9 @@ pub enum Event {
     SetRewardFee {
         old_reward_fee: Fraction,
         new_reward_fee: Fraction,
+    },
+    CommitRewardFee {
+        commited_reward_fee: Fraction,
     },
     SetMinDeposit {
         old_min_deposit: U128,

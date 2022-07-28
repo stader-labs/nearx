@@ -25,28 +25,139 @@ use workspaces::network::DevAccountDeployer;
 /// 5. actual staked info
 /// 6. actual unstaked info
 ///
+
+#[tokio::test]
+async fn test_set_owner() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    let new_owner_account = context.worker.dev_create_account().await?;
+    let new_owner_near_sdk_account = near_sdk::AccountId::new_unchecked(new_owner_account.id().to_string());
+
+    context.set_owner(&new_owner_account.id().clone()).await?;
+
+    let roles = context.get_roles().await?;
+    assert_eq!(roles.temp_owner, Some(new_owner_near_sdk_account.clone()));
+
+    context.commit_owner(&new_owner_account).await?;
+
+    let roles = context.get_roles().await?;
+
+    assert_eq!(roles.owner_account, new_owner_near_sdk_account);
+
+    let roles = context.get_roles().await?;
+    assert!(roles.temp_owner.is_none());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_set_operator() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    let new_operator_account = context.worker.dev_create_account().await?;
+    let new_operator_near_sdk_account = near_sdk::AccountId::new_unchecked(new_operator_account.id().to_string());
+
+    context.set_operator(&new_operator_account.id().clone()).await?;
+
+    let roles = context.get_roles().await?;
+    assert_eq!(roles.temp_operator, Some(new_operator_near_sdk_account.clone()));
+
+    context.commit_operator(&new_operator_account).await?;
+
+    let roles = context.get_roles().await?;
+
+    assert_eq!(roles.operator_account, new_operator_near_sdk_account);
+
+    let roles = context.get_roles().await?;
+    assert!(roles.temp_operator.is_none());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_set_treasury() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    let new_treasury_account = context.worker.dev_create_account().await?;
+    let new_treasury_near_sdk_account = near_sdk::AccountId::new_unchecked(new_treasury_account.id().to_string());
+
+    println!("setting treasury");
+    context.set_treasury(&new_treasury_account.id().clone()).await?;
+
+    let roles = context.get_roles().await?;
+    assert_eq!(roles.temp_treasury, Some(new_treasury_near_sdk_account.clone()));
+
+    println!("commit treasury!");
+    context.commit_treasury(&new_treasury_account).await?;
+
+    let roles = context.get_roles().await?;
+
+    assert_eq!(roles.treasury_account, new_treasury_near_sdk_account);
+
+    let roles = context.get_roles().await?;
+    assert!(roles.temp_treasury.is_none());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_reward_fee_set() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    context.set_reward_fee(Fraction::new(6, 100)).await?;
+
+    let nearx_pool_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_pool_state.temp_reward_fee.unwrap().numerator, 6);
+    assert_eq!(nearx_pool_state.temp_reward_fee.unwrap().denominator, 100);
+
+    context.worker.fast_forward(ONE_EPOCH).await?;
+
+    assert!(context.commit_reward_fee().await.is_err());
+
+    context.worker.fast_forward(5 * ONE_EPOCH).await?;
+
+    context.commit_reward_fee().await?;
+
+    let nearx_pool_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_pool_state.rewards_fee_pct.numerator, 6);
+    assert_eq!(nearx_pool_state.rewards_fee_pct.denominator, 100);
+    assert!(nearx_pool_state.temp_reward_fee.is_none());
+
+    Ok(())
+}
+
 #[tokio::test]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(3).await?;
+    let old_contract = "./../../res/near_x_d0880d47fc3410398ecf984308d7c86a9b5a7513.wasm";
 
-    let new_contract = "./../../res/near_x_2.wasm";
+    println!("Deploying old contract!");
+    let mut context = IntegrationTestContext::new(3, Some(old_contract)).await?;
 
+    let new_contract = "./../../res/near_x.wasm";
+
+    context.set_reward_fee(Fraction::new(5, 100)).await?;
+    assert!(context.commit_reward_fee().await.is_err());
+
+    println!("Reading the new contract!");
     let nearx_2_wasm = std::fs::read(new_contract)?;
-
-    let res = context.post_upgrade_function().await;
-    assert!(res.is_err());
 
     context.upgrade(nearx_2_wasm).await?;
 
-    let res = context.post_upgrade_function().await?;
-    assert_eq!(res, "post upgrade function successfully run!".to_string());
+    // test reward fee setting and commiting
+    context.set_reward_fee(Fraction::new(10, 100)).await?;
+    context.worker.fast_forward(5 * ONE_EPOCH).await?;
+    context.commit_reward_fee().await?;
+
+    let nearx_pool_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_pool_state.rewards_fee_pct.numerator, 10);
+    assert_eq!(nearx_pool_state.rewards_fee_pct.denominator, 100);
 
     Ok(())
 }
 
 #[tokio::test]
 async fn test_all_epochs_paused() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(3).await?;
+    let mut context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch = context.get_current_epoch().await?;
 
@@ -125,7 +236,7 @@ async fn test_all_epochs_paused() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_system_with_no_validators() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(0).await?;
+    let mut context = IntegrationTestContext::new(0, None).await?;
 
     // deposit and unstake
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -250,7 +361,7 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(3).await?;
+    let mut context = IntegrationTestContext::new(3, None).await?;
 
     context
         .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(0).id().clone())
@@ -302,7 +413,7 @@ async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_validator_selection_with_0_weight() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(3).await?;
+    let mut context = IntegrationTestContext::new(3, None).await?;
 
     context.add_validator(20).await?;
     context.add_validator(20).await?;
@@ -599,7 +710,7 @@ async fn test_validator_selection_with_0_weight() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_validator_selection() -> anyhow::Result<()> {
-    let mut context = IntegrationTestContext::new(3).await?;
+    let mut context = IntegrationTestContext::new(3, None).await?;
 
     /// All validators have equal weight
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -920,7 +1031,7 @@ async fn test_validator_selection() -> anyhow::Result<()> {
 /// Test ft_on_transfer
 #[tokio::test]
 async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // get 10 Nearx
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -950,7 +1061,7 @@ async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_ft_on_transfer() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // get 10 Nearx
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -997,7 +1108,7 @@ async fn test_ft_on_transfer() -> anyhow::Result<()> {
 /// Stake pool deposit_and_stake failures
 #[tokio::test]
 async fn test_stake_pool_failures_deposit() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
 
@@ -1132,7 +1243,7 @@ async fn test_stake_pool_failures_deposit() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stake_pool_failures_unstake() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
 
@@ -1370,7 +1481,7 @@ async fn test_stake_pool_failures_unstake() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_stake_pool_failures_withdraw() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
 
@@ -1666,7 +1777,7 @@ async fn test_stake_pool_failures_withdraw() -> anyhow::Result<()> {
 /// User flow specific integration tests
 #[tokio::test]
 async fn test_eight_epochs_user_flows() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
     println!("current_epoch_1 is {:?}", current_epoch_1);
@@ -1779,18 +1890,31 @@ async fn test_eight_epochs_user_flows() -> anyhow::Result<()> {
 
     context.worker.fast_forward(ONE_EPOCH).await?;
 
-    let current_epoch_2 = context.get_current_epoch().await?;
-
-    context.deposit(&context.user1, ntoy(5)).await?;
-    context.deposit(&context.user2, ntoy(5)).await?;
-    context.unstake(&context.user1, U128(ntoy(5))).await?;
-
     context
         .set_reward_fee(Fraction {
             numerator: 10,
             denominator: 100,
         })
         .await?;
+    context.worker.fast_forward(4 * ONE_EPOCH).await?;
+    context.commit_reward_fee().await?;
+
+    let reward_fee = context.get_reward_fee().await?;
+    assert_eq!(reward_fee.numerator, 10);
+    assert_eq!(reward_fee.denominator, 100);
+
+    context.worker.fast_forward(5 * ONE_EPOCH).await?;
+
+    context.deposit(&context.user1, ntoy(5)).await?;
+    context.deposit(&context.user2, ntoy(5)).await?;
+    context.unstake(&context.user1, U128(ntoy(5))).await?;
+
+    let current_epoch_2 = context.get_current_epoch().await?;
+
+    println!(
+        "current_epoch_2_post_reward_fee_set is {:?}",
+        current_epoch_2
+    );
 
     context
         .add_stake_pool_rewards(U128(ntoy(10)), context.get_stake_pool_contract(0))
@@ -1922,8 +2046,6 @@ async fn test_eight_epochs_user_flows() -> anyhow::Result<()> {
 
     context.unstake(&context.user1, U128(ntoy(5))).await?;
     context.unstake(&context.user3, U128(ntoy(5))).await?;
-    let res = context.withdraw_all(&context.user2).await;
-    assert!(res.is_err());
 
     context
         .add_stake_pool_rewards(U128(ntoy(10)), context.get_stake_pool_contract(0))
@@ -2142,7 +2264,7 @@ async fn test_eight_epochs_user_flows() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_bank_run() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
     println!("current_epoch_1 is {:?}", current_epoch_1);
@@ -2467,7 +2589,7 @@ async fn test_bank_run() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() -> anyhow::Result<()>
 {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
     println!("current_epoch_1 is {:?}", current_epoch_1);
@@ -2881,7 +3003,7 @@ async fn test_user_deposit_unstake_autcompounding_withdraw_with_grouped_epoch() 
 /// Fuzzy integration tests
 #[tokio::test]
 async fn test_validator_balance_sync() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -3013,7 +3135,7 @@ async fn test_validator_balance_sync() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_validator_removal() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // Add deposits to validator 1
     let current_epoch_1 = context.get_current_epoch().await?;
@@ -3174,7 +3296,7 @@ async fn test_validator_removal() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_involved(
 ) -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
 
@@ -3592,7 +3714,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_all_validators_invo
 
 #[tokio::test]
 async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // User 1 stakes
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -4305,7 +4427,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
 /// Happy flows of testing
 #[tokio::test]
 async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // User 1 deposits 10N
     context.deposit(&context.user1, ntoy(10)).await?;
@@ -4880,7 +5002,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
 
 #[tokio::test]
 async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // User 1 deposit
     // User 2 deposit
@@ -5286,7 +5408,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
 // Tests: Deposit and stake with epoch
 #[tokio::test]
 async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // Deposit for the 3 users
     // Add user deposits
@@ -5402,7 +5524,7 @@ async fn test_deposit_and_stake_with_epoch() -> anyhow::Result<()> {
 // Tests: Unstake with a withdraw following up
 #[tokio::test]
 async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // Deposit for the 3 users
     // Add user deposits
@@ -5711,7 +5833,7 @@ async fn test_stake_unstake_and_withdraw_flow_happy_flow() -> anyhow::Result<()>
 // Tests: Autocompound with treasury rewards and autocompound in the same epoch
 #[tokio::test]
 async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
@@ -5791,6 +5913,9 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
             denominator: 100,
         })
         .await?;
+    context.worker.fast_forward(5 * ONE_EPOCH).await?;
+    context.commit_reward_fee().await?;
+
     let reward_fee = context.get_reward_fee().await?;
     assert_eq!(reward_fee.numerator, 10);
     assert_eq!(reward_fee.denominator, 100);
@@ -5977,7 +6102,7 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
     println!("***** Step 1: Initialization *****");
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     // Auto compound
     println!("autocompounding!");
@@ -6012,7 +6137,7 @@ async fn test_autocompound_with_no_stake() -> anyhow::Result<()> {
 #[tokio::test]
 async fn test_deposit_flows() -> anyhow::Result<()> {
     println!("***** Step 1: Initialization *****");
-    let context = IntegrationTestContext::new(3).await?;
+    let context = IntegrationTestContext::new(3, None).await?;
 
     let current_epoch_1 = context.get_current_epoch().await?;
 
