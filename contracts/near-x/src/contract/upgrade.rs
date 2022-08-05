@@ -29,6 +29,7 @@ impl NearxPool {
             operator_account_id: contract.operator_account_id,
             treasury_account_id: contract.treasury_account_id,
             rewards_fee: contract.rewards_fee,
+            rewards_buffer: 0,
             temp_owner: contract.temp_owner,
             temp_operator: None,
             temp_treasury: None,

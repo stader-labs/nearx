@@ -46,12 +46,20 @@ impl NearxPool {
             },
             treasury_account_id,
             total_validator_weight: 0,
+            rewards_buffer: 0
         }
     }
 
     /*
        Main staking pool api
     */
+    #[payable]
+    pub fn update_rewards_buffer(&mut self) {
+        self.assert_operator_or_owner();
+        self.internal_update_rewards_buffer(env::attached_deposit())
+    }
+
+
     #[payable]
     pub fn manager_deposit_and_stake(&mut self, validator: AccountId) {
         self.assert_owner_calling();
