@@ -60,7 +60,11 @@ pub struct NearxPoolStateResponse {
     /// Last epoch height stake/unstake amount were reconciled
     pub last_reconcilation_epoch: U64,
 
-    pub temp_reward_fee: Option<Fraction>
+    pub temp_reward_fee: Option<Fraction>,
+
+    pub rewards_buffer: U128,
+
+    pub last_reward_fee_set_epoch: EpochHeight,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

@@ -456,10 +456,13 @@ impl NearxPool {
             .saturating_sub(self.reconciled_epoch_stake_amount);
 
         if reconciled_unstake_amount > self.rewards_buffer {
-            reconciled_unstake_amount = reconciled_unstake_amount.saturating_sub(self.rewards_buffer);
+            reconciled_unstake_amount =
+                reconciled_unstake_amount.saturating_sub(self.rewards_buffer);
             self.rewards_buffer = 0;
         } else {
-            self.rewards_buffer = self.rewards_buffer.saturating_sub(reconciled_unstake_amount);
+            self.rewards_buffer = self
+                .rewards_buffer
+                .saturating_sub(reconciled_unstake_amount);
             reconciled_unstake_amount = 0;
         }
 

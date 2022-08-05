@@ -144,14 +144,6 @@ pub struct LegacyNearxPool {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
-    fn on_stake_pool_deposit_and_stake_direct(
-        &mut self,
-        validator_info: ValidatorInfo,
-        amount: u128,
-        shares: u128,
-        user: AccountId,
-    ) -> PromiseOrValue<bool>;
-
     fn on_stake_pool_deposit_and_stake_manager(
         &mut self,
         validator_info: ValidatorInfo,
@@ -170,30 +162,11 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_stake_pool_drain_withdraw(&mut self, validator_id: AccountId, amount_to_withdraw: u128);
 
-    fn on_get_sp_total_balance(
-        &mut self,
-        validator_info: ValidatorInfo,
-        #[callback] total_balance: U128,
-    );
-
     fn on_get_sp_staked_balance_for_rewards(
         &mut self,
         validator_info: ValidatorInfo,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool>;
-
-    fn on_get_sp_staked_balance_reconcile(
-        &mut self,
-        validator_info: ValidatorInfo,
-        amount_actually_staked: u128,
-        #[callback] total_staked_balance: U128,
-    );
-
-    fn on_get_sp_unstaked_balance(
-        &mut self,
-        validator_info: ValidatorInfo,
-        #[callback] unstaked_balance: U128,
-    );
 
     fn on_stake_pool_get_account(
         &mut self,

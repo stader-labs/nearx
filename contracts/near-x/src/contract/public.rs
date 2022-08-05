@@ -46,7 +46,7 @@ impl NearxPool {
             },
             treasury_account_id,
             total_validator_weight: 0,
-            rewards_buffer: 0
+            rewards_buffer: 0,
         }
     }
 
@@ -58,7 +58,6 @@ impl NearxPool {
         self.assert_operator_or_owner();
         self.internal_update_rewards_buffer(env::attached_deposit())
     }
-
 
     #[payable]
     pub fn manager_deposit_and_stake(&mut self, validator: AccountId) {
@@ -249,7 +248,10 @@ impl NearxPool {
         assert_one_yocto();
 
         if let Some(temp_operator) = self.temp_operator.clone() {
-            require!(env::predecessor_account_id() == temp_operator, ERROR_UNAUTHORIZED);
+            require!(
+                env::predecessor_account_id() == temp_operator,
+                ERROR_UNAUTHORIZED
+            );
             self.operator_account_id = temp_operator;
             self.temp_operator = None;
 
@@ -281,7 +283,10 @@ impl NearxPool {
         assert_one_yocto();
 
         if let Some(temp_treasury) = self.temp_treasury.clone() {
-            require!(env::predecessor_account_id() == temp_treasury, ERROR_UNAUTHORIZED);
+            require!(
+                env::predecessor_account_id() == temp_treasury,
+                ERROR_UNAUTHORIZED
+            );
             self.treasury_account_id = temp_treasury;
             self.temp_treasury = None;
 
@@ -408,10 +413,18 @@ impl NearxPool {
         self.get_account(account_id).staked_balance
     }
 
+    pub fn get_account_unstaked_balance(&self, account_id: AccountId) -> U128 {
+        self.get_account(account_id).unstaked_balance
+    }
+
     pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
         let acc = self.internal_get_account(&account_id);
         self.staked_amount_from_num_shares_rounded_down(acc.stake_shares)
             .into()
+    }
+
+    pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
+        self.get_account(account_id).can_withdraw
     }
 
     pub fn get_owner_id(&self) -> AccountId {
@@ -422,7 +435,12 @@ impl NearxPool {
         self.rewards_fee
     }
 
-    pub fn get_total_staked(&self) -> U128 {
+    /// Returns true if the staking is paused
+    pub fn is_staking_paused(&self) -> bool {
+        self.operations_control.stake_paused
+    }
+
+    pub fn get_total_staked_balance(&self) -> U128 {
         U128::from(self.total_staked)
     }
 
@@ -445,7 +463,7 @@ impl NearxPool {
         self.operations_control
     }
 
-    pub fn get_account(&self, account_id: AccountId) -> AccountResponse {
+    pub fn get_user_account(&self, account_id: AccountId) -> AccountResponse {
         let account = self.internal_get_account(&account_id);
         AccountResponse {
             account_id,
@@ -454,6 +472,18 @@ impl NearxPool {
                 .staked_amount_from_num_shares_rounded_down(account.stake_shares)
                 .into(),
             withdrawable_epoch: U64(account.withdrawable_epoch_height),
+        }
+    }
+
+    pub fn get_account(&self, account_id: AccountId) -> HumanReadableAccount {
+        let account = self.internal_get_account(&account_id);
+        HumanReadableAccount {
+            account_id,
+            unstaked_balance: U128(account.unstaked_amount),
+            staked_balance: self
+                .staked_amount_from_num_shares_rounded_down(account.stake_shares)
+                .into(),
+            can_withdraw: account.withdrawable_epoch_height >= env::epoch_height(),
         }
     }
 
@@ -474,7 +504,7 @@ impl NearxPool {
             .collect()
     }
 
-    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<AccountResponse> {
+    pub fn get_accounts(&self, from_index: u64, limit: u64) -> Vec<HumanReadableAccount> {
         let keys = self.accounts.keys_as_vector();
         (from_index..std::cmp::min(from_index + limit, keys.len()))
             .map(|index| self.get_account(keys.get(index).unwrap()))
@@ -496,7 +526,9 @@ impl NearxPool {
             reconciled_epoch_stake_amount: U128(self.reconciled_epoch_stake_amount),
             reconciled_epoch_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
             last_reconcilation_epoch: U64(self.last_reconcilation_epoch),
-            temp_reward_fee: self.temp_reward_fee
+            temp_reward_fee: self.temp_reward_fee,
+            rewards_buffer: U128(self.rewards_buffer),
+            last_reward_fee_set_epoch: self.last_reward_fee_set_epoch,
         }
     }
 

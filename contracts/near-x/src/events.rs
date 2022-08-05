@@ -187,6 +187,10 @@ pub enum Event {
         old_min_deposit: U128,
         new_min_deposit: U128,
     },
+    UpdateRewardBuffer {
+        amount_added: U128,
+        new_reward_buffer: U128,
+    },
 }
 
 impl Event {
