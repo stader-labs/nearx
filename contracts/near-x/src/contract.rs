@@ -74,6 +74,8 @@ pub struct NearxPool {
 
     pub rewards_buffer: u128,
 
+    pub accumulated_rewards_buffer: u128,
+
     // Temp owner for owner update
     // This is to have 2 commit owner update
     pub temp_owner: Option<AccountId>,

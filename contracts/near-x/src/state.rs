@@ -64,6 +64,8 @@ pub struct NearxPoolStateResponse {
 
     pub rewards_buffer: U128,
 
+    pub accumulated_rewards_buffer: U128,
+
     pub last_reward_fee_set_epoch: EpochHeight,
 }
 

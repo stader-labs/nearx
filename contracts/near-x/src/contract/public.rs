@@ -47,6 +47,7 @@ impl NearxPool {
             treasury_account_id,
             total_validator_weight: 0,
             rewards_buffer: 0,
+            accumulated_rewards_buffer: 0,
         }
     }
 
@@ -527,6 +528,7 @@ impl NearxPool {
             last_reconcilation_epoch: U64(self.last_reconcilation_epoch),
             temp_reward_fee: self.temp_reward_fee,
             rewards_buffer: U128(self.rewards_buffer),
+            accumulated_rewards_buffer: U128(self.accumulated_rewards_buffer),
             last_reward_fee_set_epoch: self.last_reward_fee_set_epoch,
         }
     }

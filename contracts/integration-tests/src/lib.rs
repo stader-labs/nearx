@@ -5159,6 +5159,10 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(4500000000000000000000000));
+    assert_eq!(
+        nearx_state.accumulated_rewards_buffer,
+        U128(4500000000000000000000000)
+    );
 
     let nearx_price = context.get_nearx_price().await?;
     println!("nearx price is {:?}", nearx_price);
@@ -5394,6 +5398,10 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(3450000000000002503999491));
+    assert_eq!(
+        nearx_state.accumulated_rewards_buffer,
+        U128(7950000000000002503999491)
+    );
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
@@ -5503,6 +5511,10 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(2450000000000002503999490));
+    assert_eq!(
+        nearx_state.accumulated_rewards_buffer,
+        U128(7950000000000002503999491)
+    );
 
     context.unstaking_epoch().await?;
 

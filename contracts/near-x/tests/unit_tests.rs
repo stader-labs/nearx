@@ -221,6 +221,7 @@ fn test_update_rewards_buffer_success() {
 
     assert_eq!(contract.total_staked, ntoy(110));
     assert_eq!(contract.rewards_buffer, ntoy(10));
+    assert_eq!(contract.accumulated_rewards_buffer, ntoy(10));
 }
 
 #[test]
@@ -1313,7 +1314,7 @@ fn test_epoch_reconcilation_with_rewards_buffer() {
     context.epoch_height = 100;
     context.predecessor_account_id = operator_account();
     context.attached_deposit = ntoy(10);
-    testing_env!(context);
+    testing_env!(context.clone());
 
     contract.total_staked = ntoy(200);
 
@@ -1321,6 +1322,7 @@ fn test_epoch_reconcilation_with_rewards_buffer() {
 
     assert_eq!(contract.total_staked, ntoy(210));
     assert_eq!(contract.rewards_buffer, ntoy(10));
+    assert_eq!(contract.accumulated_rewards_buffer, ntoy(10));
 
     contract.last_reconcilation_epoch = 99;
     contract.user_amount_to_stake_in_epoch = ntoy(100);
@@ -1335,6 +1337,32 @@ fn test_epoch_reconcilation_with_rewards_buffer() {
     assert_eq!(contract.reconciled_epoch_unstake_amount, ntoy(40));
     assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(0));
     assert_eq!(contract.last_reconcilation_epoch, 100);
+    assert_eq!(contract.rewards_buffer, ntoy(0));
+    assert_eq!(contract.accumulated_rewards_buffer, ntoy(10));
+
+    contract.user_amount_to_unstake_in_epoch = ntoy(20);
+    contract.user_amount_to_stake_in_epoch = ntoy(0);
+    contract.reconciled_epoch_stake_amount = ntoy(0);
+    contract.reconciled_epoch_unstake_amount = ntoy(0);
+
+    context.epoch_height = 101;
+    context.predecessor_account_id = operator_account();
+    context.attached_deposit = ntoy(30);
+    testing_env!(context);
+
+    contract.update_rewards_buffer();
+
+    assert_eq!(contract.rewards_buffer, ntoy(30));
+    assert_eq!(contract.accumulated_rewards_buffer, ntoy(40));
+
+    contract.epoch_reconcilation();
+
+    assert_eq!(contract.rewards_buffer, ntoy(10));
+    assert_eq!(contract.accumulated_rewards_buffer, ntoy(40));
+    assert_eq!(contract.reconciled_epoch_unstake_amount, ntoy(0));
+    assert_eq!(contract.reconciled_epoch_stake_amount, ntoy(0));
+    assert_eq!(contract.user_amount_to_stake_in_epoch, ntoy(0));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(0));
 }
 
 #[test]
