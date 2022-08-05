@@ -5579,6 +5579,70 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
         }
     );
 
+    context.worker.fast_forward(6 * ONE_EPOCH).await?;
+
+    let current_epoch_5 = context.get_current_epoch().await?;
+
+    context.run_epoch_methods().await?;
+
+    let user1_balance_before_withdraw = context
+        .worker
+        .view_account(&context.user1.id().clone())
+        .await?
+        .balance;
+    context.withdraw_all(&context.user1).await?;
+    let user1_balance_after_withdraw = context
+        .worker
+        .view_account(&context.user1.id().clone())
+        .await?
+        .balance;
+
+    assert!(abs_diff_eq(
+        (user1_balance_after_withdraw - user1_balance_before_withdraw),
+        6000000000000000000000002,
+        ntoy(1)
+    ));
+
+    context.worker.fast_forward(3 * ONE_EPOCH).await?;
+
+    let current_epoch_6 = context.get_current_epoch().await?;
+
+    // Add staking rewards
+    context
+        .add_stake_pool_rewards(U128(ntoy(2)), context.get_stake_pool_contract(0))
+        .await?;
+    context
+        .add_stake_pool_rewards(U128(ntoy(2)), context.get_stake_pool_contract(1))
+        .await?;
+    context
+        .add_stake_pool_rewards(U128(ntoy(2)), context.get_stake_pool_contract(2))
+        .await?;
+
+    context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    println!("nearx_state is {:?}", nearx_state);
+    assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_6);
+    assert_eq!(nearx_state.total_staked, U128(42950000000000002503999487));
+    assert_eq!(
+        nearx_state.total_stake_shares,
+        U128(30537190082644628153703751)
+    );
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
+    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(0));
+    assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
+    assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
+    assert_eq!(nearx_state.rewards_buffer, U128(2450000000000002503999490));
+    assert_eq!(
+        nearx_state.accumulated_rewards_buffer,
+        U128(7950000000000002503999491)
+    );
+
+    let nearx_price = context.get_nearx_price().await?;
+    println!("nearx_price is {:?}", nearx_price);
+
+    assert_eq!(nearx_price, U128(1406481732070365438079500));
+
     Ok(())
 }
 
