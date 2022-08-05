@@ -14,6 +14,8 @@ pub const TEN_NEAR: u128 = 10 * ONE_NEAR;
 pub const K_NEAR: u128 = 1_000 * ONE_NEAR;
 
 pub const NUM_EPOCHS_TO_UNLOCK: EpochHeight = 4;
+// Number of epochs to wait for reward fee to set
+pub const REWARD_FEE_SET_WAIT_TIME: EpochHeight = 4;
 
 /// Storage keys
 pub const ACCOUNTS_MAP: &str = "A";

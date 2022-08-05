@@ -20,6 +20,9 @@ pub const ERROR_NON_POSITIVE_STAKE_SHARES: &str = "nearx to be minted must be gr
 
 /// Misc
 pub const ERROR_TEMP_OWNER_NOT_SET: &str = "Temp owner has not been set to any account";
+pub const ERROR_TEMP_OPERATOR_NOT_SET: &str = "Temp operator has not been set to any account";
+pub const ERROR_TEMP_TREASURY_NOT_SET: &str = "Temp treasury has not been set to any account";
+pub const ERROR_TEMP_REWARD_FEE_IS_NOT_SET: &str = "Temp reward fee is not set";
 pub const ERROR_UNAUTHORIZED: &str = "Unauthorized";
 pub const ERROR_MIN_DEPOSIT: &str = "Deposit should be greater than min deposit";
 pub const ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE: &str =
@@ -30,6 +33,8 @@ pub const ERROR_NOT_ENOUGH_GAS: &str = "Not enough pre-paid gas";
 pub const ERROR_REQUIRE_ONE_YOCTO_NEAR: &str = "Function requires at least one yocto near";
 pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on callback";
 pub const ERROR_MIN_DEPOSIT_TOO_HIGH: &str = "Min deposit too high";
+pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
+    "Still in wait period for reward fee to be set";
 
 /// Validator related errors
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";

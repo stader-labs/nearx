@@ -1,4 +1,4 @@
-use crate::constants::{ACCOUNTS_MAP, VALIDATOR_MAP};
+use crate::constants::{ACCOUNTS_MAP, REWARD_FEE_SET_WAIT_TIME, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
 use crate::{contract::*, state::*};
@@ -30,6 +30,10 @@ impl NearxPool {
             rewards_fee: Fraction::new(0, 1),
             last_reconcilation_epoch: 0,
             temp_owner: None,
+            temp_operator: None,
+            temp_treasury: None,
+            temp_reward_fee: None,
+            last_reward_fee_set_epoch: 0,
             operations_control: OperationControls {
                 stake_paused: false,
                 unstaked_paused: false,
@@ -214,7 +218,7 @@ impl NearxPool {
             }
             .emit();
         } else {
-            panic!("{}", ERROR_TEMP_OWNER_NOT_SET);
+            require!(false, ERROR_TEMP_OWNER_NOT_SET);
         }
     }
 
@@ -223,13 +227,31 @@ impl NearxPool {
         assert_one_yocto();
         self.assert_owner_calling();
 
-        Event::UpdateOperator {
+        Event::SetOperator {
             old_operator: self.operator_account_id.clone(),
             new_operator: new_operator_account_id.clone(),
         }
         .emit();
 
-        self.operator_account_id = new_operator_account_id;
+        self.temp_operator = Some(new_operator_account_id);
+    }
+
+    #[payable]
+    pub fn commit_operator_id(&mut self) {
+        assert_one_yocto();
+
+        if let Some(temp_operator) = self.temp_operator.clone() {
+            require!(env::predecessor_account_id() == temp_operator, ERROR_UNAUTHORIZED);
+            self.operator_account_id = temp_operator;
+            self.temp_operator = None;
+
+            Event::CommitOperator {
+                new_operator: self.operator_account_id.clone(),
+            }
+            .emit();
+        } else {
+            require!(false, ERROR_TEMP_OPERATOR_NOT_SET);
+        }
     }
 
     #[payable]
@@ -237,13 +259,31 @@ impl NearxPool {
         assert_one_yocto();
         self.assert_owner_calling();
 
-        Event::UpdateTreasury {
+        Event::SetTreasury {
             old_treasury_account: self.treasury_account_id.clone(),
             new_treasury_account: new_treasury_account_id.clone(),
         }
         .emit();
 
-        self.treasury_account_id = new_treasury_account_id;
+        self.temp_treasury = Some(new_treasury_account_id);
+    }
+
+    #[payable]
+    pub fn commit_treasury_id(&mut self) {
+        assert_one_yocto();
+
+        if let Some(temp_treasury) = self.temp_treasury.clone() {
+            require!(env::predecessor_account_id() == temp_treasury, ERROR_UNAUTHORIZED);
+            self.treasury_account_id = temp_treasury;
+            self.temp_treasury = None;
+
+            Event::CommitTreasury {
+                new_treasury_account: self.treasury_account_id.clone(),
+            }
+            .emit();
+        } else {
+            require!(false, ERROR_TEMP_TREASURY_NOT_SET);
+        }
     }
 
     #[payable]
@@ -303,13 +343,38 @@ impl NearxPool {
         require!((numerator * 100 / denominator) <= 10); // less than or equal to 10%
 
         let old_reward_fee = self.rewards_fee;
-        self.rewards_fee = Fraction::new(numerator, denominator);
+        let future_reward_fee = Fraction::new(numerator, denominator);
+        self.temp_reward_fee = Some(future_reward_fee);
+        self.last_reward_fee_set_epoch = env::epoch_height();
 
         Event::SetRewardFee {
             old_reward_fee,
-            new_reward_fee: self.rewards_fee,
+            new_reward_fee: future_reward_fee,
         }
         .emit();
+    }
+
+    #[payable]
+    pub fn commit_reward_fee(&mut self) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+
+        if self.temp_reward_fee.is_some() {
+            require!(
+                self.last_reward_fee_set_epoch + REWARD_FEE_SET_WAIT_TIME <= env::epoch_height(),
+                ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD
+            );
+
+            self.rewards_fee = self.temp_reward_fee.unwrap();
+            self.temp_reward_fee = None;
+
+            Event::CommitRewardFee {
+                commited_reward_fee: self.rewards_fee,
+            }
+            .emit();
+        } else {
+            require!(false, ERROR_TEMP_REWARD_FEE_IS_NOT_SET);
+        }
     }
 
     #[payable]
@@ -363,6 +428,8 @@ impl NearxPool {
             operator_account: self.operator_account_id.clone(),
             owner_account: self.owner_account_id.clone(),
             temp_owner: self.temp_owner.clone(),
+            temp_operator: self.temp_operator.clone(),
+            temp_treasury: self.temp_treasury.clone(),
         }
     }
 
@@ -421,6 +488,7 @@ impl NearxPool {
             reconciled_epoch_stake_amount: U128(self.reconciled_epoch_stake_amount),
             reconciled_epoch_unstake_amount: U128(self.reconciled_epoch_unstake_amount),
             last_reconcilation_epoch: U64(self.last_reconcilation_epoch),
+            temp_reward_fee: self.temp_reward_fee
         }
     }
 

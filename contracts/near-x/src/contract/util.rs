@@ -19,6 +19,20 @@ impl NearxPool {
         );
     }
 
+    pub fn assert_operator_calling(&self) {
+        require!(
+            env::predecessor_account_id() == self.operator_account_id,
+            ERROR_UNAUTHORIZED
+        );
+    }
+
+    pub fn assert_treasury_calling(&self) {
+        require!(
+            env::predecessor_account_id() == self.treasury_account_id,
+            ERROR_UNAUTHORIZED
+        );
+    }
+
     pub fn assert_min_deposit_amount(&self, amount: u128) {
         require!(amount >= self.min_deposit_amount, ERROR_MIN_DEPOSIT);
     }

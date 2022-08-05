@@ -59,6 +59,8 @@ pub struct NearxPoolStateResponse {
     pub reconciled_epoch_unstake_amount: U128,
     /// Last epoch height stake/unstake amount were reconciled
     pub last_reconcilation_epoch: U64,
+
+    pub temp_reward_fee: Option<Fraction>
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -199,6 +201,8 @@ pub struct RolesResponse {
     pub operator_account: AccountId,
     pub treasury_account: AccountId,
     pub temp_owner: Option<AccountId>,
+    pub temp_operator: Option<AccountId>,
+    pub temp_treasury: Option<AccountId>,
 }
 
 #[derive(Serialize, Deserialize)]

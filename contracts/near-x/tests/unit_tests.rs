@@ -973,16 +973,73 @@ fn test_set_reward_fee_success() {
     */
     contract.set_reward_fee(9, 100);
 
-    assert_eq!(contract.rewards_fee.numerator, 9);
-    assert_eq!(contract.rewards_fee.denominator, 100);
+    assert!(contract.temp_reward_fee.is_some());
+    assert_eq!(contract.temp_reward_fee.unwrap().numerator, 9);
+    assert_eq!(contract.temp_reward_fee.unwrap().denominator, 100);
 
     /*
         Set reward fee to 10%
     */
     contract.set_reward_fee(10, 100);
 
-    assert_eq!(contract.rewards_fee.numerator, 10);
+    assert!(contract.temp_reward_fee.is_some());
+    assert_eq!(contract.temp_reward_fee.unwrap().numerator, 10);
+    assert_eq!(contract.temp_reward_fee.unwrap().denominator, 100);
+}
+
+#[test]
+#[should_panic]
+fn test_commit_future_reward_fee_not_set() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 10;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    contract.commit_reward_fee();
+}
+
+#[test]
+#[should_panic]
+fn test_commit_future_reward_fee_in_wait_time() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 10;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    contract.temp_reward_fee = Some(Fraction::new(5, 100));
+    contract.last_reward_fee_set_epoch = 8;
+
+    contract.commit_reward_fee();
+}
+
+#[test]
+fn test_commit_future_reward_fee_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.epoch_height = 13;
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    contract.rewards_fee = Fraction::new(9, 100);
+    contract.temp_reward_fee = Some(Fraction::new(8, 100));
+    contract.last_reward_fee_set_epoch = 8;
+
+    contract.commit_reward_fee();
+
+    assert_eq!(contract.rewards_fee.numerator, 8);
     assert_eq!(contract.rewards_fee.denominator, 100);
+    assert!(contract.temp_reward_fee.is_none());
 }
 
 #[test]
@@ -2530,6 +2587,54 @@ fn test_set_operator_account() {
 }
 
 #[test]
+#[should_panic]
+fn test_commit_operator_account_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.commit_operator_id();
+}
+
+#[test]
+#[should_panic]
+fn test_commit_operator_account_not_set() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = operator_account();
+    context.signer_account_id = operator_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.commit_operator_id();
+}
+
+#[test]
+fn test_commit_operator_account_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_operator_account = AccountId::from_str("new_operator").unwrap();
+
+    context.predecessor_account_id = new_operator_account.clone();
+    context.signer_account_id = new_operator_account.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.temp_operator = Some(new_operator_account.clone());
+
+    contract.commit_operator_id();
+
+    assert_eq!(contract.operator_account_id, new_operator_account);
+    assert!(contract.temp_operator.is_none());
+}
+
+#[test]
 fn test_set_treasury_account() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2542,6 +2647,54 @@ fn test_set_treasury_account() {
     testing_env!(context.clone());
 
     contract.set_treasury_id(new_treasury_account);
+}
+
+#[test]
+#[should_panic]
+fn test_commit_treasury_account_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.commit_treasury_id();
+}
+
+#[test]
+#[should_panic]
+fn test_commit_treasury_account_not_set() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = treasury_account();
+    context.signer_account_id = treasury_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.commit_treasury_id();
+}
+
+#[test]
+fn test_commit_treasury_account_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let new_treasury_account = AccountId::from_str("new_treasury").unwrap();
+
+    context.predecessor_account_id = new_treasury_account.clone();
+    context.signer_account_id = new_treasury_account.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.temp_treasury = Some(new_treasury_account.clone());
+
+    contract.commit_treasury_id();
+
+    assert_eq!(contract.treasury_account_id, new_treasury_account);
+    assert!(contract.temp_treasury.is_none());
 }
 
 #[test]
