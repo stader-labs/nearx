@@ -435,7 +435,6 @@ impl NearxPool {
         self.rewards_fee
     }
 
-    /// Returns true if the staking is paused
     pub fn is_staking_paused(&self) -> bool {
         self.operations_control.stake_paused
     }
