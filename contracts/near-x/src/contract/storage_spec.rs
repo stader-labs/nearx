@@ -5,8 +5,9 @@ use near_contract_standards::storage_management::{
 };
 use near_sdk::{assert_one_yocto, env, log, AccountId, Balance, Promise};
 
-/// Temporarily set fixed storage amount to be compatible with standard FT implementation
-const STORAGE_AMOUNT_BYTES: usize = 300;
+/// Fixed amount of storage bytes. The contract is light weight in terms of storage amount.
+/// The below storage spec should cover all storage needs of the contract
+const STORAGE_AMOUNT_BYTES: usize = 250;
 
 impl NearxPool {
     pub(crate) fn internal_storage_balance_of(
