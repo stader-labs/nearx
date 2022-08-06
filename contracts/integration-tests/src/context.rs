@@ -1,5 +1,6 @@
 use crate::constants::ONE_EPOCH;
 use crate::helpers::ntoy;
+use crate::legacy_types::{LegacyNearxPoolStateResponse, LegacyRolesResponse};
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
@@ -80,15 +81,6 @@ impl IntegrationTestContext<Sandbox> {
             "Deploying validator stake pool contracts for {:?}",
             validator_count
         );
-        let storage_usage_before_contract_seed = nearx_contract
-            .call(&worker, "get_storage_usage")
-            .view()
-            .await?
-            .json::<U64>()?;
-        println!(
-            "storage_usage_before_contract_seed is {:?}",
-            storage_usage_before_contract_seed
-        );
 
         for i in 0..validator_count {
             let stake_pool_contract = worker.dev_deploy(&stake_pool_wasm).await?;
@@ -130,16 +122,6 @@ impl IntegrationTestContext<Sandbox> {
                 .await?;
             println!("Seed with manager deposit of 5N");
         }
-
-        let storage_usage_after_contract_seed = nearx_contract
-            .call(&worker, "get_storage_usage")
-            .view()
-            .await?
-            .json::<U64>()?;
-        println!(
-            "storage_usage_after_contract_seed is {:?}",
-            storage_usage_after_contract_seed
-        );
 
         println!("Fast forward to around 10 epochs");
         worker.fast_forward(10 * ONE_EPOCH).await?;
@@ -740,6 +722,27 @@ impl IntegrationTestContext<Sandbox> {
             .json::<AccountResponse>()
     }
 
+    pub async fn get_legacy_user_account(
+        &self,
+        user: AccountId,
+    ) -> anyhow::Result<AccountResponse> {
+        self.nearx_contract
+            .call(&self.worker, "get_account")
+            .args_json(json!({ "account_id": user }))?
+            .view()
+            .await?
+            .json::<AccountResponse>()
+    }
+
+    pub async fn get_account(&self, user: AccountId) -> anyhow::Result<HumanReadableAccount> {
+        self.nearx_contract
+            .call(&self.worker, "get_account")
+            .args_json(json!({ "account_id": user }))?
+            .view()
+            .await?
+            .json::<HumanReadableAccount>()
+    }
+
     pub async fn get_validator_info(
         &self,
         validator: AccountId,
@@ -775,6 +778,14 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<NearxPoolStateResponse>()
+    }
+
+    pub async fn get_legacy_nearx_state(&self) -> anyhow::Result<LegacyNearxPoolStateResponse> {
+        self.nearx_contract
+            .call(&self.worker, "get_nearx_pool_state")
+            .view()
+            .await?
+            .json::<LegacyNearxPoolStateResponse>()
     }
 
     pub async fn get_total_staked_amount(&self) -> anyhow::Result<U128> {
@@ -825,14 +836,6 @@ impl IntegrationTestContext<Sandbox> {
             .json::<U64>()
     }
 
-    pub async fn get_storage_usage(&self) -> anyhow::Result<U64> {
-        self.nearx_contract
-            .call(&self.worker, "get_storage_usage")
-            .view()
-            .await?
-            .json::<U64>()
-    }
-
     pub async fn get_reward_fee(&self) -> anyhow::Result<Fraction> {
         self.nearx_contract
             .call(&self.worker, "get_reward_fee_fraction")
@@ -864,6 +867,14 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<RolesResponse>()
+    }
+
+    pub async fn get_legacy_roles(&self) -> anyhow::Result<LegacyRolesResponse> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "get_roles")
+            .view()
+            .await?
+            .json::<LegacyRolesResponse>()
     }
 
     pub async fn get_operations_controls(&self) -> anyhow::Result<OperationControls> {
