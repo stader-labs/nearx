@@ -483,7 +483,7 @@ impl NearxPool {
             staked_balance: self
                 .staked_amount_from_num_shares_rounded_down(account.stake_shares)
                 .into(),
-            can_withdraw: account.withdrawable_epoch_height >= env::epoch_height(),
+            can_withdraw: account.withdrawable_epoch_height <= env::epoch_height(),
         }
     }
 
