@@ -1,6 +1,7 @@
 mod constants;
 mod context;
 mod helpers;
+mod legacy_types;
 
 use crate::constants::ONE_EPOCH;
 use crate::helpers::{abs_diff_eq, ntoy};
@@ -5017,6 +5018,12 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
 async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Result<()> {
     let context = IntegrationTestContext::new(3, None).await?;
 
+    let storage_usage_before_interactions = context.get_storage_usage().await?;
+    println!(
+        "storage_usage_before_interactions is {:?}",
+        storage_usage_before_interactions
+    );
+
     let current_epoch_1 = context.get_current_epoch().await?;
 
     println!("User 1 depositing");
@@ -5642,6 +5649,12 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
     println!("nearx_price is {:?}", nearx_price);
 
     assert_eq!(nearx_price, U128(1406481732070365438079500));
+
+    let storage_usage_after_interactions = context.get_storage_usage().await?;
+    println!(
+        "storage_usage_after_interactions is {:?}",
+        storage_usage_after_interactions
+    );
 
     Ok(())
 }

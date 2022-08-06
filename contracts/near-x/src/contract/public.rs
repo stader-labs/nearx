@@ -511,6 +511,10 @@ impl NearxPool {
             .collect()
     }
 
+    pub fn get_storage_usage(&self) -> U64 {
+        U64(env::storage_usage())
+    }
+
     // Contract state query
     pub fn get_nearx_pool_state(&self) -> NearxPoolStateResponse {
         NearxPoolStateResponse {

@@ -1,8 +1,8 @@
-mod empty_storage_spec;
 mod internal;
 mod metadata;
 mod operator;
 mod public;
+mod storage_spec;
 mod upgrade;
 mod util;
 

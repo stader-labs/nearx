@@ -80,6 +80,16 @@ impl IntegrationTestContext<Sandbox> {
             "Deploying validator stake pool contracts for {:?}",
             validator_count
         );
+        let storage_usage_before_contract_seed = nearx_contract
+            .call(&worker, "get_storage_usage")
+            .view()
+            .await?
+            .json::<U64>()?;
+        println!(
+            "storage_usage_before_contract_seed is {:?}",
+            storage_usage_before_contract_seed
+        );
+
         for i in 0..validator_count {
             let stake_pool_contract = worker.dev_deploy(&stake_pool_wasm).await?;
             let validator_account_id = get_validator_account_id(i);
@@ -120,6 +130,16 @@ impl IntegrationTestContext<Sandbox> {
                 .await?;
             println!("Seed with manager deposit of 5N");
         }
+
+        let storage_usage_after_contract_seed = nearx_contract
+            .call(&worker, "get_storage_usage")
+            .view()
+            .await?
+            .json::<U64>()?;
+        println!(
+            "storage_usage_after_contract_seed is {:?}",
+            storage_usage_after_contract_seed
+        );
 
         println!("Fast forward to around 10 epochs");
         worker.fast_forward(10 * ONE_EPOCH).await?;
@@ -800,6 +820,14 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn get_current_epoch(&self) -> anyhow::Result<U64> {
         self.nearx_contract
             .call(&self.worker, "get_current_epoch")
+            .view()
+            .await?
+            .json::<U64>()
+    }
+
+    pub async fn get_storage_usage(&self) -> anyhow::Result<U64> {
+        self.nearx_contract
+            .call(&self.worker, "get_storage_usage")
             .view()
             .await?
             .json::<U64>()
