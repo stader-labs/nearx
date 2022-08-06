@@ -2,7 +2,6 @@ target/
 .idea/
 .vscode/
 neardev/
-res/
 .env
 .DS_Store
 **/dist/
