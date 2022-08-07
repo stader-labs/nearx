@@ -12,6 +12,18 @@ use near_sdk::{
 
 #[near_bindgen]
 impl NearxPool {
+    pub(crate) fn internal_update_rewards_buffer(&mut self, rewards_amount: Balance) {
+        self.total_staked += rewards_amount;
+        self.rewards_buffer += rewards_amount;
+        self.accumulated_rewards_buffer += rewards_amount;
+
+        Event::UpdateRewardBuffer {
+            amount_added: U128(rewards_amount),
+            new_reward_buffer: U128(self.rewards_buffer),
+        }
+        .emit();
+    }
+
     pub(crate) fn internal_manager_deposit_and_stake(
         &mut self,
         user_amount: Balance,

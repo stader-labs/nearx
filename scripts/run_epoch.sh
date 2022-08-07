@@ -14,6 +14,8 @@ near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_11"
 
 near call $CONTRACT_NAME staking_epoch --accountId=$ID --gas=300000000000000;
 
+near call $CONTRACT_NAME update_rewards_buffer --accountId=$ID --gas=300000000000000 --amount=3;
+
 # run till false is returned
 near call $CONTRACT_NAME unstaking_epoch --accountId=$ID --gas=300000000000000;
 

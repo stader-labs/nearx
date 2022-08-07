@@ -1,5 +1,6 @@
 use crate::constants::ONE_EPOCH;
 use crate::helpers::ntoy;
+use crate::legacy_types::{LegacyNearxPoolStateResponse, LegacyRolesResponse};
 use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
@@ -80,6 +81,7 @@ impl IntegrationTestContext<Sandbox> {
             "Deploying validator stake pool contracts for {:?}",
             validator_count
         );
+
         for i in 0..validator_count {
             let stake_pool_contract = worker.dev_deploy(&stake_pool_wasm).await?;
             let validator_account_id = get_validator_account_id(i);
@@ -268,13 +270,23 @@ impl IntegrationTestContext<Sandbox> {
             }
         }
 
-        // Run the validator balance syncing epoch
-        // for i in 0..self.validator_count {
-        //     self.sync_validator_balances(self.get_stake_pool_contract(i).id().clone())
-        //         .await?;
-        // }
-
         Ok(())
+    }
+
+    pub async fn update_rewards_buffer(
+        &self,
+        amount: u128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "update_rewards_buffer",
+            )
+            .deposit(amount)
+            .max_gas()
+            .transact()
+            .await
     }
 
     pub async fn set_owner(&self, new_owner: &AccountId) -> anyhow::Result<CallExecutionDetails> {
@@ -296,7 +308,10 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn set_operator(&self, new_operator: &AccountId) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn set_operator(
+        &self,
+        new_operator: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
             .call(&self.worker, self.nearx_contract.id(), "set_operator_id")
             .args_json(json!({ "new_operator_account_id": new_operator.clone() }))?
@@ -306,7 +321,10 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn commit_operator(&self, new_operator: &Account) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn commit_operator(
+        &self,
+        new_operator: &Account,
+    ) -> anyhow::Result<CallExecutionDetails> {
         new_operator
             .call(&self.worker, self.nearx_contract.id(), "commit_operator_id")
             .deposit(1)
@@ -315,7 +333,10 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn set_treasury(&self, new_treasury_id: &AccountId) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn set_treasury(
+        &self,
+        new_treasury_id: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_owner
             .call(&self.worker, self.nearx_contract.id(), "set_treasury_id")
             .args_json(json!({ "new_treasury_account_id": new_treasury_id.clone() }))?
@@ -325,7 +346,10 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn commit_treasury(&self, new_treasury_id: &Account) -> anyhow::Result<CallExecutionDetails> {
+    pub async fn commit_treasury(
+        &self,
+        new_treasury_id: &Account,
+    ) -> anyhow::Result<CallExecutionDetails> {
         new_treasury_id
             .call(&self.worker, self.nearx_contract.id(), "commit_treasury_id")
             .deposit(1)
@@ -680,7 +704,7 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn get_user_deposit(&self, user: AccountId) -> anyhow::Result<U128> {
         let result = self
             .nearx_contract
-            .call(&self.worker, "get_account")
+            .call(&self.worker, "get_user_account")
             .args_json(json!({ "account_id": user }))?
             .view()
             .await?
@@ -691,11 +715,32 @@ impl IntegrationTestContext<Sandbox> {
 
     pub async fn get_user_account(&self, user: AccountId) -> anyhow::Result<AccountResponse> {
         self.nearx_contract
+            .call(&self.worker, "get_user_account")
+            .args_json(json!({ "account_id": user }))?
+            .view()
+            .await?
+            .json::<AccountResponse>()
+    }
+
+    pub async fn get_legacy_user_account(
+        &self,
+        user: AccountId,
+    ) -> anyhow::Result<AccountResponse> {
+        self.nearx_contract
             .call(&self.worker, "get_account")
             .args_json(json!({ "account_id": user }))?
             .view()
             .await?
             .json::<AccountResponse>()
+    }
+
+    pub async fn get_account(&self, user: AccountId) -> anyhow::Result<HumanReadableAccount> {
+        self.nearx_contract
+            .call(&self.worker, "get_account")
+            .args_json(json!({ "account_id": user }))?
+            .view()
+            .await?
+            .json::<HumanReadableAccount>()
     }
 
     pub async fn get_validator_info(
@@ -735,9 +780,17 @@ impl IntegrationTestContext<Sandbox> {
             .json::<NearxPoolStateResponse>()
     }
 
+    pub async fn get_legacy_nearx_state(&self) -> anyhow::Result<LegacyNearxPoolStateResponse> {
+        self.nearx_contract
+            .call(&self.worker, "get_nearx_pool_state")
+            .view()
+            .await?
+            .json::<LegacyNearxPoolStateResponse>()
+    }
+
     pub async fn get_total_staked_amount(&self) -> anyhow::Result<U128> {
         self.nearx_contract
-            .call(&self.worker, "get_total_staked")
+            .call(&self.worker, "get_total_staked_balance")
             .view()
             .await?
             .json::<U128>()
@@ -814,6 +867,14 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<RolesResponse>()
+    }
+
+    pub async fn get_legacy_roles(&self) -> anyhow::Result<LegacyRolesResponse> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "get_roles")
+            .view()
+            .await?
+            .json::<LegacyRolesResponse>()
     }
 
     pub async fn get_operations_controls(&self) -> anyhow::Result<OperationControls> {

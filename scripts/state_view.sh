@@ -11,6 +11,7 @@ near view $CONTRACT_NAME get_total_validator_weight
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 
 near view $CONTRACT_NAME get_account '{"account_id":  "'"$ID"'"}'
+near view $CONTRACT_NAME get_user_account '{"account_id": "'"$ID"'"}'
 near view $CONTRACT_NAME get_account '{"account_id": "stader-treasury.near"}'
 
 near view $CONTRACT_NAME get_accounts '{"from_index": 0, "limit": 10}'
@@ -20,6 +21,9 @@ near view $CONTRACT_NAME get_current_epoch
 near view $CONTRACT_NAME get_reward_fee_fraction
 
 near view $CONTRACT_NAME get_roles
+
+# Storage deposit
+near view $CONTRACT_NAME storage_balance_of '{"account_id": "'"$ID"'"}'
 
 # FT queries
 near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
