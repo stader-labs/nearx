@@ -5,18 +5,15 @@ near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'", "weig
 
 # manager deposit
 near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_0"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_2"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_0"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=2 --gas=300000000000000;
 near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_2"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
 
 # 10 deposits
 for i in {1..3};
-do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
+do near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=5 --gas=300000000000000;
 done;
 
-near call $CONTRACT_NAME unstake '{"amount": "4000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
+near call $CONTRACT_NAME unstake '{"amount": "2000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 near call $CONTRACT_NAME storage_deposit --accountId=$ID --gas=300000000000000 --depositYocto=3000000000000000000000;
 
