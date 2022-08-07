@@ -14,7 +14,7 @@ impl FungibleTokenMetadataProvider for NearxPool {
             name: "NearX".to_string(),
             symbol: "NearX".to_string(),
             icon: Some(NEARX_LOGO.to_string()),
-            reference: Some("https://nearX.app".into()),
+            reference: Some("https://near.staderlabs.com".into()),
             reference_hash: None,
             decimals: 24,
         }
