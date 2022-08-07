@@ -1,5 +1,5 @@
-ID="<Enter sub account ID>"
-CONTRACT_NAME="<Enter Contract name>".$ID
+ID=staderlabs-test.near
+CONTRACT_NAME=testing-token.$ID
 
 # Create contract account
 near create-account $CONTRACT_NAME --masterAccount=$ID
