@@ -11,7 +11,7 @@ impl NearxPool {
     #[init(ignore_state)]
     #[private]
     pub fn migrate() -> Self {
-        let contract: LegacyNearxPool = env::state_read().expect("ERR_NOT_INITIALIZED");
+        let contract: LegacyNearxPoolV2 = env::state_read().expect("ERR_NOT_INITIALIZED");
         let new_contract: NearxPool = NearxPool {
             owner_account_id: contract.owner_account_id,
             total_staked: contract.total_staked,
@@ -29,14 +29,15 @@ impl NearxPool {
             operator_account_id: contract.operator_account_id,
             treasury_account_id: contract.treasury_account_id,
             rewards_fee: contract.rewards_fee,
-            rewards_buffer: 0,
-            accumulated_rewards_buffer: 0,
+            rewards_buffer: contract.rewards_buffer,
+            accumulated_rewards_buffer: contract.accumulated_rewards_buffer,
             temp_owner: contract.temp_owner,
-            temp_operator: None,
-            temp_treasury: None,
-            temp_reward_fee: None,
-            last_reward_fee_set_epoch: 0,
+            temp_operator: contract.temp_operator,
+            temp_treasury: contract.temp_treasury,
+            temp_reward_fee: contract.temp_reward_fee,
+            last_reward_fee_set_epoch: contract.last_reward_fee_set_epoch,
             operations_control: contract.operations_control,
+            min_storage_balance: 50 * ONE_NEAR
         };
         env::state_write(&new_contract);
         new_contract

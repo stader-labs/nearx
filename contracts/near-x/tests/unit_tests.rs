@@ -973,6 +973,56 @@ fn test_get_validator_to_stake() {
 
 #[test]
 #[should_panic]
+fn test_set_min_storage_balance_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = operator_account();
+    context.signer_account_id = operator_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    /*
+       Set reward fee more than 10%
+    */
+    contract.set_min_storage_balance(U128(ntoy(60)));
+}
+
+#[test]
+#[should_panic]
+fn test_set_min_storage_balance_below_50_near() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    /*
+       Set reward fee more than 10%
+    */
+    contract.set_min_storage_balance(U128(ntoy(40)));
+}
+
+#[test]
+fn test_set_min_storage_balance_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    /*
+       Set reward fee more than 10%
+    */
+    contract.set_min_storage_balance(U128(ntoy(60)));
+}
+
+#[test]
+#[should_panic]
 fn test_set_reward_fee_fail() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2798,7 +2848,21 @@ fn test_set_min_deposit_unauthorized() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(10));
+    contract.set_min_deposit(U128(ntoy(10)));
+}
+
+#[test]
+#[should_panic]
+fn test_set_min_deposit_less_than_one_near() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_min_deposit(U128(10000));
 }
 
 #[test]
@@ -2812,7 +2876,7 @@ fn test_set_min_deposit_more_than_100_near() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(200));
+    contract.set_min_deposit(U128(ntoy(200)));
 }
 
 #[test]
@@ -2825,7 +2889,7 @@ fn test_set_min_deposit() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(50));
+    contract.set_min_deposit(U128(ntoy(50)));
 
     assert_eq!(contract.min_deposit_amount, ntoy(50));
 }

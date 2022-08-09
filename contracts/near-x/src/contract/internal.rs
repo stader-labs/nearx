@@ -201,7 +201,7 @@ impl NearxPool {
         );
 
         require!(
-            env::account_balance().saturating_sub(MIN_BALANCE_FOR_STORAGE) >= amount,
+            env::account_balance().saturating_sub(self.min_storage_balance) >= amount,
             ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE
         );
 

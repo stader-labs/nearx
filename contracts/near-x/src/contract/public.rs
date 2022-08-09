@@ -48,6 +48,7 @@ impl NearxPool {
             total_validator_weight: 0,
             rewards_buffer: 0,
             accumulated_rewards_buffer: 0,
+            min_storage_balance: 50 * ONE_NEAR
         }
     }
 
@@ -351,10 +352,20 @@ impl NearxPool {
     }
 
     #[payable]
+    pub fn set_min_storage_balance(&mut self, min_storage_balance: U128) {
+        self.assert_owner_calling();
+        assert_one_yocto();
+
+        require!(min_storage_balance > U128(50 * ONE_NEAR));
+
+        self.min_storage_balance = min_storage_balance.0;
+    }
+
+    #[payable]
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
         assert_one_yocto();
-        require!((numerator * 100 / denominator) <= 10); // less than or equal to 10%
+        require!(numerator * 10 <= denominator); // less than or equal to 10%
 
         let old_reward_fee = self.rewards_fee;
         let future_reward_fee = Fraction::new(numerator, denominator);
@@ -392,14 +403,15 @@ impl NearxPool {
     }
 
     #[payable]
-    pub fn set_min_deposit(&mut self, min_deposit: u128) {
+    pub fn set_min_deposit(&mut self, min_deposit: U128) {
         self.assert_owner_calling();
         assert_one_yocto();
 
-        require!(min_deposit < 100 * ONE_NEAR, ERROR_MIN_DEPOSIT_TOO_HIGH);
+        require!(min_deposit > U128(1 * ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
+        require!(min_deposit < U128(100 * ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_HIGH);
 
         let old_min_deposit = self.min_deposit_amount;
-        self.min_deposit_amount = min_deposit;
+        self.min_deposit_amount = min_deposit.0;
 
         Event::SetMinDeposit {
             old_min_deposit: U128(old_min_deposit),

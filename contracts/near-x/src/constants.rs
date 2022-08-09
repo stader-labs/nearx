@@ -1,9 +1,5 @@
 use near_sdk::{EpochHeight, ONE_NEAR};
 
-/// The contract keeps at least 50 NEAR in the account to avoid being transferred out to cover
-/// contract code storage and some internal state.
-pub const MIN_BALANCE_FOR_STORAGE: u128 = 50_000_000_000_000_000_000_000_000;
-
 pub const NO_DEPOSIT: u128 = 0;
 pub const NEAR_CENT: u128 = ONE_NEAR / 100;
 pub const ONE_MILLI_NEAR: u128 = ONE_NEAR / 1_000;

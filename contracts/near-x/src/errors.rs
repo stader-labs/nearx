@@ -33,6 +33,7 @@ pub const ERROR_NOT_ENOUGH_GAS: &str = "Not enough pre-paid gas";
 pub const ERROR_REQUIRE_ONE_YOCTO_NEAR: &str = "Function requires at least one yocto near";
 pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on callback";
 pub const ERROR_MIN_DEPOSIT_TOO_HIGH: &str = "Min deposit too high";
+pub const ERROR_MIN_DEPOSIT_TOO_LOW: &str = "Min deposit too low";
 pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
     "Still in wait period for reward fee to be set";
 
