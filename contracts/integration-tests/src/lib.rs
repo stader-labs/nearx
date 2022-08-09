@@ -142,7 +142,7 @@ async fn test_reward_fee_set() -> anyhow::Result<()> {
 
 #[tokio::test]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
-    let old_contract = "./../../res/near_x_284b9c7f63ce2bfbc310099c5be55bce1f2dea1e.wasm";
+    let old_contract = "./../../res/near_x_c70812191a07c4c6b8a9ba7bd7f6dd4f615923af.wasm";
 
     println!("Deploying old contract!");
     let mut context = IntegrationTestContext::new(3, Some(old_contract)).await?;
@@ -157,13 +157,13 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     context.deposit(&context.user3, ntoy(10)).await?;
 
     let user1_account = context
-        .get_legacy_user_account(context.user1.id().clone())
+        .get_user_account(context.user1.id().clone())
         .await?;
     let user2_account = context
-        .get_legacy_user_account(context.user2.id().clone())
+        .get_user_account(context.user2.id().clone())
         .await?;
     let user3_account = context
-        .get_legacy_user_account(context.user3.id().clone())
+        .get_user_account(context.user3.id().clone())
         .await?;
 
     println!("user1_account is {:?}", user1_account);
@@ -270,7 +270,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     context.unstake(&context.user1, U128(ntoy(5))).await?;
 
     let user1_account = context
-        .get_legacy_user_account(context.user1.id().clone())
+        .get_user_account(context.user1.id().clone())
         .await?;
     println!("user1_account is {:?}", user1_account);
     assert_eq!(
@@ -350,7 +350,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.unstake(&context.user2, U128(ntoy(5))).await?;
     let user2_account = context
-        .get_legacy_user_account(context.user2.id().clone())
+        .get_user_account(context.user2.id().clone())
         .await?;
     println!("user2_account is {:?}", user2_account);
     assert_eq!(
@@ -363,39 +363,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    let new_operator_account_1 = context.worker.dev_create_account().await?;
-    let new_operator_1_near_sdk_account =
-        near_sdk::AccountId::new_unchecked(new_operator_account_1.id().to_string());
-
-    let new_treasury_account_1 = context.worker.dev_create_account().await?;
-    let new_treasury_1_near_sdk_account =
-        near_sdk::AccountId::new_unchecked(new_treasury_account_1.id().to_string());
-
-    context.set_operator(&new_operator_account_1.id()).await?;
-    context.set_treasury(&new_treasury_account_1.id()).await?;
-    assert!(context
-        .commit_operator(&new_operator_account_1)
-        .await
-        .is_err());
-    assert!(context
-        .commit_treasury(&new_treasury_account_1)
-        .await
-        .is_err());
-
-    let roles = context.get_legacy_roles().await?;
-    assert_eq!(
-        roles.operator_account,
-        new_operator_1_near_sdk_account.clone()
-    );
-    assert_eq!(
-        roles.treasury_account,
-        new_treasury_1_near_sdk_account.clone()
-    );
-
-    context.set_reward_fee(Fraction::new(5, 100)).await?;
-    assert!(context.commit_reward_fee().await.is_err());
-
-    assert!(context.update_rewards_buffer(ntoy(10)).await.is_err());
+    assert!(context.set_min_storage_balance(U128(ntoy(100))).await.is_err());
 
     println!("Reading the new contract!");
     let nearx_2_wasm = std::fs::read(new_contract)?;
@@ -407,18 +375,16 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     assert_eq!(user2_account.staked_balance, U128(ntoy(5)));
     assert_eq!(user2_account.can_withdraw, false);
 
-    // test reward fee setting and commiting
-    context.set_reward_fee(Fraction::new(10, 100)).await?;
-    context.worker.fast_forward(5 * ONE_EPOCH).await?;
-    context.commit_reward_fee().await?;
+    // test set_min_storage_balance
+    context.set_min_storage_balance(U128(ntoy(60))).await?;
+
+    context.worker.fast_forward(2 * ONE_EPOCH).await?;
 
     let current_epoch_3 = context.get_current_epoch().await?;
 
     // test reward buffer update
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
-    assert_eq!(nearx_state.rewards_fee_pct.numerator, 10);
-    assert_eq!(nearx_state.rewards_fee_pct.denominator, 100);
     assert_eq!(nearx_state.total_staked, U128(ntoy(35)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
@@ -427,13 +393,12 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(0));
     assert_eq!(nearx_state.accumulated_rewards_buffer, U128(0));
+    assert_eq!(nearx_state.min_storage_balance, U128(ntoy(60)));
 
     context.update_rewards_buffer(ntoy(5)).await?;
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_2);
-    assert_eq!(nearx_state.rewards_fee_pct.numerator, 10);
-    assert_eq!(nearx_state.rewards_fee_pct.denominator, 100);
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
@@ -451,8 +416,6 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.last_reconcilation_epoch, current_epoch_3);
-    assert_eq!(nearx_state.rewards_fee_pct.numerator, 10);
-    assert_eq!(nearx_state.rewards_fee_pct.denominator, 100);
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
@@ -472,12 +435,16 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
     let current_epoch_4 = context.get_current_epoch().await?;
+    println!("validator1_info is {:?}", validator1_info);
+    println!("validator2_info is {:?}", validator2_info);
+    println!("validator3_info is {:?}", validator3_info);
+
     assert_eq!(
         validator1_info,
         ValidatorInfoResponse {
             account_id: validator1_info.account_id.clone(),
             staked: U128(ntoy(10)),
-            unstaked: U128(ntoy(0)),
+            unstaked: U128(ntoy(5)),
             last_asked_rewards_epoch_height: current_epoch_4,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10
@@ -488,7 +455,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         ValidatorInfoResponse {
             account_id: validator2_info.account_id.clone(),
             staked: U128(ntoy(15)),
-            unstaked: U128(0),
+            unstaked: U128(ntoy(0)),
             last_asked_rewards_epoch_height: current_epoch_4,
             last_unstake_start_epoch: U64(0),
             weight: 10
@@ -504,49 +471,6 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_unstake_start_epoch: U64(0),
             weight: 10
         }
-    );
-
-    // test operator/treasury set/commit
-    let new_operator_account_2 = context.worker.dev_create_account().await?;
-    let new_operator_2_near_sdk_account =
-        near_sdk::AccountId::new_unchecked(new_operator_account_2.id().to_string());
-
-    let new_treasury_account_2 = context.worker.dev_create_account().await?;
-    let new_treasury_2_near_sdk_account =
-        near_sdk::AccountId::new_unchecked(new_treasury_account_2.id().to_string());
-
-    context.set_operator(&new_operator_account_2.id()).await?;
-    context.set_treasury(&new_treasury_account_2.id()).await?;
-
-    let roles = context.get_roles().await?;
-    assert_eq!(
-        roles.operator_account,
-        new_operator_1_near_sdk_account.clone()
-    );
-    assert_eq!(
-        roles.treasury_account,
-        new_treasury_1_near_sdk_account.clone()
-    );
-    assert_eq!(
-        roles.temp_operator,
-        Some(new_operator_2_near_sdk_account.clone())
-    );
-    assert_eq!(
-        roles.temp_treasury,
-        Some(new_treasury_2_near_sdk_account.clone())
-    );
-
-    context.commit_operator(&new_operator_account_2).await?;
-    context.commit_treasury(&new_treasury_account_2).await?;
-
-    let roles = context.get_roles().await?;
-    assert_eq!(
-        roles.operator_account,
-        new_operator_2_near_sdk_account.clone()
-    );
-    assert_eq!(
-        roles.treasury_account,
-        new_treasury_2_near_sdk_account.clone()
     );
 
     Ok(())

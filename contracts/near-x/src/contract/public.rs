@@ -546,6 +546,7 @@ impl NearxPool {
             rewards_buffer: U128(self.rewards_buffer),
             accumulated_rewards_buffer: U128(self.accumulated_rewards_buffer),
             last_reward_fee_set_epoch: self.last_reward_fee_set_epoch,
+            min_storage_balance: U128(self.min_storage_balance)
         }
     }
 
