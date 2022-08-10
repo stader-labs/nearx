@@ -198,10 +198,7 @@ impl NearxPool {
     #[payable]
     pub fn set_owner(&mut self, new_owner: AccountId) {
         assert_one_yocto();
-        require!(
-            env::predecessor_account_id() == self.owner_account_id,
-            ERROR_UNAUTHORIZED
-        );
+        self.assert_owner_calling();
 
         // owner, operator, treasury and current contract address should all be different
         require!(
