@@ -50,7 +50,8 @@ impl NearxPool {
         // update internal state
         self.reconciled_epoch_stake_amount = self
             .reconciled_epoch_stake_amount
-            .checked_sub(amount_to_stake).unwrap();
+            .checked_sub(amount_to_stake)
+            .unwrap();
 
         // do staking on selected validator
         ext_staking_pool::ext(validator.account_id.clone())

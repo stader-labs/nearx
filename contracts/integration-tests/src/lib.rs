@@ -156,15 +156,9 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     context.deposit(&context.user2, ntoy(10)).await?;
     context.deposit(&context.user3, ntoy(10)).await?;
 
-    let user1_account = context
-        .get_user_account(context.user1.id().clone())
-        .await?;
-    let user2_account = context
-        .get_user_account(context.user2.id().clone())
-        .await?;
-    let user3_account = context
-        .get_user_account(context.user3.id().clone())
-        .await?;
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
+    let user3_account = context.get_user_account(context.user3.id().clone()).await?;
 
     println!("user1_account is {:?}", user1_account);
     println!("user2_account is {:?}", user2_account);
@@ -269,9 +263,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.unstake(&context.user1, U128(ntoy(5))).await?;
 
-    let user1_account = context
-        .get_user_account(context.user1.id().clone())
-        .await?;
+    let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     println!("user1_account is {:?}", user1_account);
     assert_eq!(
         user1_account,
@@ -349,9 +341,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     );
 
     context.unstake(&context.user2, U128(ntoy(5))).await?;
-    let user2_account = context
-        .get_user_account(context.user2.id().clone())
-        .await?;
+    let user2_account = context.get_user_account(context.user2.id().clone()).await?;
     println!("user2_account is {:?}", user2_account);
     assert_eq!(
         user2_account,
@@ -363,7 +353,10 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    assert!(context.set_min_storage_balance(U128(ntoy(100))).await.is_err());
+    assert!(context
+        .set_min_storage_balance(U128(ntoy(100)))
+        .await
+        .is_err());
 
     println!("Reading the new contract!");
     let nearx_2_wasm = std::fs::read(new_contract)?;

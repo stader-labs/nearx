@@ -2595,6 +2595,51 @@ fn test_set_owner_unauthorized() {
 }
 
 #[test]
+#[should_panic]
+fn test_set_owner_same_as_operator() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+    contract.operator_account_id = new_owner.clone();
+
+    contract.set_owner(new_owner);
+}
+
+#[test]
+#[should_panic]
+fn test_set_owner_same_as_treasury() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+    contract.treasury_account_id = new_owner.clone();
+
+    contract.set_owner(new_owner);
+}
+
+#[test]
+#[should_panic]
+fn test_set_owner_same_as_current_contract() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_owner(context.current_account_id);
+}
+
+#[test]
 fn test_set_owner() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2697,6 +2742,45 @@ fn test_set_operator_account_unauthorized() {
 
 #[test]
 #[should_panic]
+fn test_set_operator_account_same_as_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(owner_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_operator_account_same_as_treasury() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(treasury_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_operator_account_same_as_current_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(context.current_account_id);
+}
+
+#[test]
+#[should_panic]
 fn test_set_treasury_account_unauthorized() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2708,6 +2792,45 @@ fn test_set_treasury_account_unauthorized() {
     testing_env!(context.clone());
 
     contract.set_treasury_id(new_treasury_account);
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(owner_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_operator() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(operator_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_current_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(context.current_account_id);
 }
 
 #[test]

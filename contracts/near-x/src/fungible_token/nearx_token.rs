@@ -1,16 +1,10 @@
 use crate::constants::{gas, NO_DEPOSIT};
 use crate::contract::*;
 use crate::events::Event;
-use near_contract_standards::fungible_token::{
-    core::FungibleTokenCore, metadata::FungibleTokenMetadata,
-};
+use near_contract_standards::fungible_token::core::FungibleTokenCore;
 use near_sdk::{
-    assert_one_yocto,
-    borsh::{self, BorshDeserialize, BorshSerialize},
-    collections::{LazyOption, LookupMap},
-    env, ext_contract,
-    json_types::U128,
-    log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue, StorageUsage,
+    assert_one_yocto, env, ext_contract, json_types::U128, log, near_bindgen, AccountId,
+    PromiseOrValue,
 };
 
 #[ext_contract(ext_ft_receiver)]
@@ -31,16 +25,6 @@ trait FungibleTokenResolver {
         receiver_id: AccountId,
         amount: U128,
     ) -> U128;
-}
-
-#[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct Contract {
-    metadata: LazyOption<FungibleTokenMetadata>,
-
-    pub accounts: LookupMap<AccountId, Balance>,
-    pub total_supply: Balance,
-    pub account_storage_usage: StorageUsage,
 }
 
 #[near_bindgen]

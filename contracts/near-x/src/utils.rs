@@ -1,10 +1,6 @@
 use crate::{constants::*, errors::*};
 use near_sdk::{env, require, PromiseResult};
 
-pub fn assert_callback_calling() {
-    require!(env::predecessor_account_id() == env::current_account_id());
-}
-
 pub fn is_promise_success() -> bool {
     require!(
         env::promise_results_count() == 1,

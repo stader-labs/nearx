@@ -37,7 +37,7 @@ impl NearxPool {
             temp_reward_fee: contract.temp_reward_fee,
             last_reward_fee_set_epoch: contract.last_reward_fee_set_epoch,
             operations_control: contract.operations_control,
-            min_storage_balance: 50 * ONE_NEAR
+            min_storage_balance: 50 * ONE_NEAR,
         };
         env::state_write(&new_contract);
         new_contract
