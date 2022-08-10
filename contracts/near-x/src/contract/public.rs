@@ -204,10 +204,19 @@ impl NearxPool {
         );
 
         // owner, operator, treasury and current contract address should all be different
-        require!(new_owner != self.operator_account_id);
-        require!(new_owner != self.treasury_account_id);
-        require!(new_owner != self.owner_account_id);
-        require!(new_owner != env::current_account_id());
+        require!(
+            new_owner != self.operator_account_id,
+            ERROR_OWNER_OPERATOR_SAME
+        );
+        require!(
+            new_owner != self.treasury_account_id,
+            ERROR_OWNER_TREASURY_SAME
+        );
+        require!(new_owner != self.owner_account_id, ERROR_OWNER_SAME);
+        require!(
+            new_owner != env::current_account_id(),
+            ERROR_OWNER_CURRENT_CONTRACT_SAME
+        );
 
         self.temp_owner = Some(new_owner.clone());
         Event::SetOwner {
@@ -244,10 +253,22 @@ impl NearxPool {
         self.assert_owner_calling();
 
         // owner, operator, treasury and current contract address should all be different
-        require!(new_operator_account_id != self.operator_account_id);
-        require!(new_operator_account_id != self.treasury_account_id);
-        require!(new_operator_account_id != self.owner_account_id);
-        require!(new_operator_account_id != env::current_account_id());
+        require!(
+            new_operator_account_id != self.operator_account_id,
+            ERROR_OPERATOR_SAME
+        );
+        require!(
+            new_operator_account_id != self.treasury_account_id,
+            ERROR_OPERATOR_TREASURY_SAME
+        );
+        require!(
+            new_operator_account_id != self.owner_account_id,
+            ERROR_OPERATOR_OWNER_SAME
+        );
+        require!(
+            new_operator_account_id != env::current_account_id(),
+            ERROR_OPERATOR_CURRENT_CONTRACT_SAME
+        );
 
         Event::SetOperator {
             old_operator: self.operator_account_id.clone(),
@@ -285,10 +306,22 @@ impl NearxPool {
         self.assert_owner_calling();
 
         // owner, operator, treasury and current contract address should all be different
-        require!(new_treasury_account_id != self.operator_account_id);
-        require!(new_treasury_account_id != self.treasury_account_id);
-        require!(new_treasury_account_id != self.owner_account_id);
-        require!(new_treasury_account_id != env::current_account_id());
+        require!(
+            new_treasury_account_id != self.operator_account_id,
+            ERROR_TREASURY_OPERATOR_SAME
+        );
+        require!(
+            new_treasury_account_id != self.treasury_account_id,
+            ERROR_TREASURY_SAME
+        );
+        require!(
+            new_treasury_account_id != self.owner_account_id,
+            ERROR_TREASURY_OWNER_SAME
+        );
+        require!(
+            new_treasury_account_id != env::current_account_id(),
+            ERROR_TREASURY_CURRENT_CONTRACT_SAME
+        );
 
         Event::SetTreasury {
             old_treasury_account: self.treasury_account_id.clone(),

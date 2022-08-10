@@ -37,6 +37,22 @@ pub const ERROR_MIN_DEPOSIT_TOO_LOW: &str = "Min deposit too low";
 pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
     "Still in wait period for reward fee to be set";
 
+/// Owner/Operator/Treasury mechanism related errors
+pub const ERROR_OPERATOR_OWNER_SAME: &str = "Operator and owner account cannot be the same";
+pub const ERROR_OPERATOR_TREASURY_SAME: &str = "Operator and treasury account cannot be the same";
+pub const ERROR_OPERATOR_CURRENT_CONTRACT_SAME: &str =
+    "Operator and current contract cannot be the same";
+pub const ERROR_OPERATOR_SAME: &str = "Operator cannot be same as current operator";
+pub const ERROR_OWNER_OPERATOR_SAME: &str = "Owner and operator account cannot be the same";
+pub const ERROR_OWNER_TREASURY_SAME: &str = "Owner and treasury account cannot be the same";
+pub const ERROR_OWNER_CURRENT_CONTRACT_SAME: &str = "Owner and current contract cannot be the same";
+pub const ERROR_OWNER_SAME: &str = "Owner cannot be same as current owner";
+pub const ERROR_TREASURY_OPERATOR_SAME: &str = "Treasury and operator account cannot be the same";
+pub const ERROR_TREASURY_OWNER_SAME: &str = "Treasury and owner account cannot be the same";
+pub const ERROR_TREASURY_CURRENT_CONTRACT_SAME: &str =
+    "Treasury and current contract cannot be the same";
+pub const ERROR_TREASURY_SAME: &str = "Treasury cannot be same as current treasury";
+
 /// Validator related errors
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
 pub const ERROR_INVALID_VALIDATOR_REMOVAL: &str = "Cannot remove this validator";
