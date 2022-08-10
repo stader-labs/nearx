@@ -973,7 +973,7 @@ fn test_get_validator_to_stake() {
 
 #[test]
 #[should_panic]
-fn test_set_min_storage_balance_unauthorized() {
+fn test_add_min_storage_reserve_unauthorized() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
@@ -982,43 +982,24 @@ fn test_set_min_storage_balance_unauthorized() {
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
-    /*
-       Set reward fee more than 10%
-    */
-    contract.set_min_storage_balance(U128(ntoy(60)));
+    contract.add_min_storage_reserve();
 }
 
 #[test]
-#[should_panic]
-fn test_set_min_storage_balance_below_50_near() {
+fn test_add_min_storage_reserve_success() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
 
     context.predecessor_account_id = owner_account();
     context.signer_account_id = owner_account();
-    context.attached_deposit = 1;
+    context.attached_deposit = ntoy(50);
     testing_env!(context.clone()); // this updates the context
 
-    /*
-       Set reward fee more than 10%
-    */
-    contract.set_min_storage_balance(U128(ntoy(40)));
-}
+    contract.min_storage_reserve = ntoy(10);
 
-#[test]
-fn test_set_min_storage_balance_success() {
-    let (mut context, mut contract) =
-        contract_setup(owner_account(), operator_account(), treasury_account());
+    contract.add_min_storage_reserve();
 
-    context.predecessor_account_id = owner_account();
-    context.signer_account_id = owner_account();
-    context.attached_deposit = 1;
-    testing_env!(context.clone()); // this updates the context
-
-    /*
-       Set reward fee more than 10%
-    */
-    contract.set_min_storage_balance(U128(ntoy(60)));
+    assert_eq!(contract.min_storage_reserve, ntoy(60));
 }
 
 #[test]
@@ -1803,6 +1784,7 @@ fn test_withdraw_fail_not_enough_storage_balance() {
     context.epoch_height = 12;
     context.predecessor_account_id = user1;
     context.account_balance = ntoy(230);
+    contract.min_storage_reserve = ntoy(50);
     testing_env!(context.clone());
 
     contract.withdraw(U128(ntoy(200)));

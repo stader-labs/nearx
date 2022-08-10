@@ -600,7 +600,7 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn set_min_storage_balance(
+    pub async fn add_min_storage_reserve(
         &self,
         amount: U128,
     ) -> anyhow::Result<CallExecutionDetails> {
@@ -608,11 +608,10 @@ impl IntegrationTestContext<Sandbox> {
             .call(
                 &self.worker,
                 &self.nearx_contract.id(),
-                "set_min_storage_balance",
+                "add_min_storage_reserve",
             )
             .max_gas()
-            .args_json(json!({ "min_storage_balance": amount }))?
-            .deposit(1)
+            .deposit(amount.0)
             .transact()
             .await
     }

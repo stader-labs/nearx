@@ -68,7 +68,7 @@ pub struct NearxPoolStateResponse {
 
     pub last_reward_fee_set_epoch: EpochHeight,
 
-    pub min_storage_balance: U128,
+    pub min_storage_reserve: U128,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]

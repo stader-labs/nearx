@@ -43,7 +43,7 @@ impl NearxPool {
         log!("amount to stake is {:?}", amount_to_stake);
 
         require!(
-            env::account_balance() >= amount_to_stake + self.min_storage_balance,
+            env::account_balance() >= amount_to_stake + self.min_storage_reserve,
             ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
         );
 

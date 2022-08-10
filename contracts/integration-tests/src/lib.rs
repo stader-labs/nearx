@@ -354,7 +354,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     );
 
     assert!(context
-        .set_min_storage_balance(U128(ntoy(100)))
+        .add_min_storage_reserve(U128(ntoy(10)))
         .await
         .is_err());
 
@@ -368,8 +368,8 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     assert_eq!(user2_account.staked_balance, U128(ntoy(5)));
     assert_eq!(user2_account.can_withdraw, false);
 
-    // test set_min_storage_balance
-    context.set_min_storage_balance(U128(ntoy(60))).await?;
+    // test set_min_storage_reserve
+    context.add_min_storage_reserve(U128(ntoy(60))).await?;
 
     context.worker.fast_forward(2 * ONE_EPOCH).await?;
 
@@ -386,7 +386,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(0));
     assert_eq!(nearx_state.accumulated_rewards_buffer, U128(0));
-    assert_eq!(nearx_state.min_storage_balance, U128(ntoy(60)));
+    assert_eq!(nearx_state.min_storage_reserve, U128(ntoy(110)));
 
     context.update_rewards_buffer(ntoy(5)).await?;
 

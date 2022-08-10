@@ -48,7 +48,7 @@ impl NearxPool {
             total_validator_weight: 0,
             rewards_buffer: 0,
             accumulated_rewards_buffer: 0,
-            min_storage_balance: 50 * ONE_NEAR,
+            min_storage_reserve: 0,
         }
     }
 
@@ -404,13 +404,10 @@ impl NearxPool {
     }
 
     #[payable]
-    pub fn set_min_storage_balance(&mut self, min_storage_balance: U128) {
-        self.assert_owner_calling();
-        assert_one_yocto();
+    pub fn add_min_storage_reserve(&mut self) {
+        self.assert_min_deposit_amount(env::attached_deposit());
 
-        require!(min_storage_balance > U128(50 * ONE_NEAR));
-
-        self.min_storage_balance = min_storage_balance.0;
+        self.min_storage_reserve += env::attached_deposit();
     }
 
     #[payable]
@@ -601,7 +598,7 @@ impl NearxPool {
             rewards_buffer: U128(self.rewards_buffer),
             accumulated_rewards_buffer: U128(self.accumulated_rewards_buffer),
             last_reward_fee_set_epoch: self.last_reward_fee_set_epoch,
-            min_storage_balance: U128(self.min_storage_balance),
+            min_storage_reserve: U128(self.min_storage_reserve),
         }
     }
 

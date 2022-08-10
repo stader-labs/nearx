@@ -91,7 +91,7 @@ pub struct NearxPool {
     // Operations control
     pub operations_control: OperationControls,
 
-    pub min_storage_balance: u128,
+    pub min_storage_reserve: u128,
 }
 
 #[near_bindgen]
