@@ -179,7 +179,7 @@ impl NearxPool {
             .expect(ERROR_VALIDATOR_DOES_NOT_EXIST);
 
         if weight == 0 {
-            require!(true, ERROR_INVALID_VALIDATOR_WEIGHT);
+            require!(false, ERROR_INVALID_VALIDATOR_WEIGHT);
         }
 
         // update total weight
