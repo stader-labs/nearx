@@ -134,14 +134,14 @@ impl NearxPool {
             ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT
         );
 
-        let num_shares = self.num_shares_from_staked_amount_rounded_up(amount);
+        let mut num_shares = self.num_shares_from_staked_amount_rounded_up(amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_UNSTAKING_SHARES);
         require!(
             account.stake_shares >= num_shares,
             ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE
         );
 
-        let receive_amount = self.staked_amount_from_num_shares_rounded_up(num_shares);
+        let mut receive_amount = self.staked_amount_from_num_shares_rounded_up(num_shares);
         require!(
             receive_amount > 0,
             ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT
@@ -149,8 +149,21 @@ impl NearxPool {
 
         account.stake_shares -= num_shares;
         account.unstaked_amount += receive_amount;
+
+        let remaining_amount =
+            self.staked_amount_from_num_shares_rounded_down(account.stake_shares);
+
+        let storage_balance_bounds = self.storage_balance_bounds();
+        if remaining_amount <= storage_balance_bounds.min.0 {
+            receive_amount += remaining_amount;
+            num_shares += account.stake_shares;
+
+            account.stake_shares = 0;
+            account.unstaked_amount += remaining_amount;
+        }
+
         account.withdrawable_epoch_height =
-            env::epoch_height() + self.get_unstake_release_epoch(amount);
+            env::epoch_height() + self.get_unstake_release_epoch(receive_amount);
         if self.last_reconcilation_epoch == env::epoch_height() {
             // The unstake request is received after epoch_reconcilation
             // so actual unstake will happen in the next epoch,
@@ -168,7 +181,7 @@ impl NearxPool {
 
         Event::Unstake {
             account_id: account_id.clone(),
-            unstaked_amount: U128(amount),
+            unstaked_amount: U128(receive_amount),
             burnt_stake_shares: U128(num_shares),
             new_unstaked_balance: U128(account.unstaked_amount),
             new_stake_shares: U128(account.stake_shares),

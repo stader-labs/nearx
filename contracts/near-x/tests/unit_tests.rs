@@ -1997,6 +1997,53 @@ fn test_unstake_fail_greater_than_total_staked_amount() {
 }
 
 #[test]
+fn test_unstake_success_remaining_amount_less_than_storage_deposit() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    context.epoch_height = 10;
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone(), 10);
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(500);
+    val1_info.unstaked_amount = ntoy(0);
+    val1_info.unstake_start_epoch = 3;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.total_staked = ntoy(500);
+    contract.total_stake_shares = ntoy(500);
+    contract.last_reconcilation_epoch = 8;
+    contract.user_amount_to_unstake_in_epoch = ntoy(60);
+
+    let mut user1_account = Account::default();
+    user1_account.stake_shares = ntoy(50);
+    user1_account.unstaked_amount = ntoy(0);
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context.clone());
+
+    contract.unstake(U128(49999000000000000000000000));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(0));
+    assert_eq!(user1_account.unstaked_amount, ntoy(50));
+    assert_eq!(user1_account.withdrawable_epoch_height, 14);
+
+    assert_eq!(contract.total_staked, ntoy(450));
+    assert_eq!(contract.total_stake_shares, ntoy(450));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(110));
+}
+
+#[test]
 fn test_unstake_success_diff_epoch_than_reconcilation_epoch() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
