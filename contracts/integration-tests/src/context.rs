@@ -384,6 +384,13 @@ impl IntegrationTestContext<Sandbox> {
         user: &Account,
         amount: u128,
     ) -> anyhow::Result<CallExecutionDetails> {
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+
         user.call(&self.worker, self.nearx_contract.id(), "deposit_and_stake")
             .max_gas()
             .deposit(amount)

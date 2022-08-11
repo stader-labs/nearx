@@ -2,6 +2,7 @@ mod helpers;
 
 use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
+use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
@@ -1276,7 +1277,6 @@ fn test_deposit_and_stake_success() {
 
     let user1 = AccountId::from_str("user1").unwrap();
 
-    context.attached_deposit = ntoy(100);
     context.predecessor_account_id = user1.clone();
     testing_env!(context.clone());
 
@@ -1285,6 +1285,12 @@ fn test_deposit_and_stake_success() {
     contract.total_stake_shares = ntoy(10);
     contract.user_amount_to_stake_in_epoch = ntoy(10);
 
+    context.attached_deposit = 3000000000000000000000;
+    testing_env!(context.clone());
+    contract.storage_deposit(None, None);
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context.clone());
     contract.deposit_and_stake();
 
     let user1_account = contract.get_account(user1.clone());

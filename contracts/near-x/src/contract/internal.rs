@@ -96,7 +96,7 @@ impl NearxPool {
         self.assert_min_deposit_amount(amount);
 
         let account_id = env::predecessor_account_id();
-        let mut account = self.internal_get_account(&account_id);
+        let mut account = self.internal_get_account_unwrap(&account_id);
 
         // Calculate the number of "stake" shares that the account will receive for staking the
         // given amount.
@@ -302,6 +302,12 @@ impl NearxPool {
 
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
+    }
+
+    pub(crate) fn internal_get_account_unwrap(&self, account_id: &AccountId) -> Account {
+        self.accounts
+            .get(account_id)
+            .expect("Account is not registered")
     }
 
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
