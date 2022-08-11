@@ -80,8 +80,6 @@ pub mod gas {
 
     pub const DRAIN_WITHDRAW: Gas = base_gas(3);
 
-    pub const FT_ON_TRANSFER: Gas = base_gas(35);
-
     pub const FT_TRANSFER_RESOLVE: Gas = tera(12);
 
     pub const FT_TRANSFER: Gas = tera(35);
