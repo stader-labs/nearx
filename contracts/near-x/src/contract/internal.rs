@@ -1,4 +1,3 @@
-use near_contract_standards::storage_management::StorageManagement;
 use crate::constants::*;
 use crate::errors::*;
 use crate::events::Event;
@@ -7,6 +6,7 @@ use crate::{
     contract::*,
     state::*,
 };
+use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::{
     is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
 };
@@ -190,11 +190,11 @@ impl NearxPool {
         let mut amount_to_send = amount;
         let account_id = env::predecessor_account_id();
 
-        require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
+        require!(amount_to_send > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
 
         let account = self.internal_get_account(&account_id);
         require!(
-            account.unstaked_amount >= amount,
+            account.unstaked_amount >= amount_to_send,
             ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW
         );
         require!(
@@ -203,7 +203,7 @@ impl NearxPool {
         );
 
         require!(
-            env::account_balance().saturating_sub(self.min_storage_reserve) >= amount,
+            env::account_balance().saturating_sub(self.min_storage_reserve) >= amount_to_send,
             ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE
         );
 
