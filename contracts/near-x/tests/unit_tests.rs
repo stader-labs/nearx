@@ -105,6 +105,10 @@ fn get_account(contract: &NearxPool, account_id: AccountId) -> Account {
     contract.accounts.get(&account_id).unwrap()
 }
 
+fn get_account_option(contract: &NearxPool, account_id: AccountId) -> Option<Account> {
+    contract.accounts.get(&account_id)
+}
+
 fn update_account(contract: &mut NearxPool, account_id: AccountId, account: &Account) {
     contract.accounts.insert(&account_id, account);
 }
@@ -1811,6 +1815,58 @@ fn test_withdraw_success() {
 
     let user1_account = get_account(&contract, user1.clone());
     assert_eq!(user1_account.unstaked_amount, ntoy(100));
+}
+
+#[test]
+fn test_withdraw_success_with_storage_balance_with_no_staked_amount() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    let mut user1_account = Account::default();
+    user1_account.unstaked_amount += ntoy(300);
+    user1_account.withdrawable_epoch_height = 10;
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    contract.min_storage_reserve = ntoy(50);
+
+    context.epoch_height = 12;
+    context.predecessor_account_id = user1.clone();
+    context.account_balance = ntoy(400);
+    testing_env!(context.clone());
+
+    contract.withdraw(U128(299999900000000000000000000));
+
+    let user1_account = get_account_option(&contract, user1.clone());
+    assert!(user1_account.is_none());
+}
+
+#[test]
+fn test_withdraw_success_with_storage_balance_with_staked_amount() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    let mut user1_account = Account::default();
+    user1_account.unstaked_amount += ntoy(300);
+    user1_account.stake_shares = ntoy(10);
+    user1_account.withdrawable_epoch_height = 10;
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    contract.min_storage_reserve = ntoy(50);
+
+    context.epoch_height = 12;
+    context.predecessor_account_id = user1.clone();
+    context.account_balance = ntoy(400);
+    testing_env!(context.clone());
+
+    contract.withdraw(U128(299999900000000000000000000));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(10));
+    assert_eq!(user1_account.unstaked_amount, ntoy(0));
 }
 
 #[test]

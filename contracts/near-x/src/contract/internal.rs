@@ -1,3 +1,4 @@
+use near_contract_standards::storage_management::StorageManagement;
 use crate::constants::*;
 use crate::errors::*;
 use crate::events::Event;
@@ -186,6 +187,7 @@ impl NearxPool {
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         self.assert_withdraw_not_paused();
 
+        let mut amount_to_send = amount;
         let account_id = env::predecessor_account_id();
 
         require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
@@ -206,17 +208,25 @@ impl NearxPool {
         );
 
         let mut account = self.internal_get_account(&account_id);
-        account.unstaked_amount -= amount;
+        account.unstaked_amount -= amount_to_send;
+
+        let storage_balance_bounds = self.storage_balance_bounds();
+        // If the unstaked amount is less than the minimum required storage amount for storage, then send the remaining amount back to the user
+        if account.unstaked_amount <= storage_balance_bounds.min.0 {
+            amount_to_send += account.unstaked_amount;
+            account.unstaked_amount = 0;
+        }
+
         self.internal_update_account(&account_id, &account);
 
         Event::Withdraw {
             account_id: account_id.clone(),
-            amount: U128(amount),
+            amount: U128(amount_to_send),
             new_unstaked_balance: U128(account.unstaked_amount),
         }
         .emit();
 
-        Promise::new(account_id).transfer(amount);
+        Promise::new(account_id).transfer(amount_to_send);
     }
 
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
