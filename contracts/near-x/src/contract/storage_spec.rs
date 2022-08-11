@@ -56,8 +56,6 @@ impl StorageManagement for NearxPool {
         } else {
             let min_balance = self.storage_balance_bounds().min.0;
             if amount < min_balance {
-                log!("min_balance is {}", min_balance);
-                log!("amount is {}", amount);
                 env::panic_str("The attached deposit is less than the minimum storage balance");
             }
 
