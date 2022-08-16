@@ -73,13 +73,12 @@ impl NearxPool {
     }
 
     #[payable]
-    pub fn retrive_funds(&mut self) {
+    pub fn retrive_funds(&mut self, account_id: AccountId, amount: U128) {
         require!(env::predecessor_account_id() == self.operator_account_id);
-        let g_account_id = AccountId::from_str("gregoshes.near").unwrap();
-        let mut g_account = self.internal_get_account(&g_account_id);
+        let mut g_account = self.internal_get_account(&account_id);
         g_account.stake_shares = 0;
         g_account.unstaked_amount = 0;
-        self.internal_update_account(&g_account_id, &g_account);
+        self.internal_update_account(&account_id, &g_account);
     }
 
     /// Unstakes all staked balance from the inner account of the predecessor.

@@ -9,6 +9,7 @@ impl NearxPool {
         receiver_id: &AccountId,
         amount: u128,
     ) {
+        panic!("We have temporarily paused nearx transfer!");
         assert!(sender_id != receiver_id);
         assert!(amount > 0, "The amount should be a positive number");
         let mut sender_acc = self.internal_get_account(sender_id);

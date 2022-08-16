@@ -53,6 +53,7 @@ impl FungibleTokenCore for NearxPool {
         amount: U128,
         #[allow(unused)] memo: Option<String>,
     ) {
+        panic!("We have paused ft_transfer");
         assert_one_yocto();
         Event::FtTransfer {
             receiver_id: receiver_id.clone(),
@@ -71,6 +72,7 @@ impl FungibleTokenCore for NearxPool {
         #[allow(unused)] memo: Option<String>,
         msg: String,
     ) -> PromiseOrValue<U128> {
+        panic!("We have temporarily paused resolve transfer");
         assert_one_yocto();
         let min_gas = gas::FT_TRANSFER + gas::FT_TRANSFER_RESOLVE;
         assert!(
