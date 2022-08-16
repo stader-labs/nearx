@@ -92,12 +92,33 @@ impl StorageManagement for NearxPool {
         }
     }
 
-    /// Storage unregister is disabled because staking users don't need
-    /// to deposit but they are allowed to withdraw storage fee with
-    /// the current implementation.
     #[payable]
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
-        panic!("Storage unregister is not supported yet.");
+        assert_one_yocto();
+
+        if let Some(f) = force {
+            if f {
+                panic!("{}", "Force unregister not supported");
+            }
+        }
+
+        let account_id = env::predecessor_account_id();
+
+        if self.accounts.get(&account_id).is_none() {
+            return false;
+        }
+
+        let account = self.internal_get_account(&account_id);
+
+        // if account registered check if amount staked and unstaked is 0
+        if account.is_empty() {
+            self.accounts.remove(&account_id);
+            Promise::new(account_id).transfer(self.storage_balance_bounds().min.0);
+        } else {
+            panic!("Account is not empty!");
+        }
+
+        true
     }
 
     fn storage_balance_bounds(&self) -> StorageBalanceBounds {

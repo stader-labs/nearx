@@ -1844,8 +1844,9 @@ fn test_withdraw_success_with_storage_balance_with_no_staked_amount() {
 
     contract.withdraw(U128(299999900000000000000000000));
 
-    let user1_account = get_account_option(&contract, user1.clone());
-    assert!(user1_account.is_none());
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.unstaked_amount, 0);
+    assert_eq!(user1_account.stake_shares, 0);
 }
 
 #[test]
@@ -3168,4 +3169,70 @@ fn test_pause_validator() {
     assert_eq!(val1.weight, 0);
 
     assert_eq!(contract.total_validator_weight, 50);
+}
+
+#[test]
+fn test_storage_unregister_no_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account = AccountId::from_str("user1").unwrap();
+
+    context.predecessor_account_id = user1_account;
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    assert!(!contract.storage_unregister(None));
+}
+
+#[test]
+#[should_panic]
+fn test_storage_unregister_account_non_empty_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+
+    context.predecessor_account_id = user1_account_id.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    update_account(
+        &mut contract,
+        user1_account_id.clone(),
+        &Account {
+            stake_shares: ntoy(10),
+            unstaked_amount: ntoy(10),
+            withdrawable_epoch_height: 100,
+        },
+    );
+
+    contract.storage_unregister(None);
+}
+
+#[test]
+fn test_storage_unregister_account_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+
+    context.predecessor_account_id = user1_account_id.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    update_account(
+        &mut contract,
+        user1_account_id.clone(),
+        &Account {
+            stake_shares: ntoy(0),
+            unstaked_amount: ntoy(0),
+            withdrawable_epoch_height: 100,
+        },
+    );
+
+    contract.storage_unregister(None);
+
+    let user1_account = get_account_option(&contract, user1_account_id);
+    assert!(user1_account.is_none());
 }

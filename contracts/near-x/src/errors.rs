@@ -36,8 +36,6 @@ pub const ERROR_MIN_DEPOSIT_TOO_HIGH: &str = "Min deposit too high";
 pub const ERROR_MIN_DEPOSIT_TOO_LOW: &str = "Min deposit too low";
 pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
     "Still in wait period for reward fee to be set";
-pub const ERROR_INSUFFICIENT_FUNDS_FOR_STORAGE_RESERVE: &str =
-    "Need to send 50N for storage reserve";
 
 /// Owner/Operator/Treasury mechanism related errors
 pub const ERROR_OPERATOR_OWNER_SAME: &str = "Operator and owner account cannot be the same";
