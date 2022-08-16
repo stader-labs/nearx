@@ -96,12 +96,6 @@ impl StorageManagement for NearxPool {
     fn storage_unregister(&mut self, force: Option<bool>) -> bool {
         assert_one_yocto();
 
-        if let Some(f) = force {
-            if f {
-                panic!("{}", "Force unregister not supported");
-            }
-        }
-
         let account_id = env::predecessor_account_id();
 
         if self.accounts.get(&account_id).is_none() {
