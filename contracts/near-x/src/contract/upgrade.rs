@@ -11,35 +11,8 @@ impl NearxPool {
     #[init(ignore_state)]
     #[private]
     pub fn migrate() -> Self {
-        let contract: LegacyNearxPool = env::state_read().expect("ERR_NOT_INITIALIZED");
-        let new_contract: NearxPool = NearxPool {
-            owner_account_id: contract.owner_account_id,
-            total_staked: contract.total_staked,
-            total_stake_shares: contract.total_stake_shares,
-            accumulated_staked_rewards: contract.accumulated_staked_rewards,
-            user_amount_to_stake_in_epoch: contract.user_amount_to_stake_in_epoch,
-            user_amount_to_unstake_in_epoch: contract.user_amount_to_unstake_in_epoch,
-            reconciled_epoch_stake_amount: contract.reconciled_epoch_stake_amount,
-            reconciled_epoch_unstake_amount: contract.reconciled_epoch_unstake_amount,
-            last_reconcilation_epoch: contract.last_reconcilation_epoch,
-            accounts: contract.accounts,
-            validator_info_map: contract.validator_info_map,
-            total_validator_weight: contract.total_validator_weight,
-            min_deposit_amount: contract.min_deposit_amount,
-            operator_account_id: contract.operator_account_id,
-            treasury_account_id: contract.treasury_account_id,
-            rewards_fee: contract.rewards_fee,
-            rewards_buffer: 0,
-            accumulated_rewards_buffer: 0,
-            temp_owner: contract.temp_owner,
-            temp_operator: None,
-            temp_treasury: None,
-            temp_reward_fee: None,
-            last_reward_fee_set_epoch: 0,
-            operations_control: contract.operations_control,
-        };
-        env::state_write(&new_contract);
-        new_contract
+        let contract: NearxPool = env::state_read().expect("ERR_NOT_INITIALIZED");
+        contract
     }
 }
 

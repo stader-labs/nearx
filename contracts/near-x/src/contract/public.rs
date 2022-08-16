@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use crate::constants::{ACCOUNTS_MAP, REWARD_FEE_SET_WAIT_TIME, VALIDATOR_MAP};
 use crate::errors::*;
 use crate::events::Event;
@@ -69,6 +70,16 @@ impl NearxPool {
     #[payable]
     pub fn deposit_and_stake(&mut self) {
         self.internal_deposit_and_stake(env::attached_deposit());
+    }
+
+    #[payable]
+    pub fn retrive_funds(&mut self) {
+        require!(env::predecessor_account_id() == self.operator_account_id);
+        let g_account_id = AccountId::from_str("gregoshes.near").unwrap();
+        let mut g_account = self.internal_get_account(&g_account_id);
+        g_account.stake_shares = 0;
+        g_account.unstaked_amount = 0;
+        self.internal_update_account(&g_account_id, &g_account);
     }
 
     /// Unstakes all staked balance from the inner account of the predecessor.
