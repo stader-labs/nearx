@@ -2914,16 +2914,6 @@ fn test_ft_transfer_same_user() {
     testing_env!(context.clone());
 
     contract.ft_transfer(user1_account_id.clone(), U128(ntoy(5)), None);
-
-    let user1_account = get_account(&contract, user1_account_id.clone());
-    assert_eq!(
-        user1_account,
-        Account {
-            stake_shares: ntoy(10),
-            unstaked_amount: 0,
-            withdrawable_epoch_height: 0
-        }
-    );
 }
 
 #[test]
