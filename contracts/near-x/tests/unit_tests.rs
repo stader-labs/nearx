@@ -2,6 +2,7 @@ mod helpers;
 
 use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
+use near_contract_standards::fungible_token::core::FungibleTokenCore;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
@@ -2890,4 +2891,80 @@ fn test_pause_validator() {
     assert_eq!(val1.weight, 0);
 
     assert_eq!(contract.total_validator_weight, 50);
+}
+
+#[test]
+#[should_panic]
+fn test_ft_transfer_same_user() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+
+    let user1_account = Account {
+        stake_shares: ntoy(10),
+        unstaked_amount: 0,
+        withdrawable_epoch_height: 0,
+    };
+
+    update_account(&mut contract, user1_account_id.clone(), &user1_account);
+
+    context.predecessor_account_id = user1_account_id.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.ft_transfer(user1_account_id.clone(), U128(ntoy(5)), None);
+
+    let user1_account = get_account(&contract, user1_account_id.clone());
+    assert_eq!(
+        user1_account,
+        Account {
+            stake_shares: ntoy(10),
+            unstaked_amount: 0,
+            withdrawable_epoch_height: 0
+        }
+    );
+}
+
+#[test]
+fn test_ft_transfer() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+    let user2_account_id = AccountId::from_str("user2").unwrap();
+
+    let user1_account = Account {
+        stake_shares: ntoy(10),
+        unstaked_amount: 0,
+        withdrawable_epoch_height: 0,
+    };
+
+    update_account(&mut contract, user1_account_id.clone(), &user1_account);
+
+    context.predecessor_account_id = user1_account_id.clone();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.ft_transfer(user2_account_id.clone(), U128(ntoy(5)), None);
+
+    let user1_account = get_account(&contract, user1_account_id.clone());
+    assert_eq!(
+        user1_account,
+        Account {
+            stake_shares: ntoy(5),
+            unstaked_amount: 0,
+            withdrawable_epoch_height: 0
+        }
+    );
+
+    let user2_account = get_account(&contract, user2_account_id.clone());
+    assert_eq!(
+        user2_account,
+        Account {
+            stake_shares: ntoy(5),
+            unstaked_amount: 0,
+            withdrawable_epoch_height: 0
+        }
+    );
 }
