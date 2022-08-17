@@ -12,8 +12,8 @@ impl NearxPool {
     ) {
         require!(sender_id != receiver_id, ERROR_SENDER_RECEIVER_SAME);
         require!(amount > 0, ERROR_REQUIRE_AMOUNT_GT_0);
+
         let mut sender_acc = self.internal_get_account(sender_id);
-        let mut receiver_acc = self.internal_get_account(receiver_id);
         assert!(
             amount <= sender_acc.stake_shares,
             "{} does not have enough NearX balance {}",
@@ -24,6 +24,7 @@ impl NearxPool {
         sender_acc.stake_shares -= amount;
         self.internal_update_account(sender_id, &sender_acc);
 
+        let mut receiver_acc = self.internal_get_account(receiver_id);
         receiver_acc.stake_shares += amount;
         self.internal_update_account(receiver_id, &receiver_acc);
     }
