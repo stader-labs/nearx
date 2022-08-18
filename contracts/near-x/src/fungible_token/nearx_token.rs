@@ -87,7 +87,6 @@ impl FungibleTokenCore for NearxPool {
         }
         .emit();
 
-        let receiver_id: AccountId = receiver_id;
         self.internal_nearx_transfer(&env::predecessor_account_id(), &receiver_id, amount.0);
 
         ext_ft_receiver::ext(receiver_id.clone())
