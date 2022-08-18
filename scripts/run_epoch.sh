@@ -22,6 +22,7 @@ near call $CONTRACT_NAME unstaking_epoch --accountId=$ID --gas=300000000000000;
 near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_6"'"}' --accountId=$ID --gas=300000000000000
 
 near call $CONTRACT_NAME sync_balance_from_validator '{"validator_id": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000;
 near call $CONTRACT_NAME sync_balance_from_validator '{"validator_id": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000;

@@ -51,7 +51,7 @@ impl NearxPool {
     pub fn assert_withdraw_not_paused(&self) {
         require!(
             !self.operations_control.withdraw_paused,
-            ERROR_UNSTAKING_PAUSED
+            ERROR_WITHDRAW_PAUSED
         );
     }
 
