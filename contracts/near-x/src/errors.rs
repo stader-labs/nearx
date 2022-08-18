@@ -35,6 +35,8 @@ pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on c
 pub const ERROR_MIN_DEPOSIT_TOO_HIGH: &str = "Min deposit too high";
 pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
     "Still in wait period for reward fee to be set";
+pub const ERROR_SENDER_RECEIVER_SAME: &str = "Sender and receiver cannot be the same";
+pub const ERROR_REQUIRE_AMOUNT_GT_0: &str = "Amount should be greater than 0";
 
 /// Validator related errors
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
