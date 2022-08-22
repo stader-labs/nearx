@@ -26,6 +26,18 @@ impl NearxPool {
             operator_account_id != treasury_account_id,
             ERROR_OPERATOR_TREASURY_SAME
         );
+        require!(
+            operator_account_id != env::current_account_id(),
+            ERROR_OPERATOR_CURRENT_CONTRACT_SAME
+        );
+        require!(
+            treasury_account_id != env::current_account_id(),
+            ERROR_TREASURY_CURRENT_CONTRACT_SAME
+        );
+        require!(
+            owner_account_id != env::current_account_id(),
+            ERROR_OWNER_CURRENT_CONTRACT_SAME
+        );
 
         Self {
             owner_account_id,
