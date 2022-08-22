@@ -2,6 +2,7 @@ mod helpers;
 
 use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
+use near_contract_standards::storage_management::StorageManagement;
 use near_contract_standards::fungible_token::core::FungibleTokenCore;
 use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::json_types::{U128, U64};
