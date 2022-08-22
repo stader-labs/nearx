@@ -54,6 +54,8 @@ pub const ERROR_TREASURY_OWNER_SAME: &str = "Treasury and owner account cannot b
 pub const ERROR_TREASURY_CURRENT_CONTRACT_SAME: &str =
     "Treasury and current contract cannot be the same";
 pub const ERROR_TREASURY_SAME: &str = "Treasury cannot be same as current treasury";
+pub const ERROR_SENDER_RECEIVER_SAME: &str = "Sender and receiver cannot be the same";
+pub const ERROR_REQUIRE_AMOUNT_GT_0: &str = "Amount should be greater than 0";
 
 /// Validator related errors
 pub const ERROR_VALIDATOR_NOT_PAUSED: &str = "Validator not paused";
