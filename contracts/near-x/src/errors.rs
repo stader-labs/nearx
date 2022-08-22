@@ -33,8 +33,27 @@ pub const ERROR_NOT_ENOUGH_GAS: &str = "Not enough pre-paid gas";
 pub const ERROR_REQUIRE_ONE_YOCTO_NEAR: &str = "Function requires at least one yocto near";
 pub const ERROR_EXPECT_RESULT_ON_CALLBACK: &str = "Callback expected result on callback";
 pub const ERROR_MIN_DEPOSIT_TOO_HIGH: &str = "Min deposit too high";
+pub const ERROR_MIN_DEPOSIT_TOO_LOW: &str = "Min deposit too low";
 pub const ERROR_TEMP_REWARD_FEE_SET_IN_WAIT_PERIOD: &str =
     "Still in wait period for reward fee to be set";
+pub const ERROR_INSUFFICIENT_FUNDS_FOR_STORAGE_RESERVE: &str =
+    "Need to send 50N for storage reserve";
+
+/// Owner/Operator/Treasury mechanism related errors
+pub const ERROR_OPERATOR_OWNER_SAME: &str = "Operator and owner account cannot be the same";
+pub const ERROR_OPERATOR_TREASURY_SAME: &str = "Operator and treasury account cannot be the same";
+pub const ERROR_OPERATOR_CURRENT_CONTRACT_SAME: &str =
+    "Operator and current contract cannot be the same";
+pub const ERROR_OPERATOR_SAME: &str = "Operator cannot be same as current operator";
+pub const ERROR_OWNER_OPERATOR_SAME: &str = "Owner and operator account cannot be the same";
+pub const ERROR_OWNER_TREASURY_SAME: &str = "Owner and treasury account cannot be the same";
+pub const ERROR_OWNER_CURRENT_CONTRACT_SAME: &str = "Owner and current contract cannot be the same";
+pub const ERROR_OWNER_SAME: &str = "Owner cannot be same as current owner";
+pub const ERROR_TREASURY_OPERATOR_SAME: &str = "Treasury and operator account cannot be the same";
+pub const ERROR_TREASURY_OWNER_SAME: &str = "Treasury and owner account cannot be the same";
+pub const ERROR_TREASURY_CURRENT_CONTRACT_SAME: &str =
+    "Treasury and current contract cannot be the same";
+pub const ERROR_TREASURY_SAME: &str = "Treasury cannot be same as current treasury";
 pub const ERROR_SENDER_RECEIVER_SAME: &str = "Sender and receiver cannot be the same";
 pub const ERROR_REQUIRE_AMOUNT_GT_0: &str = "Amount should be greater than 0";
 

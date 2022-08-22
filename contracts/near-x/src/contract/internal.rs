@@ -6,6 +6,7 @@ use crate::{
     contract::*,
     state::*,
 };
+use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::{
     is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
 };
@@ -95,7 +96,7 @@ impl NearxPool {
         self.assert_min_deposit_amount(amount);
 
         let account_id = env::predecessor_account_id();
-        let mut account = self.internal_get_account(&account_id);
+        let mut account = self.internal_get_account_unwrap(&account_id);
 
         // Calculate the number of "stake" shares that the account will receive for staking the
         // given amount.
@@ -133,14 +134,14 @@ impl NearxPool {
             ERROR_NOT_ENOUGH_CONTRACT_STAKED_AMOUNT
         );
 
-        let num_shares = self.num_shares_from_staked_amount_rounded_up(amount);
+        let mut num_shares = self.num_shares_from_staked_amount_rounded_up(amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_UNSTAKING_SHARES);
         require!(
             account.stake_shares >= num_shares,
             ERROR_NOT_ENOUGH_STAKED_AMOUNT_TO_UNSTAKE
         );
 
-        let receive_amount = self.staked_amount_from_num_shares_rounded_up(num_shares);
+        let mut receive_amount = self.staked_amount_from_num_shares_rounded_up(num_shares);
         require!(
             receive_amount > 0,
             ERROR_NON_POSITIVE_UNSTAKE_RECEVIE_AMOUNT
@@ -148,8 +149,21 @@ impl NearxPool {
 
         account.stake_shares -= num_shares;
         account.unstaked_amount += receive_amount;
+
+        let remaining_amount =
+            self.staked_amount_from_num_shares_rounded_down(account.stake_shares);
+
+        let storage_balance_bounds = self.storage_balance_bounds();
+        if remaining_amount <= storage_balance_bounds.min.0 {
+            receive_amount += remaining_amount;
+            num_shares += account.stake_shares;
+
+            account.stake_shares = 0;
+            account.unstaked_amount += remaining_amount;
+        }
+
         account.withdrawable_epoch_height =
-            env::epoch_height() + self.get_unstake_release_epoch(amount);
+            env::epoch_height() + self.get_unstake_release_epoch(receive_amount);
         if self.last_reconcilation_epoch == env::epoch_height() {
             // The unstake request is received after epoch_reconcilation
             // so actual unstake will happen in the next epoch,
@@ -167,7 +181,7 @@ impl NearxPool {
 
         Event::Unstake {
             account_id: account_id.clone(),
-            unstaked_amount: U128(amount),
+            unstaked_amount: U128(receive_amount),
             burnt_stake_shares: U128(num_shares),
             new_unstaked_balance: U128(account.unstaked_amount),
             new_stake_shares: U128(account.stake_shares),
@@ -186,13 +200,14 @@ impl NearxPool {
     pub(crate) fn internal_withdraw(&mut self, amount: Balance) {
         self.assert_withdraw_not_paused();
 
+        let mut amount_to_send = amount;
         let account_id = env::predecessor_account_id();
 
-        require!(amount > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
+        require!(amount_to_send > 0, ERROR_NON_POSITIVE_WITHDRAWAL);
 
         let account = self.internal_get_account(&account_id);
         require!(
-            account.unstaked_amount >= amount,
+            account.unstaked_amount >= amount_to_send,
             ERROR_NOT_ENOUGH_UNSTAKED_AMOUNT_TO_WITHDRAW
         );
         require!(
@@ -201,22 +216,30 @@ impl NearxPool {
         );
 
         require!(
-            env::account_balance().saturating_sub(MIN_BALANCE_FOR_STORAGE) >= amount,
+            env::account_balance().saturating_sub(self.min_storage_reserve) >= amount_to_send,
             ERROR_NOT_ENOUGH_BALANCE_FOR_STORAGE
         );
 
         let mut account = self.internal_get_account(&account_id);
-        account.unstaked_amount -= amount;
+        account.unstaked_amount -= amount_to_send;
+
+        let storage_balance_bounds = self.storage_balance_bounds();
+        // If the unstaked amount is less than the minimum required storage amount for storage, then send the remaining amount back to the user
+        if account.unstaked_amount <= storage_balance_bounds.min.0 {
+            amount_to_send += account.unstaked_amount;
+            account.unstaked_amount = 0;
+        }
+
         self.internal_update_account(&account_id, &account);
 
         Event::Withdraw {
             account_id: account_id.clone(),
-            amount: U128(amount),
+            amount: U128(amount_to_send),
             new_unstaked_balance: U128(account.unstaked_amount),
         }
         .emit();
 
-        Promise::new(account_id).transfer(amount);
+        Promise::new(account_id).transfer(amount_to_send);
     }
 
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
@@ -279,6 +302,12 @@ impl NearxPool {
 
     pub(crate) fn internal_get_account(&self, account_id: &AccountId) -> Account {
         self.accounts.get(account_id).unwrap_or_default()
+    }
+
+    pub(crate) fn internal_get_account_unwrap(&self, account_id: &AccountId) -> Account {
+        self.accounts
+            .get(account_id)
+            .expect("Account is not registered")
     }
 
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
