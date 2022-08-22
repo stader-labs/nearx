@@ -1,4 +1,3 @@
-use crate::constants::MIN_BALANCE_FOR_STORAGE;
 use crate::errors::*;
 use crate::events::*;
 use crate::utils::*;
@@ -44,24 +43,25 @@ impl NearxPool {
         log!("amount to stake is {:?}", amount_to_stake);
 
         require!(
-            env::account_balance() >= amount_to_stake + MIN_BALANCE_FOR_STORAGE,
+            env::account_balance() >= amount_to_stake + self.min_storage_reserve,
             ERROR_MIN_BALANCE_FOR_CONTRACT_STORAGE
         );
 
         // update internal state
         self.reconciled_epoch_stake_amount = self
             .reconciled_epoch_stake_amount
-            .saturating_sub(amount_to_stake);
+            .checked_sub(amount_to_stake)
+            .unwrap();
 
         // do staking on selected validator
         ext_staking_pool::ext(validator.account_id.clone())
             .with_attached_deposit(amount_to_stake)
-            .with_static_gas(gas::DEPOSIT_AND_STAKE)
+            .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
             .deposit_and_stake()
             .then(
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
-                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
+                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB)
                     .on_stake_pool_deposit_and_stake(validator.account_id.clone(), amount_to_stake),
             );
 

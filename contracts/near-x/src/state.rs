@@ -1,4 +1,5 @@
 use crate::constants::NUM_EPOCHS_TO_UNLOCK;
+use crate::contract::OperationControls;
 use near_sdk::{
     borsh::{self, BorshDeserialize, BorshSerialize},
     env,
@@ -67,6 +68,8 @@ pub struct NearxPoolStateResponse {
     pub accumulated_rewards_buffer: U128,
 
     pub last_reward_fee_set_epoch: EpochHeight,
+
+    pub min_storage_reserve: U128,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -222,6 +225,40 @@ pub struct OperationsControlUpdateRequest {
     pub withdraw_epoch_paused: Option<bool>,
     pub autocompounding_epoch_paused: Option<bool>,
     pub sync_validator_balance_paused: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ContractStateUpdateRequest {
+    pub total_staked: Option<U128>,
+
+    pub total_stake_shares: Option<U128>,
+
+    pub accumulated_staked_rewards: Option<U128>,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AccountUpdateRequest {
+    pub account_id: AccountId,
+
+    pub stake_shares: U128, //nearx this account owns
+
+    pub staked_amount: U128,
+
+    pub unstaked_amount: U128,
+
+    pub withdrawable_epoch_height: EpochHeight,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct ValidatorUpdateRequest {
+    pub validator_account_id: AccountId,
+
+    pub staked_amount: Option<U128>,
+
+    pub unstaked_amount: Option<U128>,
 }
 
 #[derive(Serialize, Deserialize)]
