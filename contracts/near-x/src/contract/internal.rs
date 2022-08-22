@@ -307,15 +307,11 @@ impl NearxPool {
     pub(crate) fn internal_get_account_unwrap(&self, account_id: &AccountId) -> Account {
         self.accounts
             .get(account_id)
-            .expect("Account is not registered")
+            .expect("Account is not registered. Please register the account using storage_deposit")
     }
 
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
-        if account.is_empty() {
-            self.accounts.remove(account_id);
-        } else {
-            self.accounts.insert(account_id, account); //insert_or_update
-        }
+        self.accounts.insert(account_id, account);
     }
 
     pub(crate) fn get_validator_expected_stake(&self, validator: &ValidatorInfo) -> Balance {
