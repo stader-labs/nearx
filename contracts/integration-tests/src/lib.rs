@@ -28,6 +28,50 @@ use workspaces::network::DevAccountDeployer;
 ///
 
 #[tokio::test]
+async fn test_transfer_funds() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    let contract_balance_before_transfer = context
+        .worker
+        .view_account(context.nearx_contract.id())
+        .await?
+        .balance;
+    let user2_balance_before_transfer = context
+        .worker
+        .view_account(context.user2.id())
+        .await?
+        .balance;
+
+    context
+        .transfer_funds(context.user2.id().clone(), U128(ntoy(5)))
+        .await?;
+
+    let contract_balance_after_transfer = context
+        .worker
+        .view_account(context.nearx_contract.id())
+        .await?
+        .balance;
+    let user2_balance_after_transfer = context
+        .worker
+        .view_account(context.user2.id())
+        .await?
+        .balance;
+
+    assert!(abs_diff_eq(
+        (contract_balance_before_transfer - contract_balance_after_transfer),
+        ntoy(5),
+        ntoy(1)
+    ));
+    assert!(abs_diff_eq(
+        (user2_balance_after_transfer - user2_balance_before_transfer),
+        ntoy(5),
+        ntoy(1)
+    ));
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_set_owner() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3, None).await?;
 
@@ -2096,34 +2140,44 @@ async fn test_migrate_validator_stake() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     let validator1_account_id = validator1_info.account_id.clone();
-    assert_eq!(validator1_info, ValidatorInfoResponse {
-        account_id: validator1_account_id.clone(),
-        staked: U128(ntoy(5)),
-        unstaked: U128(0),
-        weight: 10,
-        last_asked_rewards_epoch_height: U64(0),
-        last_unstake_start_epoch: U64(0)
-    });
+    assert_eq!(
+        validator1_info,
+        ValidatorInfoResponse {
+            account_id: validator1_account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0)
+        }
+    );
 
     let validator_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
         .await?;
     assert_eq!(validator_staked_balance, U128(ntoy(5)));
 
-
-    context.migrate_stake_to_validator(context.get_stake_pool_contract(0).id().clone(), U128(ntoy(10))).await?;
+    context
+        .migrate_stake_to_validator(
+            context.get_stake_pool_contract(0).id().clone(),
+            U128(ntoy(10)),
+        )
+        .await?;
 
     let validator1_info = context
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
-    assert_eq!(validator1_info, ValidatorInfoResponse {
-        account_id: validator1_account_id,
-        staked: U128(ntoy(15)),
-        unstaked: U128(0),
-        weight: 10,
-        last_asked_rewards_epoch_height: U64(0),
-        last_unstake_start_epoch: U64(0)
-    });
+    assert_eq!(
+        validator1_info,
+        ValidatorInfoResponse {
+            account_id: validator1_account_id,
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0)
+        }
+    );
 
     let validator_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))

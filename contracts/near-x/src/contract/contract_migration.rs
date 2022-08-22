@@ -7,7 +7,10 @@ use crate::{
     state::*,
 };
 use near_contract_standards::storage_management::StorageManagement;
-use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR, assert_one_yocto};
+use near_sdk::{
+    assert_one_yocto, is_promise_success, log, require, AccountId, Balance, Promise,
+    PromiseOrValue, ONE_NEAR,
+};
 
 // TODO - bchain - remove these post migration
 #[near_bindgen]
@@ -123,5 +126,18 @@ impl NearxPool {
             &validator_state_update_request.validator_account_id,
             &validator_info,
         );
+    }
+
+    #[payable]
+    pub fn transfer_funds(&mut self, transfer_to: AccountId, amount: U128) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+
+        require!(
+            env::account_balance() >= amount.0,
+            ERROR_NOT_ENOUGH_BALANCE_IN_CONTRACT
+        );
+
+        Promise::new(transfer_to).transfer(amount.0);
     }
 }

@@ -1,10 +1,10 @@
+mod contract_migration;
 mod internal;
 mod metadata;
 mod operator;
 mod public;
 mod storage_spec;
 mod upgrade;
-mod user_migration;
 mod util;
 
 use crate::state::*;

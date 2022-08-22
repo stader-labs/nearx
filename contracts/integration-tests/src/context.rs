@@ -612,6 +612,20 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn transfer_funds(
+        &self,
+        transfer_to: AccountId,
+        amount: U128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(&self.worker, self.nearx_contract.id(), "transfer_funds")
+            .max_gas()
+            .deposit(1)
+            .args_json(json!({ "transfer_to": transfer_to, "amount": amount }))?
+            .transact()
+            .await
+    }
+
     pub async fn set_refund_amount(
         &self,
         amount: U128,
