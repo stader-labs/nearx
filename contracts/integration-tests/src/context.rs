@@ -416,6 +416,24 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn migrate_stake_to_validator(
+        &self,
+        validator: AccountId,
+        amount: U128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_owner
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "migrate_stake_to_validator",
+            )
+            .args_json(json!({ "validator": validator, "amount": amount }))?
+            .max_gas()
+            .deposit(1)
+            .transact()
+            .await
+    }
+
     pub async fn unstake(
         &self,
         user: &Account,

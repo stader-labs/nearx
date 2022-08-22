@@ -7,15 +7,16 @@ use crate::{
     state::*,
 };
 use near_contract_standards::storage_management::StorageManagement;
-use near_sdk::{
-    is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR,
-};
+use near_sdk::{is_promise_success, log, require, AccountId, Balance, Promise, PromiseOrValue, ONE_NEAR, assert_one_yocto};
 
 // TODO - bchain - remove these post migration
 #[near_bindgen]
 impl NearxPool {
-    pub fn update_user_state(&mut self, user_info: Vec<AccountUpdateRequest>) {
+    #[payable]
+    pub fn migrate_user_state(&mut self, user_info: Vec<AccountUpdateRequest>) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
+
         for u in user_info {
             self.internal_update_account(
                 &u.account_id,
@@ -31,8 +32,10 @@ impl NearxPool {
         }
     }
 
+    #[payable]
     pub fn migrate_stake_to_validator(&mut self, validator: AccountId, amount: U128) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         require!(amount.0 > 0, ERROR_REQUIRE_AMOUNT_GT_0);
 
@@ -78,7 +81,8 @@ impl NearxPool {
         }
     }
 
-    pub fn update_contract_state(
+    #[payable]
+    pub fn migrate_contract_state(
         &mut self,
         contract_state_update_request: ContractStateUpdateRequest,
     ) {
@@ -97,11 +101,13 @@ impl NearxPool {
             .0;
     }
 
-    pub fn update_validator_state(
+    #[payable]
+    pub fn migrate_validator_state(
         &mut self,
         validator_state_update_request: ValidatorUpdateRequest,
     ) {
         self.assert_operator_or_owner();
+        assert_one_yocto();
 
         let mut validator_info =
             self.internal_get_validator(&validator_state_update_request.validator_account_id);

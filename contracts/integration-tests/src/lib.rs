@@ -2088,6 +2088,51 @@ async fn test_stake_pool_failures_withdraw() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_migrate_validator_stake() -> anyhow::Result<()> {
+    let context = IntegrationTestContext::new(3, None).await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator1_account_id = validator1_info.account_id.clone();
+    assert_eq!(validator1_info, ValidatorInfoResponse {
+        account_id: validator1_account_id.clone(),
+        staked: U128(ntoy(5)),
+        unstaked: U128(0),
+        weight: 10,
+        last_asked_rewards_epoch_height: U64(0),
+        last_unstake_start_epoch: U64(0)
+    });
+
+    let validator_staked_balance = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
+        .await?;
+    assert_eq!(validator_staked_balance, U128(ntoy(5)));
+
+
+    context.migrate_stake_to_validator(context.get_stake_pool_contract(0).id().clone(), U128(ntoy(10))).await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(validator1_info, ValidatorInfoResponse {
+        account_id: validator1_account_id,
+        staked: U128(ntoy(15)),
+        unstaked: U128(0),
+        weight: 10,
+        last_asked_rewards_epoch_height: U64(0),
+        last_unstake_start_epoch: U64(0)
+    });
+
+    let validator_staked_balance = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
+        .await?;
+    assert_eq!(validator_staked_balance, U128(ntoy(15)));
+
+    Ok(())
+}
+
 /// User flow specific integration tests
 #[tokio::test]
 async fn test_eight_epochs_user_flows() -> anyhow::Result<()> {

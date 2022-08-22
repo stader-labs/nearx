@@ -2,8 +2,8 @@ mod helpers;
 
 use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
-use near_contract_standards::storage_management::StorageManagement;
 use near_contract_standards::fungible_token::core::FungibleTokenCore;
+use near_contract_standards::storage_management::StorageManagement;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
 use near_sdk::{
@@ -12,10 +12,7 @@ use near_sdk::{
 };
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::{NearxPool, OperationControls};
-use near_x::state::{
-    Account, AccountResponse, Fraction, HumanReadableAccount, OperationsControlUpdateRequest,
-    ValidatorInfo, ValidatorInfoResponse,
-};
+use near_x::state::{Account, AccountResponse, AccountUpdateRequest, ContractStateUpdateRequest, Fraction, HumanReadableAccount, OperationsControlUpdateRequest, ValidatorInfo, ValidatorInfoResponse, ValidatorUpdateRequest};
 use std::collections::HashMap;
 use std::{convert::TryFrom, str::FromStr};
 
@@ -3316,4 +3313,150 @@ fn test_storage_unregister_account_success() {
 
     let user1_account = get_account_option(&contract, user1_account_id);
     assert!(user1_account.is_none());
+}
+
+#[test]
+#[should_panic]
+fn test_update_user_state_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+    context.predecessor_account_id = user1_account_id;
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.migrate_user_state(Vec::new());
+}
+
+#[test]
+fn test_migrate_user_state() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+    let user2 = AccountId::from_str("user2").unwrap();
+
+    contract.total_staked = ntoy(10);
+    contract.total_stake_shares = ntoy(10);
+
+    contract.migrate_user_state(vec![
+        AccountUpdateRequest {
+            account_id: user1.clone(),
+            stake_shares: U128(ntoy(10)),
+            staked_amount: U128(ntoy(10)),
+            unstaked_amount: U128(ntoy(5)),
+            withdrawable_epoch_height: 0,
+        },
+        AccountUpdateRequest {
+            account_id: user2.clone(),
+            stake_shares: U128(ntoy(20)),
+            staked_amount: U128(ntoy(20)),
+            unstaked_amount: U128(ntoy(5)),
+            withdrawable_epoch_height: 0,
+        },
+    ]);
+
+    let user1 = get_account(&contract, user1);
+    let user2 = get_account(&contract, user2);
+
+    assert_eq!(user1.stake_shares, ntoy(10));
+    assert_eq!(user1.unstaked_amount, ntoy(5));
+    assert_eq!(user2.stake_shares, ntoy(20));
+    assert_eq!(user2.unstaked_amount, ntoy(5));
+
+    assert_eq!(contract.total_staked, ntoy(40));
+    assert_eq!(contract.total_stake_shares, ntoy(40));
+}
+
+#[test]
+#[should_panic]
+fn test_migrate_contract_state_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+    
+    context.predecessor_account_id = user1;
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+    
+    contract.migrate_contract_state(ContractStateUpdateRequest {
+        total_staked: None,
+        total_stake_shares: None,
+        accumulated_staked_rewards: None
+    });
+}
+
+#[test]
+fn test_migrate_contract_state() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.total_staked = ntoy(50);
+    contract.total_stake_shares = ntoy(25);
+    contract.accumulated_staked_rewards = ntoy(10);
+
+    contract.migrate_contract_state(ContractStateUpdateRequest {
+        total_staked: Some(U128(ntoy(100))),
+        total_stake_shares: Some(U128(ntoy(50))),
+        accumulated_staked_rewards: Some(U128(ntoy(10)))
+    });
+
+    assert_eq!(contract.total_staked, ntoy(100));
+    assert_eq!(contract.total_stake_shares, ntoy(50));
+    assert_eq!(contract.accumulated_staked_rewards, ntoy(10));
+}
+
+#[test]
+#[should_panic]
+fn test_migrate_validator_state_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    context.predecessor_account_id = user1;
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1_id = AccountId::from_str("validator1").unwrap();
+
+    contract.migrate_validator_state(ValidatorUpdateRequest {
+        validator_account_id: validator1_id,
+        staked_amount: None,
+        unstaked_amount: None
+    });
+}
+
+#[test]
+fn test_migrate_validator_state() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1_id = AccountId::from_str("validator1").unwrap();
+    contract.add_validator(validator1_id.clone(), 10);
+
+    contract.migrate_validator_state(ValidatorUpdateRequest {
+        validator_account_id: validator1_id.clone(),
+        staked_amount: Some(U128(ntoy(30))),
+        unstaked_amount: Some(U128(ntoy(10)))
+    });
+
+    let validator1_info = get_validator(&contract, validator1_id);
+    assert_eq!(validator1_info.staked, ntoy(30));
+    assert_eq!(validator1_info.unstaked_amount, ntoy(10));
 }
