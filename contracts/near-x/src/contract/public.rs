@@ -14,6 +14,19 @@ impl NearxPool {
         operator_account_id: AccountId,
         treasury_account_id: AccountId,
     ) -> Self {
+        require!(
+            owner_account_id != operator_account_id,
+            ERROR_OWNER_OPERATOR_SAME
+        );
+        require!(
+            owner_account_id != treasury_account_id,
+            ERROR_OWNER_TREASURY_SAME
+        );
+        require!(
+            operator_account_id != treasury_account_id,
+            ERROR_OPERATOR_TREASURY_SAME
+        );
+
         Self {
             owner_account_id,
             operator_account_id,
@@ -48,6 +61,7 @@ impl NearxPool {
             total_validator_weight: 0,
             rewards_buffer: 0,
             accumulated_rewards_buffer: 0,
+            min_storage_reserve: 0,
         }
     }
 
@@ -178,7 +192,7 @@ impl NearxPool {
             .expect(ERROR_VALIDATOR_DOES_NOT_EXIST);
 
         if weight == 0 {
-            require!(true, ERROR_INVALID_VALIDATOR_WEIGHT);
+            require!(false, ERROR_INVALID_VALIDATOR_WEIGHT);
         }
 
         // update total weight
@@ -197,10 +211,23 @@ impl NearxPool {
     #[payable]
     pub fn set_owner(&mut self, new_owner: AccountId) {
         assert_one_yocto();
+        self.assert_owner_calling();
+
+        // owner, operator, treasury and current contract address should all be different
         require!(
-            env::predecessor_account_id() == self.owner_account_id,
-            ERROR_UNAUTHORIZED
+            new_owner != self.operator_account_id,
+            ERROR_OWNER_OPERATOR_SAME
         );
+        require!(
+            new_owner != self.treasury_account_id,
+            ERROR_OWNER_TREASURY_SAME
+        );
+        require!(new_owner != self.owner_account_id, ERROR_OWNER_SAME);
+        require!(
+            new_owner != env::current_account_id(),
+            ERROR_OWNER_CURRENT_CONTRACT_SAME
+        );
+
         self.temp_owner = Some(new_owner.clone());
         Event::SetOwner {
             old_owner: self.owner_account_id.clone(),
@@ -234,6 +261,24 @@ impl NearxPool {
     pub fn set_operator_id(&mut self, new_operator_account_id: AccountId) {
         assert_one_yocto();
         self.assert_owner_calling();
+
+        // owner, operator, treasury and current contract address should all be different
+        require!(
+            new_operator_account_id != self.operator_account_id,
+            ERROR_OPERATOR_SAME
+        );
+        require!(
+            new_operator_account_id != self.treasury_account_id,
+            ERROR_OPERATOR_TREASURY_SAME
+        );
+        require!(
+            new_operator_account_id != self.owner_account_id,
+            ERROR_OPERATOR_OWNER_SAME
+        );
+        require!(
+            new_operator_account_id != env::current_account_id(),
+            ERROR_OPERATOR_CURRENT_CONTRACT_SAME
+        );
 
         Event::SetOperator {
             old_operator: self.operator_account_id.clone(),
@@ -269,6 +314,24 @@ impl NearxPool {
     pub fn set_treasury_id(&mut self, new_treasury_account_id: AccountId) {
         assert_one_yocto();
         self.assert_owner_calling();
+
+        // owner, operator, treasury and current contract address should all be different
+        require!(
+            new_treasury_account_id != self.operator_account_id,
+            ERROR_TREASURY_OPERATOR_SAME
+        );
+        require!(
+            new_treasury_account_id != self.treasury_account_id,
+            ERROR_TREASURY_SAME
+        );
+        require!(
+            new_treasury_account_id != self.owner_account_id,
+            ERROR_TREASURY_OWNER_SAME
+        );
+        require!(
+            new_treasury_account_id != env::current_account_id(),
+            ERROR_TREASURY_CURRENT_CONTRACT_SAME
+        );
 
         Event::SetTreasury {
             old_treasury_account: self.treasury_account_id.clone(),
@@ -351,10 +414,17 @@ impl NearxPool {
     }
 
     #[payable]
+    pub fn add_min_storage_reserve(&mut self) {
+        self.assert_min_deposit_amount(env::attached_deposit());
+
+        self.min_storage_reserve += env::attached_deposit();
+    }
+
+    #[payable]
     pub fn set_reward_fee(&mut self, numerator: u32, denominator: u32) {
         self.assert_owner_calling();
         assert_one_yocto();
-        require!((numerator * 100 / denominator) <= 10); // less than or equal to 10%
+        require!(numerator * 10 <= denominator); // less than or equal to 10%
 
         let old_reward_fee = self.rewards_fee;
         let future_reward_fee = Fraction::new(numerator, denominator);
@@ -392,14 +462,18 @@ impl NearxPool {
     }
 
     #[payable]
-    pub fn set_min_deposit(&mut self, min_deposit: u128) {
+    pub fn set_min_deposit(&mut self, min_deposit: U128) {
         self.assert_owner_calling();
         assert_one_yocto();
 
-        require!(min_deposit < 100 * ONE_NEAR, ERROR_MIN_DEPOSIT_TOO_HIGH);
+        require!(min_deposit > U128(1 * ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
+        require!(
+            min_deposit < U128(100 * ONE_NEAR),
+            ERROR_MIN_DEPOSIT_TOO_HIGH
+        );
 
         let old_min_deposit = self.min_deposit_amount;
-        self.min_deposit_amount = min_deposit;
+        self.min_deposit_amount = min_deposit.0;
 
         Event::SetMinDeposit {
             old_min_deposit: U128(old_min_deposit),
@@ -534,6 +608,7 @@ impl NearxPool {
             rewards_buffer: U128(self.rewards_buffer),
             accumulated_rewards_buffer: U128(self.accumulated_rewards_buffer),
             last_reward_fee_set_epoch: self.last_reward_fee_set_epoch,
+            min_storage_reserve: U128(self.min_storage_reserve),
         }
     }
 

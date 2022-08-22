@@ -1,9 +1,5 @@
 use near_sdk::{EpochHeight, ONE_NEAR};
 
-/// The contract keeps at least 50 NEAR in the account to avoid being transferred out to cover
-/// contract code storage and some internal state.
-pub const MIN_BALANCE_FOR_STORAGE: u128 = 50_000_000_000_000_000_000_000_000;
-
 pub const NO_DEPOSIT: u128 = 0;
 pub const NEAR_CENT: u128 = ONE_NEAR / 100;
 pub const ONE_MILLI_NEAR: u128 = ONE_NEAR / 1_000;
@@ -84,17 +80,9 @@ pub mod gas {
 
     pub const DRAIN_WITHDRAW: Gas = base_gas(3);
 
-    pub const FT_ON_TRANSFER: Gas = base_gas(35);
-
     pub const FT_TRANSFER_RESOLVE: Gas = tera(12);
 
     pub const FT_TRANSFER: Gas = tera(35);
-
-    pub const ONE_T_GAS: Gas = base_gas(1);
-
-    pub const FIVE_T_GAS: Gas = base_gas(5);
-
-    pub const TEN_T_GAS: Gas = base_gas(10);
 
     const fn base_gas(n: u64) -> Gas {
         Gas(1_000_000_000_000 * 25 * n)

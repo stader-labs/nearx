@@ -41,6 +41,14 @@ pub struct LegacyNearxPoolStateResponse {
     pub reconciled_epoch_unstake_amount: U128,
     /// Last epoch height stake/unstake amount were reconciled
     pub last_reconcilation_epoch: U64,
+
+    pub temp_reward_fee: Option<Fraction>,
+
+    pub rewards_buffer: U128,
+
+    pub accumulated_rewards_buffer: U128,
+
+    pub last_reward_fee_set_epoch: EpochHeight,
 }
 
 #[derive(Default, BorshDeserialize, BorshSerialize, Debug, PartialEq, Deserialize, Serialize)]

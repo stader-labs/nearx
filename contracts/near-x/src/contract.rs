@@ -90,11 +90,13 @@ pub struct NearxPool {
 
     // Operations control
     pub operations_control: OperationControls,
+
+    pub min_storage_reserve: u128,
 }
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
-pub struct LegacyNearxPool {
+pub struct LegacyNearxPoolV1 {
     pub owner_account_id: AccountId,
 
     /// The total amount of tokens actually staked (the tokens are in the staking pools)
@@ -136,6 +138,67 @@ pub struct LegacyNearxPool {
     // Temp owner for owner update
     // This is to have 2 commit owner update
     pub temp_owner: Option<AccountId>,
+
+    // Operations control
+    pub operations_control: OperationControls,
+}
+
+#[near_bindgen]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
+pub struct LegacyNearxPoolV2 {
+    pub owner_account_id: AccountId,
+
+    /// The total amount of tokens actually staked (the tokens are in the staking pools)
+    // nearx_price = (total_staked) / (total_stake_shares)
+    pub total_staked: u128,
+
+    /// how many "NearX" were minted.
+    pub total_stake_shares: u128, //total NearX minted
+
+    pub accumulated_staked_rewards: u128,
+
+    /// Amount of NEAR that is users requested to stake
+    pub user_amount_to_stake_in_epoch: Balance,
+    /// Amount of NEAR that is users requested to unstake
+    pub user_amount_to_unstake_in_epoch: Balance,
+
+    /// Amount of NEAR that actually needs to be staked in the epoch
+    pub reconciled_epoch_stake_amount: Balance,
+    /// Amount of NEAR that actually needs to be unstaked in the epoch
+    pub reconciled_epoch_unstake_amount: Balance,
+    /// Last epoch height stake/unstake amount were reconciled
+    pub last_reconcilation_epoch: EpochHeight,
+
+    // User account map
+    pub accounts: UnorderedMap<AccountId, Account>,
+
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
+    pub total_validator_weight: u16,
+
+    /// min amount accepted as deposit or stake
+    pub min_deposit_amount: u128,
+
+    pub operator_account_id: AccountId,
+
+    pub treasury_account_id: AccountId,
+
+    pub rewards_fee: Fraction,
+
+    pub rewards_buffer: u128,
+
+    pub accumulated_rewards_buffer: u128,
+
+    // Temp owner for owner update
+    // This is to have 2 commit owner update
+    pub temp_owner: Option<AccountId>,
+
+    pub temp_operator: Option<AccountId>,
+
+    pub temp_treasury: Option<AccountId>,
+
+    pub temp_reward_fee: Option<Fraction>,
+
+    pub last_reward_fee_set_epoch: EpochHeight,
 
     // Operations control
     pub operations_control: OperationControls,

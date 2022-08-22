@@ -2,6 +2,7 @@ mod helpers;
 
 use crate::helpers::abs_diff_eq;
 use helpers::ntoy;
+use near_contract_standards::storage_management::StorageManagement;
 use near_contract_standards::fungible_token::core::FungibleTokenCore;
 use near_sdk::json_types::{U128, U64};
 use near_sdk::test_utils::testing_env_with_promise_results;
@@ -104,6 +105,10 @@ fn update_validator(
 
 fn get_account(contract: &NearxPool, account_id: AccountId) -> Account {
     contract.accounts.get(&account_id).unwrap()
+}
+
+fn get_account_option(contract: &NearxPool, account_id: AccountId) -> Option<Account> {
+    contract.accounts.get(&account_id)
 }
 
 fn update_account(contract: &mut NearxPool, account_id: AccountId, account: &Account) {
@@ -974,6 +979,37 @@ fn test_get_validator_to_stake() {
 
 #[test]
 #[should_panic]
+fn test_add_min_storage_reserve_unauthorized() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = operator_account();
+    context.signer_account_id = operator_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone()); // this updates the context
+
+    contract.add_min_storage_reserve();
+}
+
+#[test]
+fn test_add_min_storage_reserve_success() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = ntoy(50);
+    testing_env!(context.clone()); // this updates the context
+
+    contract.min_storage_reserve = ntoy(10);
+
+    contract.add_min_storage_reserve();
+
+    assert_eq!(contract.min_storage_reserve, ntoy(60));
+}
+
+#[test]
+#[should_panic]
 fn test_set_reward_fee_fail() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -1242,7 +1278,6 @@ fn test_deposit_and_stake_success() {
 
     let user1 = AccountId::from_str("user1").unwrap();
 
-    context.attached_deposit = ntoy(100);
     context.predecessor_account_id = user1.clone();
     testing_env!(context.clone());
 
@@ -1251,6 +1286,12 @@ fn test_deposit_and_stake_success() {
     contract.total_stake_shares = ntoy(10);
     contract.user_amount_to_stake_in_epoch = ntoy(10);
 
+    context.attached_deposit = 3000000000000000000000;
+    testing_env!(context.clone());
+    contract.storage_deposit(None, None);
+
+    context.attached_deposit = ntoy(100);
+    testing_env!(context.clone());
     contract.deposit_and_stake();
 
     let user1_account = contract.get_account(user1.clone());
@@ -1754,6 +1795,7 @@ fn test_withdraw_fail_not_enough_storage_balance() {
     context.epoch_height = 12;
     context.predecessor_account_id = user1;
     context.account_balance = ntoy(230);
+    contract.min_storage_reserve = ntoy(50);
     testing_env!(context.clone());
 
     contract.withdraw(U128(ntoy(200)));
@@ -1780,6 +1822,58 @@ fn test_withdraw_success() {
 
     let user1_account = get_account(&contract, user1.clone());
     assert_eq!(user1_account.unstaked_amount, ntoy(100));
+}
+
+#[test]
+fn test_withdraw_success_with_storage_balance_with_no_staked_amount() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    let mut user1_account = Account::default();
+    user1_account.unstaked_amount += ntoy(300);
+    user1_account.withdrawable_epoch_height = 10;
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    contract.min_storage_reserve = ntoy(50);
+
+    context.epoch_height = 12;
+    context.predecessor_account_id = user1.clone();
+    context.account_balance = ntoy(400);
+    testing_env!(context.clone());
+
+    contract.withdraw(U128(299999900000000000000000000));
+
+    let user1_account = get_account_option(&contract, user1.clone());
+    assert!(user1_account.is_none());
+}
+
+#[test]
+fn test_withdraw_success_with_storage_balance_with_staked_amount() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+
+    let mut user1_account = Account::default();
+    user1_account.unstaked_amount += ntoy(300);
+    user1_account.stake_shares = ntoy(10);
+    user1_account.withdrawable_epoch_height = 10;
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    contract.min_storage_reserve = ntoy(50);
+
+    context.epoch_height = 12;
+    context.predecessor_account_id = user1.clone();
+    context.account_balance = ntoy(400);
+    testing_env!(context.clone());
+
+    contract.withdraw(U128(299999900000000000000000000));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(10));
+    assert_eq!(user1_account.unstaked_amount, ntoy(0));
 }
 
 #[test]
@@ -1907,6 +2001,53 @@ fn test_unstake_fail_greater_than_total_staked_amount() {
     contract.total_staked = ntoy(100);
 
     contract.unstake(U128(ntoy(200)));
+}
+
+#[test]
+fn test_unstake_success_remaining_amount_less_than_storage_deposit() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    context.epoch_height = 10;
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone(), 10);
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(500);
+    val1_info.unstaked_amount = ntoy(0);
+    val1_info.unstake_start_epoch = 3;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.total_staked = ntoy(500);
+    contract.total_stake_shares = ntoy(500);
+    contract.last_reconcilation_epoch = 8;
+    contract.user_amount_to_unstake_in_epoch = ntoy(60);
+
+    let mut user1_account = Account::default();
+    user1_account.stake_shares = ntoy(50);
+    user1_account.unstaked_amount = ntoy(0);
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context.clone());
+
+    contract.unstake(U128(49999000000000000000000000));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(0));
+    assert_eq!(user1_account.unstaked_amount, ntoy(50));
+    assert_eq!(user1_account.withdrawable_epoch_height, 14);
+
+    assert_eq!(contract.total_staked, ntoy(450));
+    assert_eq!(contract.total_stake_shares, ntoy(450));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(110));
 }
 
 #[test]
@@ -2546,6 +2687,51 @@ fn test_set_owner_unauthorized() {
 }
 
 #[test]
+#[should_panic]
+fn test_set_owner_same_as_operator() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+    contract.operator_account_id = new_owner.clone();
+
+    contract.set_owner(new_owner);
+}
+
+#[test]
+#[should_panic]
+fn test_set_owner_same_as_treasury() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let new_owner = AccountId::from_str("new_owner").unwrap();
+    contract.treasury_account_id = new_owner.clone();
+
+    contract.set_owner(new_owner);
+}
+
+#[test]
+#[should_panic]
+fn test_set_owner_same_as_current_contract() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_owner(context.current_account_id);
+}
+
+#[test]
 fn test_set_owner() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2648,6 +2834,45 @@ fn test_set_operator_account_unauthorized() {
 
 #[test]
 #[should_panic]
+fn test_set_operator_account_same_as_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(owner_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_operator_account_same_as_treasury() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(treasury_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_operator_account_same_as_current_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_operator_id(context.current_account_id);
+}
+
+#[test]
+#[should_panic]
 fn test_set_treasury_account_unauthorized() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
@@ -2659,6 +2884,45 @@ fn test_set_treasury_account_unauthorized() {
     testing_env!(context.clone());
 
     contract.set_treasury_id(new_treasury_account);
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_owner() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(owner_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_operator() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(operator_account());
+}
+
+#[test]
+#[should_panic]
+fn test_set_treasury_account_same_as_current_account() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_treasury_id(context.current_account_id);
 }
 
 #[test]
@@ -2799,7 +3063,21 @@ fn test_set_min_deposit_unauthorized() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(10));
+    contract.set_min_deposit(U128(ntoy(10)));
+}
+
+#[test]
+#[should_panic]
+fn test_set_min_deposit_less_than_one_near() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.set_min_deposit(U128(10000));
 }
 
 #[test]
@@ -2813,7 +3091,7 @@ fn test_set_min_deposit_more_than_100_near() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(200));
+    contract.set_min_deposit(U128(ntoy(200)));
 }
 
 #[test]
@@ -2826,7 +3104,7 @@ fn test_set_min_deposit() {
     context.attached_deposit = 1;
     testing_env!(context.clone());
 
-    contract.set_min_deposit(ntoy(50));
+    contract.set_min_deposit(U128(ntoy(50)));
 
     assert_eq!(contract.min_deposit_amount, ntoy(50));
 }
