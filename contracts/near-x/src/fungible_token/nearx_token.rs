@@ -38,6 +38,7 @@ impl FungibleTokenCore for NearxPool {
         #[allow(unused)] memo: Option<String>,
     ) {
         assert_one_yocto();
+        self.assert_ft_transfer_not_paused();
         Event::FtTransfer {
             receiver_id: receiver_id.clone(),
             sender_id: env::predecessor_account_id(),
@@ -56,6 +57,7 @@ impl FungibleTokenCore for NearxPool {
         msg: String,
     ) -> PromiseOrValue<U128> {
         assert_one_yocto();
+        self.assert_ft_transfer_call_not_paused();
         let min_gas = gas::FT_TRANSFER + gas::FT_TRANSFER_RESOLVE;
         assert!(
             env::prepaid_gas() > min_gas,

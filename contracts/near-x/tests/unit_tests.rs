@@ -158,6 +158,8 @@ fn test_non_owner_calling_update_operations_control() {
         withdraw_epoch_paused: None,
         autocompounding_epoch_paused: None,
         sync_validator_balance_paused: None,
+        ft_transfer_paused: None,
+        ft_transfer_call_paused: None,
     });
 }
 
@@ -180,6 +182,8 @@ fn test_update_operations_control_success() {
         withdraw_epoch_paused: Some(true),
         autocompounding_epoch_paused: None,
         sync_validator_balance_paused: Some(true),
+        ft_transfer_paused: Some(true),
+        ft_transfer_call_paused: Some(true),
     });
 
     let operations_control = contract.get_operations_control();
@@ -193,7 +197,9 @@ fn test_update_operations_control_success() {
             unstaking_epoch_paused: true,
             withdraw_epoch_paused: true,
             autocompounding_epoch_paused: false,
-            sync_validator_balance_paused: true
+            sync_validator_balance_paused: true,
+            ft_transfer_paused: true,
+            ft_transfer_call_paused: true
         }
     );
 }
@@ -1482,6 +1488,32 @@ fn test_withdraw_paused() {
     contract.operations_control.withdraw_paused = true;
 
     contract.withdraw(U128(100));
+}
+
+#[test]
+#[should_panic]
+fn test_ft_transfer_paused() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    contract.operations_control.ft_transfer_paused = true;
+    context.attached_deposit = 1;
+    testing_env!(context);
+
+    contract.ft_transfer(operator_account(), U128(100), None);
+}
+
+#[test]
+#[should_panic]
+fn test_ft_transfer_call_paused() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    contract.operations_control.ft_transfer_call_paused = true;
+    context.attached_deposit = 1;
+    testing_env!(context);
+
+    contract.ft_transfer_call(operator_account(), U128(100), None, "".to_string());
 }
 
 #[test]
