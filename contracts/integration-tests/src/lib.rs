@@ -140,6 +140,7 @@ async fn test_reward_fee_set() -> anyhow::Result<()> {
     Ok(())
 }
 
+// TODO - update this test when we do the next contract upgrade
 // #[tokio::test]
 // async fn test_contract_upgrade() -> anyhow::Result<()> {
 //     let old_contract = "./../../res/near_x_c70812191a07c4c6b8a9ba7bd7f6dd4f615923af.wasm";
