@@ -75,4 +75,18 @@ impl NearxPool {
             ERROR_SYNC_VALIDATOR_BALANCE_PAUSED
         );
     }
+
+    pub fn assert_ft_transfer_not_paused(&self) {
+        require!(
+            !self.operations_control.ft_transfer_paused,
+            ERROR_FT_TRANSFER_PAUSED
+        );
+    }
+
+    pub fn assert_ft_transfer_call_not_paused(&self) {
+        require!(
+            !self.operations_control.ft_transfer_call_paused,
+            ERROR_FT_TRANSFER_CALL_PAUSED
+        );
+    }
 }

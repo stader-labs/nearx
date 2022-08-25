@@ -87,3 +87,5 @@ pub const ERROR_UNSTAKING_EPOCH_PAUSED: &str = "Unstaking epoch paused";
 pub const ERROR_WITHDRAW_EPOCH_PAUSED: &str = "Withdraw epoch paused";
 pub const ERROR_AUTOCOMPOUNDING_EPOCH_PAUSED: &str = "Autocompounding epoch paused";
 pub const ERROR_SYNC_VALIDATOR_BALANCE_PAUSED: &str = "Sync validator balance paused";
+pub const ERROR_FT_TRANSFER_PAUSED: &str = "ft_transfer paused";
+pub const ERROR_FT_TRANSFER_CALL_PAUSED: &str = "ft_transfer_call paused";

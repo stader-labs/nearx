@@ -68,6 +68,8 @@ impl NearxPool {
                 withdraw_epoch_paused: false,
                 autocompounding_epoch_paused: false,
                 sync_validator_balance_paused: false,
+                ft_transfer_paused: false,
+                ft_transfer_call_paused: false,
             },
             treasury_account_id,
             total_validator_weight: 0,
@@ -407,6 +409,12 @@ impl NearxPool {
         self.operations_control.sync_validator_balance_paused = update_operations_control_request
             .sync_validator_balance_paused
             .unwrap_or(self.operations_control.sync_validator_balance_paused);
+        self.operations_control.ft_transfer_paused = update_operations_control_request
+            .ft_transfer_paused
+            .unwrap_or(self.operations_control.ft_transfer_paused);
+        self.operations_control.ft_transfer_call_paused = update_operations_control_request
+            .ft_transfer_call_paused
+            .unwrap_or(self.operations_control.ft_transfer_call_paused);
 
         Event::UpdateOperationsControl {
             operations_control: OperationControls {
@@ -420,6 +428,8 @@ impl NearxPool {
                 sync_validator_balance_paused: self
                     .operations_control
                     .sync_validator_balance_paused,
+                ft_transfer_paused: self.operations_control.ft_transfer_paused,
+                ft_transfer_call_paused: self.operations_control.ft_transfer_call_paused,
             },
         }
         .emit();

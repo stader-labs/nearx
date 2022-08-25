@@ -224,6 +224,8 @@ pub struct OperationsControlUpdateRequest {
     pub withdraw_epoch_paused: Option<bool>,
     pub autocompounding_epoch_paused: Option<bool>,
     pub sync_validator_balance_paused: Option<bool>,
+    pub ft_transfer_paused: Option<bool>,
+    pub ft_transfer_call_paused: Option<bool>,
 }
 
 #[derive(Serialize, Deserialize)]

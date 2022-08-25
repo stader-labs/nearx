@@ -29,6 +29,8 @@ pub struct OperationControls {
     pub withdraw_epoch_paused: bool,
     pub autocompounding_epoch_paused: bool,
     pub sync_validator_balance_paused: bool,
+    pub ft_transfer_paused: bool,
+    pub ft_transfer_call_paused: bool,
 }
 
 #[near_bindgen]
