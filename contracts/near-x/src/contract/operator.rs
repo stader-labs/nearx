@@ -499,7 +499,6 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        // TODO - Due to precision issues in core contracts, unstaked amount for a validator can be around a few yoctoNEAR even though
         // we have not unstaked.
         require!(
             validator_info.unstaked_amount == 0,
