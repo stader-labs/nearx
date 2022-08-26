@@ -488,7 +488,7 @@ impl NearxPool {
         self.assert_owner_calling();
         assert_one_yocto();
 
-        require!(min_deposit > U128(1 * ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
+        require!(min_deposit > U128(ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
         require!(
             min_deposit < U128(100 * ONE_NEAR),
             ERROR_MIN_DEPOSIT_TOO_HIGH
