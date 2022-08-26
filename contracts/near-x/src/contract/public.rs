@@ -460,6 +460,8 @@ impl NearxPool {
         .emit();
     }
 
+    // Don't immediaitely set the rewards, wait for 4 epochs and then set the rewards to allow
+    // users to opt out if they feel that the reward fee is too high
     #[payable]
     pub fn commit_reward_fee(&mut self) {
         self.assert_owner_calling();
@@ -488,7 +490,7 @@ impl NearxPool {
         self.assert_owner_calling();
         assert_one_yocto();
 
-        require!(min_deposit > U128(1 * ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
+        require!(min_deposit > U128(ONE_NEAR), ERROR_MIN_DEPOSIT_TOO_LOW);
         require!(
             min_deposit < U128(100 * ONE_NEAR),
             ERROR_MIN_DEPOSIT_TOO_HIGH
