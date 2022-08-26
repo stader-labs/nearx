@@ -154,6 +154,8 @@ impl NearxPool {
             self.staked_amount_from_num_shares_rounded_down(account.stake_shares);
 
         let storage_balance_bounds = self.storage_balance_bounds();
+        // if the amount remaining is lower than the storage balance, unstake the remaining amount in order to
+        // avoid large number of accounts piling up with v.v small amounts
         if remaining_amount <= storage_balance_bounds.min.0 {
             receive_amount += remaining_amount;
             num_shares += account.stake_shares;
