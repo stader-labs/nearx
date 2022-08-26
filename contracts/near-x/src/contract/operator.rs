@@ -455,6 +455,7 @@ impl NearxPool {
             .reconciled_epoch_unstake_amount
             .saturating_sub(self.reconciled_epoch_stake_amount);
 
+        // while unstaking first drain the unstaked from the rewards_buffer and then from the validators
         if reconciled_unstake_amount > self.rewards_buffer {
             reconciled_unstake_amount =
                 reconciled_unstake_amount.saturating_sub(self.rewards_buffer);
@@ -499,7 +500,6 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        // TODO - Due to precision issues in core contracts, unstaked amount for a validator can be around a few yoctoNEAR even though
         // we have not unstaked.
         require!(
             validator_info.unstaked_amount == 0,

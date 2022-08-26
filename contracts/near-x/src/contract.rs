@@ -74,6 +74,8 @@ pub struct NearxPool {
 
     pub rewards_fee: Fraction,
 
+    // extra rewards which the owner/operator can drop to increase the exchange rate and increase the
+    // staked amounts of all users
     pub rewards_buffer: u128,
 
     pub accumulated_rewards_buffer: u128,
