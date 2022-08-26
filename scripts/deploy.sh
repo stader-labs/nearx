@@ -8,4 +8,4 @@ near create-account $CONTRACT_NAME --masterAccount=$ID
 near deploy $CONTRACT_NAME --wasmFile=res/near_x.wasm
 
 # Init
-near call $CONTRACT_NAME new '{"owner_account_id": "'"$ID"'", "operator_account_id": "'"$ID"'", "treasury_account_id": "'"$ID"'"}' --accountId=$ID
+near call $CONTRACT_NAME new '{"owner_account_id": "staderlabs.testnet", "operator_account_id": "bchain99.testnet", "treasury_account_id": "bchaina.testnet"}' --accountId=$ID
