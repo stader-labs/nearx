@@ -96,6 +96,7 @@ impl NearxPool {
         self.assert_min_deposit_amount(amount);
 
         let account_id = env::predecessor_account_id();
+        // we need to call storage_deposit and register the user storage before the user deposits
         let mut account = self.internal_get_account_unwrap(&account_id);
 
         // Calculate the number of "stake" shares that the account will receive for staking the
@@ -313,6 +314,7 @@ impl NearxPool {
     }
 
     pub(crate) fn internal_update_account(&mut self, account_id: &AccountId, account: &Account) {
+        // accounts can only be removed by storage_unregister
         self.accounts.insert(account_id, account);
     }
 
