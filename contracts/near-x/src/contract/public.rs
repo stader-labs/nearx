@@ -4,7 +4,7 @@ use crate::errors::*;
 use crate::events::Event;
 use crate::{contract::*, state::*};
 use near_sdk::json_types::U64;
-use near_sdk::near_bindgen;
+use near_sdk::{near_bindgen, Promise};
 use near_sdk::{assert_one_yocto, require, ONE_NEAR};
 
 #[near_bindgen]
@@ -50,6 +50,12 @@ impl NearxPool {
             rewards_buffer: 0,
             accumulated_rewards_buffer: 0,
         }
+    }
+
+    #[payable]
+    pub fn transfer_funds(&mut self, account_id: AccountId, amount: U128) {
+        self.assert_owner_calling();
+        Promise::new(account_id).transfer(amount.0);
     }
 
     /*
