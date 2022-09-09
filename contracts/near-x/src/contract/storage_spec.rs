@@ -113,7 +113,6 @@ impl StorageManagement for NearxPool {
         // if account registered check if amount staked and unstaked is 0
         if account.is_empty() {
             self.accounts.remove(&account_id);
-            Promise::new(account_id).transfer(self.storage_balance_bounds().min.0);
         } else {
             panic!("Account is not empty!");
         }
