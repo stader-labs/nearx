@@ -166,7 +166,7 @@ impl NearxPool {
         }
 
         account.withdrawable_epoch_height =
-            env::epoch_height() + self.get_unstake_release_epoch(receive_amount);
+            env::epoch_height() + self.get_unstake_release_epoch(account.unstaked_amount);
         if self.last_reconcilation_epoch == env::epoch_height() {
             // The unstake request is received after epoch_reconcilation
             // so actual unstake will happen in the next epoch,
