@@ -2178,6 +2178,68 @@ fn test_unstake_success_same_epoch_as_reconcilation_epoch() {
 }
 
 #[test]
+fn test_unstake_success_without_validators_to_unstake_from() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1 = AccountId::from_str("user1").unwrap();
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    context.epoch_height = 10;
+    context.predecessor_account_id = owner_account();
+    context.signer_account_id = owner_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    contract.add_validator(validator1.clone(), 10);
+
+    let mut val1_info = get_validator(&contract, validator1.clone());
+    val1_info.staked = ntoy(100);
+    val1_info.unstaked_amount = ntoy(0);
+    val1_info.unstake_start_epoch = 9;
+    update_validator(&mut contract, validator1.clone(), &val1_info);
+
+    contract.total_staked = ntoy(100);
+    contract.total_stake_shares = ntoy(100);
+    contract.last_reconcilation_epoch = 9;
+    contract.user_amount_to_unstake_in_epoch = ntoy(60);
+
+    let mut user1_account = Account::default();
+    user1_account.stake_shares = ntoy(50);
+    user1_account.unstaked_amount = ntoy(10);
+    update_account(&mut contract, user1.clone(), &user1_account);
+
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context.clone());
+
+    contract.unstake(U128(ntoy(10)));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(40));
+    assert_eq!(user1_account.unstaked_amount, ntoy(20));
+    assert_eq!(user1_account.withdrawable_epoch_height, 18);
+
+    assert_eq!(contract.total_staked, ntoy(90));
+    assert_eq!(contract.total_stake_shares, ntoy(90));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(70));
+
+    context.epoch_height = 11;
+    context.predecessor_account_id = user1.clone();
+    testing_env!(context.clone());
+
+    contract.unstake(U128(ntoy(10)));
+
+    let user1_account = get_account(&contract, user1.clone());
+    assert_eq!(user1_account.stake_shares, ntoy(30));
+    assert_eq!(user1_account.unstaked_amount, ntoy(30));
+    assert_eq!(user1_account.withdrawable_epoch_height, 19);
+
+    assert_eq!(contract.total_staked, ntoy(80));
+    assert_eq!(contract.total_stake_shares, ntoy(80));
+    assert_eq!(contract.user_amount_to_unstake_in_epoch, ntoy(80));
+}
+
+#[test]
 fn test_epoch_unstake_success() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
