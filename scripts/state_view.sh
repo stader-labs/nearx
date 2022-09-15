@@ -13,7 +13,7 @@ near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 near view $CONTRACT_NAME get_account '{"account_id": "'"$ID"'"}'
 near view $CONTRACT_NAME get_user_account '{"account_id": "'"$ID"'"}'
 near view $CONTRACT_NAME get_account '{"account_id": "test-dapp.testnet"}'
-near view $CONTRACT_NAME get_user_account '{"account_id": "bchain99.near"}'
+near view $CONTRACT_NAME get_user_account '{"account_id": "facdc31d402868617cfbfd93772481584ea00162d98fe606b07583c81b7f2d9f"}'
 
 near view $CONTRACT_NAME storage_balance_of '{"account_id": "'"$ID"'"}'
 
@@ -31,7 +31,7 @@ near view $CONTRACT_NAME get_operations_control
 near view $CONTRACT_NAME storage_balance_of '{"account_id": "'"$ID"'"}'
 
 # FT queries
-near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
+near view $CONTRACT_NAME ft_balance_of '{"account_id": "facdc31d402868617cfbfd93772481584ea00162d98fe606b07583c81b7f2d9f"}'
 near view $CONTRACT_NAME ft_balance_of '{"account_id": "learning12345.testnet"}'
 
 near view $CONTRACT_NAME ft_total_supply
