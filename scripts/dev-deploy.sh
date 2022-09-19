@@ -1,1 +1,1 @@
-rm -rf neardev; near dev-deploy --wasmFile res/near_x.wasm; sleep 2; source neardev/dev-account.env
+rm -rf neardev; near dev-deploy --wasmFile res/near_x.wasm; sleep 2; source neardev/dev-account.env;
