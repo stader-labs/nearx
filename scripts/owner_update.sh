@@ -14,19 +14,8 @@ near call $CONTRACT_NAME set_reward_fee '{"numerator": 10, "denominator": 100}' 
 
 near call $CONTRACT_NAME commit_reward_fee --accountId=$ID --gas=300000000000000 --depositYocto=1;
 
-near call $CONTRACT_NAME update_operations_control '{"update_operations_control_request": {
-  "ft_transfer_paused": true,
-  "ft_transfer_call_paused": true,
-  "stake_paused": false,
-  "unstake_paused": true,
-  "withdraw_paused": true,
-  "staking_epoch_paused": true,
-  "unstaking_epoch_paused": true,
-  "withdraw_epoch_paused": true,
-  "autocompounding_epoch_paused": false,
-  "sync_validator_balance_paused": true
-}}' --accountId=$ID --gas=300000000000000 --depositYocto=1;
-
 near call $CONTRACT_NAME add_min_storage_reserve --accountId=$ID --gas=300000000000000 --amount=10;
 
-near call $CONTRACT_NAME update_rewards_buffer --accountId=$ID --gas=300000000000000 --amount=2;
+near call $CONTRACT_NAME update_rewards_buffer --accountId=$ID --gas=300000000000000 --depositYocto=1596381189754760206691;
+
+near call $CONTRACT_NAME transfer_funds '{"account_id": "'"$ID"'", "amount": "1000000000000000000000000"}' --accountId=$ID --gas=300000000000000 --amount=10;
