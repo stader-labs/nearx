@@ -1,3 +1,0 @@
-{
-  "references": [{ "path": "./cli" }, { "path": "./client" }]
-}
