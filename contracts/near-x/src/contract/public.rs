@@ -517,9 +517,8 @@ impl NearxPool {
     }
 
     pub fn get_account_total_balance(&self, account_id: AccountId) -> U128 {
-        let acc = self.internal_get_account(&account_id);
-        self.staked_amount_from_num_shares_rounded_down(acc.stake_shares)
-            .into()
+        let account = self.get_account(account_id);
+        (account.unstaked_balance.0 + account.staked_balance.0).into()
     }
 
     pub fn is_account_unstaked_balance_available(&self, account_id: AccountId) -> bool {
