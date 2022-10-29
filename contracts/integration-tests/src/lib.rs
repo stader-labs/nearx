@@ -140,11 +140,9 @@ async fn test_reward_fee_set() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO - update this test when we do the next contract upgrade
 #[tokio::test]
-#[ignore]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
-    let old_contract = "./../../res/near_x_c70812191a07c4c6b8a9ba7bd7f6dd4f615923af.wasm";
+    let old_contract = "./../../res/near_x_50273033d58cf3b61532b9703d7b7110a1e09071.wasm";
 
     println!("Deploying old contract!");
     let mut context = IntegrationTestContext::new(3, Some(old_contract)).await?;
@@ -194,7 +192,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
@@ -205,7 +203,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.run_epoch_methods().await?;
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -277,7 +275,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -288,7 +286,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.run_epoch_methods().await?;
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -355,11 +353,6 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    assert!(context
-        .add_min_storage_reserve(U128(ntoy(10)))
-        .await
-        .is_err());
-
     println!("Reading the new contract!");
     let nearx_2_wasm = std::fs::read(new_contract)?;
 
@@ -388,7 +381,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(0));
     assert_eq!(nearx_state.accumulated_rewards_buffer, U128(0));
-    assert_eq!(nearx_state.min_storage_reserve, U128(ntoy(110)));
+    assert_eq!(nearx_state.min_storage_reserve, U128(ntoy(60)));
 
     context.update_rewards_buffer(ntoy(5)).await?;
 
