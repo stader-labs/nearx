@@ -140,9 +140,7 @@ async fn test_reward_fee_set() -> anyhow::Result<()> {
     Ok(())
 }
 
-// TODO - update this test when we do the next contract upgrade
 #[tokio::test]
-#[ignore]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
     let old_contract = "./../../res/near_x_c70812191a07c4c6b8a9ba7bd7f6dd4f615923af.wasm";
 
@@ -194,7 +192,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(30)));
@@ -205,7 +203,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.run_epoch_methods().await?;
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -277,7 +275,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
         }
     );
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
@@ -288,7 +286,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
 
     context.run_epoch_methods().await?;
 
-    let nearx_state = context.get_legacy_nearx_state().await?;
+    let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(40)));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(40)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
