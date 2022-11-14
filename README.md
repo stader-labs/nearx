@@ -24,23 +24,34 @@ To run the unit and integration tests, run the following
 `make run-all-tests
 `
 
+### Integrating with NearX
+
+A typescript sdk is available to integrate with NearX. Please refer to https://github.com/stader-labs/nearx-sdk
+
+A nodejs based cli is available to at https://www.npmjs.com/package/nearx-cli
+
 ### Live contracts
 
 The following are the contracts deployed on mainnet and testnet:
 
 Mainnet NearX contract: `v2-nearx.stader-labs.near`
+
 Testnet NearX contract: `v2-nearx.staderlabs.testnet`
 
 Mainnet NearX Aurora Erc20: `0xb39eeb9e168ef6c639f5e282fef1f6bc4dcae375`
+
 Testnet NearX Aurora Erc20: `0xfd2557bdf5bee20681690f21ceda22fd8135cda8`
 
 Mainnet NearX Aurora Staking contract: `0x8E30eE730d4a6F3457befA60b25533F1400d31A6`
+
 Testnet NearX Aurora Staking contract: `0xA2133C04Fed4301eD97e53067F51C238aBf9C810`
 
 Mainnet NearX Near Price Feed contract: `nearx-price-feed.stader-labs.near`
+
 Testnet NearX Near Price Feed contract: `nearx-price-feed.staderlabs.testnet`
 
 Mainnet NearX Aurora Price Feed contract: `0x6081918387c97F81247adAF2F12a8A94A8dA84ED`
+
 Testnet NearX Aurora Price Feed contract: `0x8CaD8F11aC35216071d796d1e6778C3C4d741bfA`
 
 ### Dapp link
