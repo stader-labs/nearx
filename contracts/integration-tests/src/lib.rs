@@ -140,6 +140,7 @@ async fn test_reward_fee_set() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[ignore]
 #[tokio::test]
 async fn test_contract_upgrade() -> anyhow::Result<()> {
     let old_contract = "./../../res/near_x_50273033d58cf3b61532b9703d7b7110a1e09071.wasm";
@@ -673,17 +674,17 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn test_manager_deposit_and_stake() -> anyhow::Result<()> {
+async fn test_direct_deposit_and_stake() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3, None).await?;
 
     context
-        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(0).id().clone())
+        .direct_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(0).id().clone())
         .await?;
     context
-        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(1).id().clone())
+        .direct_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(1).id().clone())
         .await?;
     context
-        .manager_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(2).id().clone())
+        .direct_deposit_and_stake(ntoy(10), context.get_stake_pool_contract(2).id().clone())
         .await?;
 
     let nearx_state = context.get_nearx_state().await?;

@@ -213,7 +213,7 @@ pub struct LegacyNearxPoolV2 {
 pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
-    fn on_stake_pool_deposit_and_stake_manager(
+    fn on_stake_pool_direct_deposit_and_stake(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,

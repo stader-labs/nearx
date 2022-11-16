@@ -25,7 +25,7 @@ impl NearxPool {
         .emit();
     }
 
-    pub(crate) fn internal_manager_deposit_and_stake(
+    pub(crate) fn internal_direct_deposit_and_stake(
         &mut self,
         user_amount: Balance,
         validator: AccountId,
@@ -47,7 +47,7 @@ impl NearxPool {
                 ext_staking_pool_callback::ext(env::current_account_id())
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
-                    .on_stake_pool_deposit_and_stake_manager(
+                    .on_stake_pool_direct_deposit_and_stake(
                         validator_info,
                         user_amount,
                         num_shares,
@@ -57,7 +57,7 @@ impl NearxPool {
     }
 
     #[private]
-    pub fn on_stake_pool_deposit_and_stake_manager(
+    pub fn on_stake_pool_direct_deposit_and_stake(
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
