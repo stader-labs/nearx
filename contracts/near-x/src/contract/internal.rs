@@ -67,7 +67,7 @@ impl NearxPool {
         shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
-        let mut acc = &mut self.accounts.get(&user).unwrap_or_default();
+        let mut acc = &mut self.internal_get_account_unwrap(&user);
 
         if is_promise_success() {
             validator_info.staked += amount;
@@ -81,6 +81,15 @@ impl NearxPool {
             );
             self.internal_update_validator(&validator_info.account_id, &validator_info);
             self.internal_update_account(&user, acc);
+
+            Event::DirectDepositAndStake {
+                account_id: user,
+                amount: U128(amount),
+                minted_stake_shares: U128(shares),
+                new_stake_shares: U128(acc.stake_shares),
+                validator: validator_info.account_id
+            }.emit();
+
             PromiseOrValue::Value(true)
         } else {
             log!(
