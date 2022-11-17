@@ -113,6 +113,12 @@ impl IntegrationTestContext<Sandbox> {
 
         for i in 0..validator_count {
             println!("Seeding with manager deposit of 5N");
+            nearx_owner.call(&worker, nearx_contract.id(), "storage_deposit")
+                .max_gas()
+                .args_json(json!({}))?
+                .deposit(3000000000000000000000)
+                .transact()
+                .await?;
             let res = nearx_owner
                 .call(&worker, nearx_contract.id(), "direct_deposit_and_stake")
                 .args_json(json!({ "validator": validator_to_stake_pool_contract.get(&get_validator_account_id(i)).unwrap().id().clone() }))?

@@ -32,6 +32,9 @@ impl NearxPool {
     ) {
         let account_id = env::predecessor_account_id();
 
+        // this is just to check that the user has registered the storage deposit
+        self.internal_get_account_unwrap(&account_id);
+
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
