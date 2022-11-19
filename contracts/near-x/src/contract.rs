@@ -217,7 +217,6 @@ pub trait ExtNearxStakingPoolCallbacks {
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,
-        shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 

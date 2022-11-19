@@ -30,12 +30,17 @@ impl NearxPool {
         user_amount: Balance,
         validator: AccountId,
     ) {
+        self.assert_staking_not_paused();
+        self.assert_min_deposit_amount(user_amount);
+
         let account_id = env::predecessor_account_id();
 
         // this is just to check that the user has registered the storage deposit
         self.internal_get_account_unwrap(&account_id);
 
         // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
+        // this is just a check for whether num_shares is > 0 or not. The actual num_shares accounted to the user
+        // will be computed in the callback
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
@@ -53,7 +58,6 @@ impl NearxPool {
                     .on_stake_pool_direct_deposit_and_stake(
                         validator_info,
                         user_amount,
-                        num_shares,
                         account_id,
                     ),
             );
@@ -64,15 +68,18 @@ impl NearxPool {
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
-        shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
 
         if is_promise_success() {
+            // recompute here because on_stake_pool_direct_deposit_and_stake callback will execute
+            // a few blocks after direct_deposit_and_stake. In the meantime, an autocompounding epoch could have
+            // run which would have changed the exchange rate by the time this callback has been called.
+            let num_shares = self.num_shares_from_staked_amount_rounded_down(amount);
             validator_info.staked += amount;
-            acc.stake_shares += shares;
-            self.total_stake_shares += shares;
+            acc.stake_shares += num_shares;
+            self.total_stake_shares += num_shares;
             self.total_staked += amount;
             log!(
                 "Successfully staked {} into {}",
@@ -85,10 +92,11 @@ impl NearxPool {
             Event::DirectDepositAndStake {
                 account_id: user,
                 amount: U128(amount),
-                minted_stake_shares: U128(shares),
+                minted_stake_shares: U128(num_shares),
                 new_stake_shares: U128(acc.stake_shares),
-                validator: validator_info.account_id
-            }.emit();
+                validator: validator_info.account_id,
+            }
+            .emit();
 
             PromiseOrValue::Value(true)
         } else {

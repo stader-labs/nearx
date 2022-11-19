@@ -85,7 +85,7 @@ pub enum Event {
         amount: U128,
         minted_stake_shares: U128,
         new_stake_shares: U128,
-        validator: AccountId
+        validator: AccountId,
     },
     Withdraw {
         account_id: AccountId,
