@@ -3544,7 +3544,9 @@ async fn test_unstake_with_private_validators_2() -> anyhow::Result<()> {
     context.unstake(&context.user1, U128(ntoy(15))).await?;
     context.unstake(&context.user2, U128(ntoy(7))).await?;
     context.unstake(&context.user3, U128(ntoy(1))).await?;
-    context.unstake(&context.nearx_owner, U128(ntoy(15))).await?;
+    context
+        .unstake(&context.nearx_owner, U128(ntoy(15)))
+        .await?;
 
     context
         .update_validator_max_unstakable_limit(context.get_stake_pool_contract(0).id(), ntoy(2))
@@ -4288,7 +4290,9 @@ async fn test_bank_run() -> anyhow::Result<()> {
     context.unstake(&context.user1, U128(ntoy(10))).await?;
     context.unstake(&context.user2, U128(ntoy(5))).await?;
     context.unstake(&context.user3, U128(ntoy(2))).await?;
-    context.unstake(&context.nearx_owner, U128(ntoy(15))).await?;
+    context
+        .unstake(&context.nearx_owner, U128(ntoy(15)))
+        .await?;
 
     let nearx_state = context.get_nearx_state().await?;
     assert_eq!(nearx_state.total_staked, U128(ntoy(0)));
@@ -4397,7 +4401,10 @@ async fn test_bank_run() -> anyhow::Result<()> {
         stake_pool_1_unstaked_amount,
         U128(10666666666666666666666666)
     );
-    assert_eq!(stake_pool_2_unstaked_amount, U128(10666666666666666666666666));
+    assert_eq!(
+        stake_pool_2_unstaked_amount,
+        U128(10666666666666666666666666)
+    );
     assert_eq!(
         stake_pool_3_unstaked_amount,
         U128(10666666666666666666666668)
@@ -7792,7 +7799,9 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
     context.unstake(&context.user1, U128(ntoy(11))).await?;
     context.unstake(&context.user2, U128(ntoy(11))).await?;
     context.unstake(&context.user3, U128(ntoy(11))).await?;
-    context.unstake(&context.nearx_owner, U128(16500000000000000000000000)).await?;
+    context
+        .unstake(&context.nearx_owner, U128(16500000000000000000000000))
+        .await?;
 
     let user1_account = context.get_user_account(context.user1.id().clone()).await?;
     let user2_account = context.get_user_account(context.user2.id().clone()).await?;
@@ -7832,7 +7841,10 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
     assert_eq!(nearx_state.total_staked, U128(0));
     assert_eq!(nearx_state.total_stake_shares, U128(ntoy(0)));
     assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
-    assert_eq!(nearx_state.user_amount_to_unstake_in_epoch, U128(49500000000000000000000000));
+    assert_eq!(
+        nearx_state.user_amount_to_unstake_in_epoch,
+        U128(49500000000000000000000000)
+    );
     assert_eq!(nearx_state.reconciled_epoch_stake_amount, U128(0));
     assert_eq!(nearx_state.reconciled_epoch_unstake_amount, U128(0));
     assert_eq!(nearx_state.rewards_buffer, U128(4500000000000000000000000));

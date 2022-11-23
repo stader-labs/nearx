@@ -492,7 +492,8 @@ impl NearxPool {
                 && matches!(validator.validator_type, ValidatorType::PUBLIC)
             {
                 if validator.staked.gt(&max_validator_stake_amount) {
-                    max_validator_stake_amount = validator.max_unstakable_limit.unwrap_or(validator.staked);
+                    max_validator_stake_amount =
+                        validator.max_unstakable_limit.unwrap_or(validator.staked);
                     current_validator = Some(validator)
                 }
             }
