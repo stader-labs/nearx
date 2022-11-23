@@ -24,6 +24,14 @@ pub struct SnapshotUser {
     pub nearx_balance: U128,
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[serde(crate = "near_sdk::serde")]
+#[serde(rename_all = "camelCase")]
+pub enum ValidatorType {
+    PUBLIC,
+    PRIVATE,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct NearxPoolStateResponse {
@@ -71,6 +79,14 @@ pub struct NearxPoolStateResponse {
     pub min_storage_reserve: U128,
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Debug, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+#[serde(rename_all = "camelCase")]
+pub enum ValidatorInfoWrapper {
+    LegacyValidatorInfo(LegacyValidatorInfo),
+    ValidatorInfo(ValidatorInfo),
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfoResponse {
@@ -80,6 +96,26 @@ pub struct ValidatorInfoResponse {
     pub weight: u16,
     pub last_asked_rewards_epoch_height: U64,
     pub last_unstake_start_epoch: U64,
+    pub max_unstakable_limit: Option<u128>,
+    pub validator_type: ValidatorType,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct LegacyValidatorInfo {
+    pub account_id: AccountId,
+
+    pub staked: u128,
+
+    pub weight: u16,
+
+    pub last_redeemed_rewards_epoch: EpochHeight,
+
+    pub unstaked_amount: Balance,
+
+    pub unstake_start_epoch: EpochHeight,
+
+    pub last_unstake_start_epoch: EpochHeight,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -98,6 +134,12 @@ pub struct ValidatorInfo {
     pub unstake_start_epoch: EpochHeight,
 
     pub last_unstake_start_epoch: EpochHeight,
+
+    // the max amount that can be unstaked from a validator at a given time
+    // if None, then it means that we can unstake the entire amount from the validator
+    pub max_unstakable_limit: Option<u128>,
+
+    pub validator_type: ValidatorType,
 }
 
 impl ValidatorInfo {
@@ -117,6 +159,8 @@ impl ValidatorInfo {
             unstaked_amount: 0,
             unstake_start_epoch: 0,
             last_unstake_start_epoch: 0,
+            max_unstakable_limit: None,
+            validator_type: ValidatorType::PUBLIC,
         }
     }
 
@@ -217,6 +261,7 @@ pub struct RolesResponse {
 #[serde(crate = "near_sdk::serde")]
 pub struct OperationsControlUpdateRequest {
     pub stake_paused: Option<bool>,
+    pub direct_stake_paused: Option<bool>,
     pub unstake_paused: Option<bool>,
     pub withdraw_paused: Option<bool>,
     pub staking_epoch_paused: Option<bool>,

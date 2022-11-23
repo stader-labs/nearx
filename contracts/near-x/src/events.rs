@@ -87,6 +87,13 @@ pub enum Event {
         new_stake_shares: U128,
         validator: AccountId,
     },
+    ManagerDepositAndStake {
+        account_id: AccountId,
+        amount: U128,
+        minted_stake_shares: U128,
+        new_stake_shares: U128,
+        validator: AccountId,
+    },
     Withdraw {
         account_id: AccountId,
         amount: U128,

@@ -22,6 +22,7 @@ use near_sdk::{
 #[serde(crate = "near_sdk::serde")]
 pub struct OperationControls {
     pub stake_paused: bool,
+    pub direct_stake_paused: bool,
     pub unstaked_paused: bool,
     pub withdraw_paused: bool,
     pub staking_epoch_paused: bool,
@@ -176,7 +177,7 @@ pub struct LegacyNearxPoolV2 {
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
-    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfoWrapper>,
     pub total_validator_weight: u16,
 
     /// min amount accepted as deposit or stake
@@ -214,6 +215,13 @@ pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_deposit(&mut self, amount: U128) -> bool;
 
     fn on_stake_pool_direct_deposit_and_stake(
+        &mut self,
+        validator_info: ValidatorInfo,
+        amount: u128,
+        user: AccountId,
+    ) -> PromiseOrValue<bool>;
+
+    fn on_stake_pool_manager_deposit_and_stake(
         &mut self,
         validator_info: ValidatorInfo,
         amount: u128,

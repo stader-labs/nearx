@@ -80,6 +80,11 @@ impl NearxPool {
         if is_promise_success() {
             validator_info.staked += amount;
 
+            // all funds staked to public validators thru epoch staking are unstakable
+            // at any time. Only funds staked directly with the validator is not unstakable
+            validator_info.max_unstakable_limit =
+                Some(validator_info.max_unstakable_limit.unwrap_or(0) + amount);
+
             Event::StakingEpochCallbackSuccess {
                 validator_id: validator.clone(),
                 amount: U128(amount),
@@ -181,6 +186,9 @@ impl NearxPool {
             self.accumulated_staked_rewards += rewards;
             //updated new "staked" value for this pool
             validator_info.staked = new_total_balance;
+            // consider rewards to unstakable since its excess rewards and rewards get distributed to all users
+            validator_info.max_unstakable_limit =
+                Some(validator_info.max_unstakable_limit.unwrap_or(0) + rewards);
 
             let operator_fee = rewards * self.rewards_fee;
             log!("operator fee is {}", operator_fee);
@@ -225,7 +233,7 @@ impl NearxPool {
             return false;
         }
 
-        let validator_to_unstake = self.get_validator_to_unstake();
+        let (validator_to_unstake, validator_unstakable_amount) = self.get_validator_to_unstake();
 
         require!(
             validator_to_unstake.is_some(),
@@ -234,8 +242,10 @@ impl NearxPool {
 
         let mut validator_info = validator_to_unstake.unwrap();
 
-        let amount_to_unstake =
-            std::cmp::min(validator_info.staked, self.reconciled_epoch_unstake_amount);
+        let amount_to_unstake = std::cmp::min(
+            validator_unstakable_amount,
+            self.reconciled_epoch_unstake_amount,
+        );
 
         require!(
             amount_to_unstake <= validator_info.staked,
@@ -275,6 +285,13 @@ impl NearxPool {
 
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
+
+            // we might unstake more then the max_unstakable limit at times. This will happen when the max unstakable limit for the
+            // validators has not been correctly updated. Ideally this case should never come
+            // but we do not want to risk protocol insolvency for this
+            let max_unstakable_limit = validator.max_unstakable_limit.unwrap_or(0);
+            validator.max_unstakable_limit =
+                Some(max_unstakable_limit.saturating_sub(amount_to_unstake));
 
             Event::UnstakingEpochCallbackSuccess {
                 validator_id: validator_id.clone(),
@@ -544,6 +561,7 @@ impl NearxPool {
 
         if is_promise_success() {
             validator.unstaked_amount += amount_to_unstake;
+            validator.max_unstakable_limit = Some(0); // entire amount has been unstaked
 
             Event::DrainUnstakeCallbackSuccess {
                 validator_id: validator_id.clone(),
