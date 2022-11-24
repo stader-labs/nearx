@@ -140,6 +140,10 @@ pub struct ValidatorInfo {
     pub max_unstakable_limit: Option<u128>,
 
     pub validator_type: ValidatorType,
+
+    pub redelegate_to: Option<AccountId>,
+
+    pub amount_to_redelegate: u128,
 }
 
 impl ValidatorInfo {
@@ -161,6 +165,8 @@ impl ValidatorInfo {
             last_unstake_start_epoch: 0,
             max_unstakable_limit: None,
             validator_type: ValidatorType::PUBLIC,
+            redelegate_to: None,
+            amount_to_redelegate: 0,
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::constants::NUM_EPOCHS_TO_UNLOCK;
 use crate::errors::*;
 use crate::events::*;
 use crate::utils::*;
@@ -6,7 +7,7 @@ use crate::{
     contract::*,
     state::*,
 };
-use near_sdk::{env, log, near_bindgen, require};
+use near_sdk::{assert_one_yocto, env, log, near_bindgen, require};
 
 #[near_bindgen]
 impl NearxPool {
@@ -657,5 +658,184 @@ impl NearxPool {
             }
             .emit();
         }
+    }
+
+    pub fn rebalance_unstake(&mut self, from_val: AccountId, to_val: AccountId, amount: U128) {
+        self.assert_operator_or_owner();
+
+        let mut from_val_info = self.internal_get_validator(&from_val);
+
+        // validator should not have an existing unstake
+        require!(from_val_info.unstaked_amount == 0);
+        require!(!from_val_info.pending_unstake_release());
+        require!(
+            from_val_info
+                .max_unstakable_limit
+                .unwrap_or(from_val_info.staked)
+                >= amount.0
+        );
+        // complete any previous redelegation
+        require!(from_val_info.amount_to_redelegate == 0);
+        require!(from_val_info.redelegate_to.is_none());
+
+        from_val_info.redelegate_to = Some(to_val);
+        from_val_info.staked -= amount.0;
+        from_val_info.last_unstake_start_epoch = from_val_info.unstake_start_epoch;
+        from_val_info.unstake_start_epoch = env::epoch_height();
+
+        self.internal_update_validator(&from_val, &from_val_info);
+
+        // TODO - add event
+
+        ext_staking_pool::ext(from_val_info.account_id.clone())
+            .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
+            .with_attached_deposit(NO_DEPOSIT)
+            .unstake(amount)
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE_CB)
+                    .on_stake_pool_rebalance_unstake(from_val.clone(), amount.0),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_rebalance_unstake(&mut self, validator_id: AccountId, amount: u128) {
+        let mut validator = self.internal_get_validator(&validator_id);
+
+        if is_promise_success() {
+            validator.unstaked_amount += amount;
+            validator.amount_to_redelegate += amount;
+            validator.max_unstakable_limit = Some(
+                validator
+                    .max_unstakable_limit
+                    .unwrap_or(0)
+                    .saturating_sub(amount),
+            );
+        } else {
+            validator.staked += amount;
+            validator.unstake_start_epoch = validator.last_unstake_start_epoch;
+        }
+
+        self.internal_update_validator(&validator_id, &validator);
+    }
+
+    #[payable]
+    pub fn rebalance_withdraw(&mut self, validator_id: AccountId) {
+        self.assert_operator_or_owner();
+
+        // make sure enough gas was given
+        let min_gas = gas::DRAIN_WITHDRAW
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL
+            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
+        let mut validator_info = self.internal_get_validator(&validator_id);
+
+        // make sure the validator:
+        // 1. has weight set to 0
+        // 2. has no staked balance
+        // 3. not pending release
+        require!(
+            !validator_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
+
+        let amount = validator_info.amount_to_redelegate;
+        validator_info.unstaked_amount -= amount;
+
+        self.internal_update_validator(&validator_id, &validator_info);
+
+        ext_staking_pool::ext(validator_info.account_id.clone())
+            .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
+            .with_attached_deposit(NO_DEPOSIT)
+            .withdraw(U128(amount))
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL_CB)
+                    .on_stake_pool_rebalance_withdraw(validator_info.account_id, amount),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_rebalance_withdraw(&mut self, validator_id: AccountId, amount: u128) {
+        let mut validator_info = self.internal_get_validator(&validator_id);
+
+        if is_promise_success() {
+            // stake the amount in rebalance_stake
+            Event::DrainWithdrawCallbackSuccess {
+                validator_id,
+                amount: U128(amount),
+            }
+            .emit();
+        } else {
+            validator_info.unstaked_amount += amount;
+            self.internal_update_validator(&validator_id, &validator_info);
+
+            Event::DrainWithdrawCallbackFail {
+                validator_id,
+                amount: U128(amount),
+            }
+            .emit();
+        }
+    }
+
+    #[payable]
+    pub fn rebalance_stake(&mut self, validator_id: AccountId) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+
+        let validator_info = self.internal_get_validator(&validator_id);
+
+        require!(
+            !validator_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
+        // ensure that there is no amount in unbonding period
+        require!(validator_info.unstaked_amount == 0);
+        require!(validator_info.redelegate_to.is_some());
+
+        let amount_to_stake = validator_info.amount_to_redelegate;
+        let validator_to_redelegate_to = validator_info.redelegate_to.unwrap();
+
+        ext_staking_pool::ext(validator_id.clone())
+            .with_attached_deposit(amount_to_stake)
+            .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
+            .deposit_and_stake()
+            .then(
+                ext_staking_pool_callback::ext(env::current_account_id())
+                    .with_attached_deposit(NO_DEPOSIT)
+                    .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB)
+                    .on_stake_pool_rebalance_deposit_and_stake(
+                        validator_id.clone(),
+                        validator_to_redelegate_to,
+                        amount_to_stake,
+                    ),
+            );
+    }
+
+    #[private]
+    pub fn on_stake_pool_rebalance_deposit_and_stake(
+        &mut self,
+        from_validator_id: AccountId,
+        validator_to_redelegate_to: AccountId,
+        amount_to_stake: u128,
+    ) {
+        let mut from_validator_info = self.internal_get_validator(&from_validator_id);
+        let mut to_validator_info = self.internal_get_validator(&validator_to_redelegate_to);
+
+        if is_promise_success() {
+            // if successful stake
+            from_validator_info.redelegate_to = None;
+            from_validator_info.amount_to_redelegate = 0;
+            to_validator_info.staked += amount_to_stake;
+        }
+
+        self.internal_update_validator(&from_validator_id, &from_validator_info);
+        self.internal_update_validator(&validator_to_redelegate_to, &to_validator_info);
     }
 }

@@ -64,6 +64,7 @@ pub struct NearxPool {
     pub accounts: UnorderedMap<AccountId, Account>,
 
     pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
+
     pub total_validator_weight: u16,
 
     /// min amount accepted as deposit or stake
@@ -237,6 +238,17 @@ pub trait ExtNearxStakingPoolCallbacks {
     fn on_stake_pool_drain_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128);
 
     fn on_stake_pool_drain_withdraw(&mut self, validator_id: AccountId, amount_to_withdraw: u128);
+
+    fn on_stake_pool_rebalance_unstake(&mut self, validator_id: AccountId, amount: u128);
+
+    fn on_stake_pool_rebalance_withdraw(&mut self, validator_id: AccountId, amount: u128);
+
+    fn on_stake_pool_rebalance_deposit_and_stake(
+        &mut self,
+        from_validator_id: AccountId,
+        validator_to_redelegate_to: AccountId,
+        amount_to_stake: u128,
+    );
 
     fn on_get_sp_staked_balance_for_rewards(
         &mut self,
