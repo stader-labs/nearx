@@ -1,4 +1,3 @@
-use crate::constants::NUM_EPOCHS_TO_UNLOCK;
 use crate::errors::*;
 use crate::events::*;
 use crate::utils::*;
@@ -7,7 +6,7 @@ use crate::{
     contract::*,
     state::*,
 };
-use near_sdk::{assert_one_yocto, env, log, near_bindgen, require};
+use near_sdk::{env, log, near_bindgen, require};
 
 #[near_bindgen]
 impl NearxPool {
@@ -680,7 +679,7 @@ impl NearxPool {
         require!(from_val_info.amount_to_redelegate == 0);
         require!(from_val_info.redelegate_to.is_none());
 
-        from_val_info.redelegate_to = Some(to_val);
+        from_val_info.redelegate_to = Some(to_val.clone());
         from_val_info.staked -= amount.0;
         from_val_info.last_unstake_start_epoch = from_val_info.unstake_start_epoch;
         from_val_info.unstake_start_epoch = env::epoch_height();
@@ -688,6 +687,12 @@ impl NearxPool {
         self.internal_update_validator(&from_val, &from_val_info);
 
         // TODO - add event
+        Event::RebalanceUnstake {
+            from_validator: from_val.clone(),
+            to_validator: to_val.clone(),
+            amount,
+        }
+        .emit();
 
         ext_staking_pool::ext(from_val_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_UNSTAKE)
@@ -714,10 +719,25 @@ impl NearxPool {
                     .unwrap_or(0)
                     .saturating_sub(amount),
             );
+
+            Event::RebalanceUnstakeCallbackSuccess {
+                from_validator: validator_id.clone(),
+                to_validator: validator.redelegate_to.as_ref().unwrap().clone(),
+                amount: U128(amount),
+            }
+            .emit();
         } else {
             validator.staked += amount;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
+            let validator_to_redelegate_to = validator.redelegate_to.as_ref().unwrap().clone();
             validator.redelegate_to = None;
+
+            Event::RebalanceUnstakeCallbackFail {
+                from_validator: validator_id.clone(),
+                to_validator: validator_to_redelegate_to.clone(),
+                amount: U128(amount),
+            }
+            .emit();
         }
 
         self.internal_update_validator(&validator_id, &validator);
@@ -746,11 +766,19 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
+        require!(validator_info.redelegate_to.is_some());
 
         let amount = validator_info.amount_to_redelegate;
         validator_info.unstaked_amount -= amount;
 
         self.internal_update_validator(&validator_id, &validator_info);
+
+        Event::RebalanceWithdraw {
+            from_validator: validator_id,
+            to_validator: validator_info.redelegate_to.unwrap(),
+            amount: U128(amount),
+        }
+        .emit();
 
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::ON_STAKE_POOL_WITHDRAW_ALL)
@@ -770,8 +798,9 @@ impl NearxPool {
 
         if is_promise_success() {
             // stake the amount in rebalance_stake
-            Event::DrainWithdrawCallbackSuccess {
-                validator_id,
+            Event::RebalanceWithdrawCallbackSuccess {
+                from_validator: validator_id,
+                to_validator: validator_info.redelegate_to.unwrap(),
                 amount: U128(amount),
             }
             .emit();
@@ -779,8 +808,9 @@ impl NearxPool {
             validator_info.unstaked_amount += amount;
             self.internal_update_validator(&validator_id, &validator_info);
 
-            Event::DrainWithdrawCallbackFail {
-                validator_id,
+            Event::RebalanceWithdrawCallbackFail {
+                from_validator: validator_id,
+                to_validator: validator_info.redelegate_to.unwrap(),
                 amount: U128(amount),
             }
             .emit();
@@ -803,6 +833,13 @@ impl NearxPool {
 
         let amount_to_stake = validator_info.amount_to_redelegate;
         let validator_to_redelegate_to = validator_info.redelegate_to.unwrap();
+
+        Event::RebalanceStake {
+            from_validator: validator_id.clone(),
+            to_validator: validator_to_redelegate_to.clone(),
+            amount: U128(amount_to_stake),
+        }
+        .emit();
 
         ext_staking_pool::ext(validator_id.clone())
             .with_attached_deposit(amount_to_stake)
@@ -835,6 +872,20 @@ impl NearxPool {
             from_validator_info.redelegate_to = None;
             from_validator_info.amount_to_redelegate = 0;
             to_validator_info.staked += amount_to_stake;
+
+            Event::RebalanceStakeCallbackSuccess {
+                from_validator: from_validator_id.clone(),
+                to_validator: validator_to_redelegate_to.clone(),
+                amount: U128(amount_to_stake),
+            }
+            .emit();
+        } else {
+            Event::RebalanceStakeCallbackFail {
+                from_validator: from_validator_id.clone(),
+                to_validator: validator_to_redelegate_to.clone(),
+                amount: U128(amount_to_stake),
+            }
+            .emit();
         }
 
         self.internal_update_validator(&from_validator_id, &from_validator_info);
