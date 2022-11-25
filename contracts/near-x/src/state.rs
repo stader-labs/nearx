@@ -87,6 +87,27 @@ pub enum ValidatorInfoWrapper {
     ValidatorInfo(ValidatorInfo),
 }
 
+impl ValidatorInfoWrapper {
+    pub fn into_current(self) -> ValidatorInfo {
+        match self {
+            ValidatorInfoWrapper::LegacyValidatorInfo(account) => account.into_current(),
+            ValidatorInfoWrapper::ValidatorInfo(account) => account,
+        }
+    }
+}
+
+impl From<ValidatorInfo> for ValidatorInfoWrapper {
+    fn from(validator_info: ValidatorInfo) -> Self {
+        ValidatorInfoWrapper::ValidatorInfo(validator_info)
+    }
+}
+
+impl From<ValidatorInfoWrapper> for ValidatorInfo {
+    fn from(validator_info: ValidatorInfoWrapper) -> Self {
+        validator_info.into_current()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfoResponse {
@@ -118,6 +139,24 @@ pub struct LegacyValidatorInfo {
     pub unstake_start_epoch: EpochHeight,
 
     pub last_unstake_start_epoch: EpochHeight,
+}
+
+impl LegacyValidatorInfo {
+    pub fn into_current(self) -> ValidatorInfo {
+        ValidatorInfo {
+            account_id: self.account_id,
+            staked: self.staked,
+            weight: self.weight,
+            last_redeemed_rewards_epoch: self.last_redeemed_rewards_epoch,
+            unstaked_amount: self.unstaked_amount,
+            unstake_start_epoch: self.unstake_start_epoch,
+            last_unstake_start_epoch: self.last_unstake_start_epoch,
+            max_unstakable_limit: None,
+            validator_type: ValidatorType::PUBLIC,
+            redelegate_to: None,
+            amount_to_redelegate: 0,
+        }
+    }
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]

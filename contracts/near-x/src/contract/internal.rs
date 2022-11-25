@@ -357,7 +357,7 @@ impl NearxPool {
 
     pub(crate) fn internal_get_validator(&self, validator: &AccountId) -> ValidatorInfo {
         if let Some(val_info) = self.validator_info_map.get(validator) {
-            val_info
+            val_info.into_current()
         } else {
             panic!("{}", ERROR_VALIDATOR_IS_NOT_PRESENT);
         }
@@ -368,7 +368,10 @@ impl NearxPool {
         validator: &AccountId,
         validator_info: &ValidatorInfo,
     ) {
-        self.validator_info_map.insert(validator, validator_info);
+        self.validator_info_map.insert(
+            validator,
+            &ValidatorInfoWrapper::ValidatorInfo(validator_info.clone()),
+        );
     }
 
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
@@ -441,7 +444,8 @@ impl NearxPool {
         let mut selected_validator = None;
         let mut amount_to_stake: Balance = 0;
 
-        for validator in self.validator_info_map.values() {
+        for wrapped_validator in self.validator_info_map.values() {
+            let validator = wrapped_validator.into_current();
             let target_amount = self.get_validator_expected_stake(&validator);
             if validator.staked < target_amount {
                 let delta = std::cmp::min(target_amount - validator.staked, amount);
@@ -468,7 +472,8 @@ impl NearxPool {
         let mut unstake_full_amount_from_private_validators = false;
 
         // find the total unstakable amount
-        for validator in self.validator_info_map.values() {
+        for wrapped_validator in self.validator_info_map.values() {
+            let validator = wrapped_validator.into_current();
             if !validator.pending_unstake_release() && !validator.paused() {
                 total_unstakable_amount +=
                     validator.max_unstakable_limit.unwrap_or(validator.staked);
@@ -486,7 +491,8 @@ impl NearxPool {
         }
 
         // go thru all the public validators first
-        for validator in self.validator_info_map.values() {
+        for wrapped_validator in self.validator_info_map.values() {
+            let validator = wrapped_validator.into_current();
             if !validator.pending_unstake_release()
                 && !validator.paused()
                 && matches!(validator.validator_type, ValidatorType::PUBLIC)
@@ -501,7 +507,8 @@ impl NearxPool {
 
         if current_validator.is_none() {
             // go thru the private validators if we didn't find any public validators
-            for validator in self.validator_info_map.values() {
+            for wrapped_validator in self.validator_info_map.values() {
+                let validator = wrapped_validator.into_current();
                 if !validator.pending_unstake_release()
                     && !validator.paused()
                     && matches!(validator.validator_type, ValidatorType::PRIVATE)
@@ -527,7 +534,8 @@ impl NearxPool {
     pub fn get_unstake_release_epoch(&self, amount: u128) -> EpochHeight {
         let mut available_amount: Balance = 0;
         let mut total_staked_amount: Balance = 0;
-        for validator in self.validator_info_map.values() {
+        for wrapped_validator in self.validator_info_map.values() {
+            let validator = wrapped_validator.into_current();
             total_staked_amount += validator.staked;
 
             if !validator.paused() && !validator.pending_unstake_release() && validator.staked > 0 {

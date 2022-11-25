@@ -716,13 +716,13 @@ async fn test_direct_deposit_and_stake() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3, None).await?;
 
     context
-        .make_validator_private(context.get_stake_pool_contract(0).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(1).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(2).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(2).id(), None)
         .await?;
 
     context
@@ -2644,13 +2644,13 @@ async fn test_unstake_with_only_private_validators() -> anyhow::Result<()> {
     println!("current_epoch_1 is {:?}", current_epoch_1);
 
     context
-        .make_validator_private(context.get_stake_pool_contract(0).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(1).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(2).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(2).id(), None)
         .await?;
 
     println!("user1_depositing 10N");
@@ -3041,10 +3041,10 @@ async fn test_unstake_with_private_validators() -> anyhow::Result<()> {
     println!("current_epoch_1 is {:?}", current_epoch_1);
 
     context
-        .make_validator_private(context.get_stake_pool_contract(0).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(1).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
         .await?;
 
     println!("user1_depositing 10N");
@@ -3422,10 +3422,10 @@ async fn test_unstake_with_private_validators_2() -> anyhow::Result<()> {
     println!("current_epoch_1 is {:?}", current_epoch_1);
 
     context
-        .make_validator_private(context.get_stake_pool_contract(0).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(1).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
         .await?;
 
     println!("user1_depositing 10N");
@@ -3809,10 +3809,10 @@ async fn test_bank_run_with_private_validators() -> anyhow::Result<()> {
     println!("current_epoch_1 is {:?}", current_epoch_1);
 
     context
-        .make_validator_private(context.get_stake_pool_contract(0).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
         .await?;
     context
-        .make_validator_private(context.get_stake_pool_contract(1).id(), U128(0))
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
         .await?;
 
     // make validator 2 and validator 3 max unstakable limit to 0

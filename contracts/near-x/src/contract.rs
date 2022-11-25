@@ -63,7 +63,7 @@ pub struct NearxPool {
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
-    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfoWrapper>,
 
     pub total_validator_weight: u16,
 
@@ -178,7 +178,7 @@ pub struct LegacyNearxPoolV2 {
     // User account map
     pub accounts: UnorderedMap<AccountId, Account>,
 
-    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfoWrapper>,
+    pub validator_info_map: UnorderedMap<AccountId, ValidatorInfo>,
     pub total_validator_weight: u16,
 
     /// min amount accepted as deposit or stake

@@ -11,7 +11,7 @@ use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::{NearxPool, OperationControls};
 use near_x::state::{
     Account, Fraction, HumanReadableAccount, OperationsControlUpdateRequest, ValidatorInfo,
-    ValidatorInfoResponse, ValidatorType,
+    ValidatorInfoResponse, ValidatorInfoWrapper, ValidatorType,
 };
 use std::{convert::TryFrom, str::FromStr};
 
@@ -85,7 +85,8 @@ pub fn get_context(
 }
 
 fn get_validator(contract: &NearxPool, validator: AccountId) -> ValidatorInfo {
-    contract.validator_info_map.get(&validator).unwrap()
+    let wrapped_validator_info = contract.validator_info_map.get(&validator).unwrap();
+    wrapped_validator_info.into_current()
 }
 
 fn update_validator(
@@ -95,7 +96,10 @@ fn update_validator(
 ) {
     contract
         .validator_info_map
-        .insert(&validator, validator_info)
+        .insert(
+            &validator,
+            &ValidatorInfoWrapper::ValidatorInfo(validator_info.clone()),
+        )
         .unwrap();
 }
 
@@ -788,7 +792,7 @@ fn test_make_validator_public() {
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
-    contract.make_validator_private(stake_public_key_1.clone());
+    contract.make_validator_private(stake_public_key_1.clone(), None);
 
     let validators = contract.get_validators();
 
@@ -840,7 +844,7 @@ fn test_make_validator_private_unauthorized() {
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
-    contract.make_validator_private(AccountId::from_str("val1").unwrap());
+    contract.make_validator_private(AccountId::from_str("val1").unwrap(), None);
 }
 
 #[test]
@@ -881,7 +885,7 @@ fn test_make_validator_private() {
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
-    contract.make_validator_private(stake_public_key_1.clone());
+    contract.make_validator_private(stake_public_key_1.clone(), None);
 
     let validators = contract.get_validators();
 

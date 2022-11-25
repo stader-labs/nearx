@@ -181,12 +181,12 @@ impl IntegrationTestContext<Sandbox> {
     pub async fn make_validator_private(
         &self,
         account_id: &AccountId,
-        initial_max_unstakable_limit: U128,
+        initial_max_unstakable_limit: Option<U128>,
     ) -> anyhow::Result<CallExecutionDetails> {
         self.nearx_operator
             .call(&self.worker, self.nearx_contract.id(), "make_validator_private")
             .deposit(1)
-            .args_json(json!({ "validator": account_id, "initial_max_unstakable_limit": initial_max_unstakable_limit  }))?
+            .args_json(json!({ "validator": account_id, "initial_max_unstakable_limit": initial_max_unstakable_limit }))?
             .transact()
             .await
     }
