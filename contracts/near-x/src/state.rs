@@ -98,6 +98,8 @@ pub struct ValidatorInfoResponse {
     pub last_unstake_start_epoch: U64,
     pub max_unstakable_limit: Option<u128>,
     pub validator_type: ValidatorType,
+    pub redelegate_to: Option<AccountId>,
+    pub amount_to_redelegate: U128,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]

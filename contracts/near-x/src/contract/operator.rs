@@ -331,7 +331,7 @@ impl NearxPool {
         // If we run epoch_withdraw before drain_withdraw for a validator, we will loose the drained funds.
         // So don't run epoch_withdraw for a paused validator
         require!(!validator_info.paused(), ERROR_VALIDATOR_IS_PAUSED);
-
+        require!(validator_info.redelegate_to.is_none());
         require!(
             validator_info.unstaked_amount > 0,
             ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
@@ -602,6 +602,8 @@ impl NearxPool {
         // 1. has weight set to 0
         // 2. has no staked balance
         // 3. not pending release
+        // 4. we are not in a redelegation phase
+        require!(validator_info.redelegate_to.is_none());
         require!(validator_info.paused(), ERROR_VALIDATOR_NOT_PAUSED);
         require!(validator_info.staked == 0, ERROR_NON_POSITIVE_STAKE_AMOUNT);
         require!(
@@ -715,6 +717,7 @@ impl NearxPool {
         } else {
             validator.staked += amount;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
+            validator.redelegate_to = None;
         }
 
         self.internal_update_validator(&validator_id, &validator);
@@ -784,10 +787,8 @@ impl NearxPool {
         }
     }
 
-    #[payable]
     pub fn rebalance_stake(&mut self, validator_id: AccountId) {
         self.assert_operator_or_owner();
-        assert_one_yocto();
 
         let validator_info = self.internal_get_validator(&validator_id);
 
@@ -795,9 +796,10 @@ impl NearxPool {
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        // ensure that there is no amount in unbonding period
+        // ensure that there is no amount in unbonding period and the amount is withdrawn
         require!(validator_info.unstaked_amount == 0);
         require!(validator_info.redelegate_to.is_some());
+        require!(validator_info.amount_to_redelegate > 0);
 
         let amount_to_stake = validator_info.amount_to_redelegate;
         let validator_to_redelegate_to = validator_info.redelegate_to.unwrap();
