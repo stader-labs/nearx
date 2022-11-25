@@ -529,7 +529,7 @@ fn test_remove_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -541,7 +541,7 @@ fn test_remove_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -553,7 +553,7 @@ fn test_remove_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -585,7 +585,7 @@ fn test_remove_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -597,7 +597,7 @@ fn test_remove_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -628,7 +628,7 @@ fn test_remove_validator_success() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -689,7 +689,7 @@ fn test_add_validator_success() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -715,7 +715,7 @@ fn test_add_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -727,7 +727,7 @@ fn test_add_validator_success() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -776,7 +776,7 @@ fn test_make_validator_public() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -801,7 +801,7 @@ fn test_make_validator_public() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PRIVATE,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -821,7 +821,7 @@ fn test_make_validator_public() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -869,7 +869,7 @@ fn test_make_validator_private() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -894,7 +894,7 @@ fn test_make_validator_private() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PRIVATE,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -955,7 +955,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(100),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -967,7 +967,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(200),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -979,7 +979,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(300),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1030,7 +1030,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1042,7 +1042,7 @@ fn test_get_validator_to_unstake() {
                 weight: 20,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(400)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1054,7 +1054,7 @@ fn test_get_validator_to_unstake() {
                 weight: 30,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(300)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1108,7 +1108,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1120,7 +1120,7 @@ fn test_get_validator_to_unstake() {
                 weight: 20,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: Some(ntoy(100)),
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PRIVATE,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1132,7 +1132,7 @@ fn test_get_validator_to_unstake() {
                 weight: 30,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(300)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1178,12 +1178,12 @@ fn test_get_validator_to_unstake() {
         vec![
             ValidatorInfoResponse {
                 account_id: stake_public_key_1.clone(),
-                staked: U128(ntoy(0)),
+                staked: U128(0),
                 unstaked: U128(0),
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1195,19 +1195,19 @@ fn test_get_validator_to_unstake() {
                 weight: 20,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: Some(ntoy(100)),
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PRIVATE,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
-                staked: U128(ntoy(0)),
+                staked: U128(0),
                 unstaked: U128(0),
                 weight: 30,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1262,7 +1262,7 @@ fn test_get_validator_to_unstake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: Some(0),
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1274,7 +1274,7 @@ fn test_get_validator_to_unstake() {
                 weight: 20,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: Some(0),
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1286,7 +1286,7 @@ fn test_get_validator_to_unstake() {
                 weight: 30,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: Some(0),
+                max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1356,7 +1356,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(100),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1368,7 +1368,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(200),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1380,7 +1380,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(300),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1430,7 +1430,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1442,7 +1442,7 @@ fn test_get_validator_to_stake() {
                 weight: 20,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1454,7 +1454,7 @@ fn test_get_validator_to_stake() {
                 weight: 30,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(400)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1509,7 +1509,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1521,7 +1521,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1533,7 +1533,7 @@ fn test_get_validator_to_stake() {
                 weight: 10,
                 last_asked_rewards_epoch_height: U64(0),
                 last_unstake_start_epoch: U64(0),
-                max_unstakable_limit: None,
+                max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
                 redelegate_to: None,
                 amount_to_redelegate: U128(0)
@@ -1738,7 +1738,7 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -1798,7 +1798,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: None,
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)

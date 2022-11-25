@@ -96,7 +96,7 @@ pub struct ValidatorInfoResponse {
     pub weight: u16,
     pub last_asked_rewards_epoch_height: U64,
     pub last_unstake_start_epoch: U64,
-    pub max_unstakable_limit: Option<u128>,
+    pub max_unstakable_limit: U128,
     pub validator_type: ValidatorType,
     pub redelegate_to: Option<AccountId>,
     pub amount_to_redelegate: U128,

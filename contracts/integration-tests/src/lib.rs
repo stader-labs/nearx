@@ -234,7 +234,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -249,7 +249,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -264,7 +264,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -329,7 +329,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(10)),
+            max_unstakable_limit: U128(ntoy(10)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -344,7 +344,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -359,7 +359,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -462,7 +462,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_4,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(10)),
+            max_unstakable_limit: U128(ntoy(10)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -477,7 +477,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_4,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -492,7 +492,7 @@ async fn test_contract_upgrade() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_4,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -2754,9 +2754,9 @@ async fn test_unstake_with_only_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(16)));
     assert_eq!(validator2_info.staked, U128(ntoy(16)));
     assert_eq!(validator3_info.staked, U128(ntoy(16)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(10)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(10)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -2863,9 +2863,9 @@ async fn test_unstake_with_only_private_validators() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
 
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(13)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(13)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(11)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(13)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(13)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(11)));
     assert_eq!(validator1_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator2_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator3_info.validator_type, ValidatorType::PRIVATE);
@@ -2902,9 +2902,9 @@ async fn test_unstake_with_only_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(3)));
     assert_eq!(validator2_info.staked, U128(ntoy(9)));
     assert_eq!(validator3_info.staked, U128(ntoy(16)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(6)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(11)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(6)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(11)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(13)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(7)));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -2972,9 +2972,9 @@ async fn test_unstake_with_only_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(3)));
     assert_eq!(validator2_info.staked, U128(ntoy(9)));
     assert_eq!(validator3_info.staked, U128(ntoy(16)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(6)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(11)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(6)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(11)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -3141,9 +3141,9 @@ async fn test_unstake_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(14)));
     assert_eq!(validator2_info.staked, U128(ntoy(14)));
     assert_eq!(validator3_info.staked, U128(ntoy(14)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(14)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(14)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -3247,9 +3247,9 @@ async fn test_unstake_with_private_validators() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
 
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(14)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(14)));
     assert_eq!(validator1_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator2_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator3_info.validator_type, ValidatorType::PUBLIC);
@@ -3286,9 +3286,9 @@ async fn test_unstake_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(8)));
     assert_eq!(validator2_info.staked, U128(ntoy(14)));
     assert_eq!(validator3_info.staked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(5)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(0)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(5)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(0)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(6)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(14)));
@@ -3522,9 +3522,9 @@ async fn test_unstake_with_private_validators_2() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(14)));
     assert_eq!(validator2_info.staked, U128(ntoy(14)));
     assert_eq!(validator3_info.staked, U128(ntoy(14)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(14)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(14)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -3634,9 +3634,9 @@ async fn test_unstake_with_private_validators_2() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(14)));
     assert_eq!(validator2_info.staked, U128(ntoy(14)));
     assert_eq!(validator3_info.staked, U128(ntoy(14)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(11)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(14)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(11)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(14)));
     assert_eq!(validator1_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator2_info.validator_type, ValidatorType::PRIVATE);
     assert_eq!(validator3_info.validator_type, ValidatorType::PUBLIC);
@@ -3673,9 +3673,9 @@ async fn test_unstake_with_private_validators_2() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(0)));
     assert_eq!(validator2_info.staked, U128(ntoy(4)));
     assert_eq!(validator3_info.staked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(0)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(1)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(0)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(0)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(1)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(0)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(14)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(10)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(14)));
@@ -3855,9 +3855,9 @@ async fn test_bank_run_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
     assert_eq!(validator2_info.staked, U128(ntoy(10)));
     assert_eq!(validator3_info.staked, U128(ntoy(5)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(5)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(5)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(5)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(5)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(5)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(5)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -3944,9 +3944,9 @@ async fn test_bank_run_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(ntoy(14)));
     assert_eq!(validator2_info.staked, U128(ntoy(14)));
     assert_eq!(validator3_info.staked, U128(ntoy(14)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(9)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(14)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(9)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(14)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -4061,9 +4061,9 @@ async fn test_bank_run_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator2_info.staked, U128(0));
     assert_eq!(validator3_info.staked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(0));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(0));
     assert_eq!(validator1_info.unstaked, U128(ntoy(14)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(14)));
     assert_eq!(validator3_info.unstaked, U128(ntoy(14)));
@@ -4131,9 +4131,9 @@ async fn test_bank_run_with_private_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator2_info.staked, U128(0));
     assert_eq!(validator3_info.staked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(0));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(0));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(0));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(0));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(validator2_info.unstaked, U128(0));
     assert_eq!(validator3_info.unstaked, U128(0));
@@ -5109,11 +5109,11 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     println!("validator3_info is {:?}", validator3_info);
 
     assert_eq!(validator1_info.staked, U128(ntoy(15)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator2_info.staked, U128(ntoy(15)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -5161,7 +5161,7 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     println!("validator3_info is {:?}", validator3_info);
 
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(10)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(10)));
     assert_eq!(validator1_info.unstaked, U128(ntoy(5)));
     assert_eq!(
         validator1_info.last_unstake_start_epoch,
@@ -5170,9 +5170,9 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     // assert_eq!(validator1_info.redelegate_to, Some(AccountId::from_str(&context.get_stake_pool_contract(1).id().clone().to_string())));
     assert_eq!(validator1_info.amount_to_redelegate, U128(ntoy(5)));
     assert_eq!(validator2_info.staked, U128(ntoy(15)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     context.worker.fast_forward(ONE_EPOCH * 10).await?;
 
@@ -5213,7 +5213,7 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     println!("validator3_info is {:?}", validator3_info);
 
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(10)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(10)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(
         validator1_info.last_unstake_start_epoch,
@@ -5222,9 +5222,9 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     // assert_eq!(validator1_info.redelegate_to, Some(AccountId::from_str(&context.get_stake_pool_contract(1).id().clone().to_string())));
     assert_eq!(validator1_info.amount_to_redelegate, U128(ntoy(5)));
     assert_eq!(validator2_info.staked, U128(ntoy(15)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     context
         .rebalance_stake(context.get_stake_pool_contract(0).id())
@@ -5244,7 +5244,7 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     println!("validator3_info is {:?}", validator3_info);
 
     assert_eq!(validator1_info.staked, U128(ntoy(10)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(10)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(10)));
     assert_eq!(validator1_info.unstaked, U128(0));
     assert_eq!(
         validator1_info.last_unstake_start_epoch,
@@ -5253,9 +5253,9 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.redelegate_to, None);
     assert_eq!(validator1_info.amount_to_redelegate, U128(0));
     assert_eq!(validator2_info.staked, U128(ntoy(20)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     Ok(())
 }
@@ -5301,11 +5301,11 @@ async fn test_validator_removal() -> anyhow::Result<()> {
     println!("validator3_info is {:?}", validator3_info);
 
     assert_eq!(validator1_info.staked, U128(ntoy(15)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator2_info.staked, U128(ntoy(15)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     let stake_pool_1_staked_balance = context
         .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
@@ -5349,7 +5349,7 @@ async fn test_validator_removal() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(0).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
     assert_eq!(validator1_info.unstaked, U128(ntoy(15)));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_2);
 
@@ -5404,7 +5404,7 @@ async fn test_validator_removal() -> anyhow::Result<()> {
         .await?;
     assert_eq!(validator1_info.staked, U128(0));
     assert_eq!(validator1_info.unstaked, U128(0));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(0));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(0));
     assert_eq!(validator1_info.last_unstake_start_epoch, current_epoch_2);
     assert_eq!(validator1_info.weight, 0);
 
@@ -5945,7 +5945,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -5960,7 +5960,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -5975,7 +5975,7 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -5997,17 +5997,17 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(validator1_info.staked, U128(18666666666666666666666666));
     assert_eq!(
         validator1_info.max_unstakable_limit,
-        Some(18666666666666666666666666)
+        U128(18666666666666666666666666)
     );
     assert_eq!(validator2_info.staked, U128(18666666666666666666666666));
     assert_eq!(
         validator2_info.max_unstakable_limit,
-        Some(18666666666666666666666666)
+        U128(18666666666666666666666666)
     );
     assert_eq!(validator3_info.staked, U128(18666666666666666666666668));
     assert_eq!(
         validator3_info.max_unstakable_limit,
-        Some(18666666666666666666666668)
+        U128(18666666666666666666666668)
     );
 
     let stake_pool_1_staked_balance = context
@@ -6106,17 +6106,17 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(validator1_info.staked, U128(38666666666666666666666666));
     assert_eq!(
         validator1_info.max_unstakable_limit,
-        Some(38666666666666666666666666)
+        U128(38666666666666666666666666)
     );
     assert_eq!(validator2_info.staked, U128(18666666666666666666666666));
     assert_eq!(
         validator2_info.max_unstakable_limit,
-        Some(18666666666666666666666666)
+        U128(18666666666666666666666666)
     );
     assert_eq!(validator3_info.staked, U128(18666666666666666666666668));
     assert_eq!(
         validator3_info.max_unstakable_limit,
-        Some(18666666666666666666666668)
+        U128(18666666666666666666666668)
     );
 
     let stake_pool_1_staked_balance = context
@@ -6239,15 +6239,15 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(validator3_info.staked, U128(18666666666666666666666668));
     assert_eq!(
         validator1_info.max_unstakable_limit,
-        Some(38666666666666666666666666)
+        U128(38666666666666666666666666)
     );
     assert_eq!(
         validator2_info.max_unstakable_limit,
-        Some(18666666666666666666666666)
+        U128(18666666666666666666666666)
     );
     assert_eq!(
         validator3_info.max_unstakable_limit,
-        Some(18666666666666666666666668)
+        U128(18666666666666666666666668)
     );
     assert_eq!(validator1_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
@@ -6443,15 +6443,15 @@ async fn test_user_stake_autocompound_unstake_withdraw_flows_across_epochs() -> 
     assert_eq!(validator3_info.staked, U128(28666666666666666666666667));
     assert_eq!(
         validator1_info.max_unstakable_limit,
-        Some(43666666666666666666666666)
+        U128(43666666666666666666666666)
     );
     assert_eq!(
         validator2_info.max_unstakable_limit,
-        Some(38666666666666666666666666)
+        U128(38666666666666666666666666)
     );
     assert_eq!(
         validator3_info.max_unstakable_limit,
-        Some(28666666666666666666666667)
+        U128(28666666666666666666666667)
     );
     assert_eq!(validator1_info.unstaked, U128(ntoy(0)));
     assert_eq!(validator2_info.unstaked, U128(ntoy(0)));
@@ -6743,7 +6743,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -6763,7 +6763,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -6783,7 +6783,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -6911,7 +6911,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(12333333333333333333333333),
+            max_unstakable_limit: U128(12333333333333333333333333),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -6931,7 +6931,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(12333333333333333333333333),
+            max_unstakable_limit: U128(12333333333333333333333333),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -6951,7 +6951,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(12333333333333333333333334),
+            max_unstakable_limit: U128(12333333333333333333333334),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7178,7 +7178,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(22333333333333333333333333),
+            max_unstakable_limit: U128(22333333333333333333333333),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7198,7 +7198,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(22333333333333333333333333),
+            max_unstakable_limit: U128(22333333333333333333333333),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7218,7 +7218,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch_2() -> anyhow::Res
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(22333333333333333333333334),
+            max_unstakable_limit: U128(22333333333333333333333334),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7321,7 +7321,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7341,7 +7341,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7361,7 +7361,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7527,7 +7527,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: current_epoch_2,
             weight: 10,
-            max_unstakable_limit: Some(4499999999999999999999997),
+            max_unstakable_limit: U128(4499999999999999999999997),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7547,7 +7547,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7567,7 +7567,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7613,7 +7613,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_3,
             last_unstake_start_epoch: current_epoch_2,
             weight: 10,
-            max_unstakable_limit: Some(4499999999999999999999997),
+            max_unstakable_limit: U128(4499999999999999999999997),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7787,7 +7787,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_3,
             last_unstake_start_epoch: current_epoch_2,
             weight: 10,
-            max_unstakable_limit: Some(4499999999999999999999997),
+            max_unstakable_limit: U128(4499999999999999999999997),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7807,7 +7807,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_3,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -7827,7 +7827,7 @@ async fn test_stake_unstake_and_withdraw_flow_with_reward_boost() -> anyhow::Res
             last_asked_rewards_epoch_height: current_epoch_3,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(15)),
+            max_unstakable_limit: U128(ntoy(15)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8003,7 +8003,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(16500000000000000000000000),
+            max_unstakable_limit: U128(16500000000000000000000000),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8023,7 +8023,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(16500000000000000000000000),
+            max_unstakable_limit: U128(16500000000000000000000000),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8043,7 +8043,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_1,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(12000000000000000000000000),
+            max_unstakable_limit: U128(12000000000000000000000000),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8161,7 +8161,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10,
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8181,7 +8181,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10,
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8201,7 +8201,7 @@ async fn test_bank_run_with_boosted_apr() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch_2,
             last_unstake_start_epoch: U64(current_epoch_2.0),
             weight: 10,
-            max_unstakable_limit: Some(0),
+            max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8402,7 +8402,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8422,7 +8422,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8442,7 +8442,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(5)),
+            max_unstakable_limit: U128(ntoy(5)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8488,7 +8488,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666666),
+            max_unstakable_limit: U128(15666666666666666666666666),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8508,7 +8508,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666666),
+            max_unstakable_limit: U128(15666666666666666666666666),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8528,7 +8528,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666668),
+            max_unstakable_limit: U128(15666666666666666666666668),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8612,7 +8612,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666666),
+            max_unstakable_limit: U128(15666666666666666666666666),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8632,7 +8632,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666666),
+            max_unstakable_limit: U128(15666666666666666666666666),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -8652,7 +8652,7 @@ async fn test_user_stake_unstake_withdraw_flows_in_same_epoch() -> anyhow::Resul
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(15666666666666666666666668),
+            max_unstakable_limit: U128(15666666666666666666666668),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -9166,11 +9166,11 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(5)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(5)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(5)));
     assert_eq!(validator2_info.staked, U128(ntoy(5)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(5)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(5)));
     assert_eq!(validator3_info.staked, U128(ntoy(5)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(5)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(5)));
 
     // Add user deposits
     println!("User 1 depositing");
@@ -9219,11 +9219,11 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
         .get_validator_info(context.get_stake_pool_contract(2).id().clone())
         .await?;
     assert_eq!(validator1_info.staked, U128(ntoy(15)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator2_info.staked, U128(ntoy(15)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(15)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
     assert_eq!(total_token_supply, U128(ntoy(45)));
@@ -9278,7 +9278,7 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
             weight: 10,
             last_asked_rewards_epoch_height: context.get_current_epoch().await?,
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: Some(ntoy(60)),
+            max_unstakable_limit: U128(ntoy(60)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -9405,11 +9405,11 @@ async fn test_autocompound_with_treasury_rewards() -> anyhow::Result<()> {
     println!("validator2_info is {:?}", validator2_info);
     println!("validator3_info is {:?}", validator3_info);
     assert_eq!(validator1_info.staked, U128(ntoy(60)));
-    assert_eq!(validator1_info.max_unstakable_limit, Some(ntoy(60)));
+    assert_eq!(validator1_info.max_unstakable_limit, U128(ntoy(60)));
     assert_eq!(validator2_info.staked, U128(ntoy(40)));
-    assert_eq!(validator2_info.max_unstakable_limit, Some(ntoy(40)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(40)));
     assert_eq!(validator3_info.staked, U128(ntoy(20)));
-    assert_eq!(validator3_info.max_unstakable_limit, Some(ntoy(20)));
+    assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(20)));
 
     let total_token_supply = context.get_total_tokens_supply().await?;
     assert_eq!(total_token_supply, U128(63000000000000000000000000));
@@ -9723,7 +9723,7 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(50)),
+            max_unstakable_limit: U128(ntoy(50)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -9738,7 +9738,7 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(20)),
+            max_unstakable_limit: U128(ntoy(20)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
@@ -9753,7 +9753,7 @@ async fn test_deposit_flows() -> anyhow::Result<()> {
             last_asked_rewards_epoch_height: current_epoch,
             last_unstake_start_epoch: U64(0),
             weight: 10,
-            max_unstakable_limit: Some(ntoy(20)),
+            max_unstakable_limit: U128(ntoy(20)),
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: U128(0)
