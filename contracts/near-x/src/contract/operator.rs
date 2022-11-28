@@ -82,6 +82,7 @@ impl NearxPool {
 
             // all funds staked to public validators thru epoch staking are unstakable
             // at any time. Only funds staked directly with the validator is not unstakable
+            // initially all validators should have a non zero max unstakable limit
             validator_info.max_unstakable_limit =
                 Some(validator_info.max_unstakable_limit.unwrap_or(0) + amount);
 

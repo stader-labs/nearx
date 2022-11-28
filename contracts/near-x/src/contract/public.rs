@@ -270,8 +270,13 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator);
 
+        require!(
+            validator_info.validator_type == ValidatorType::PRIVATE,
+            ERROR_VALIDATOR_IS_PUBLIC
+        );
+
         validator_info.validator_type = ValidatorType::PUBLIC;
-        // all the existing stake is avialable to unstake from even the private stakes
+        // all the existing stake is available to unstake from even the private stakes
         validator_info.max_unstakable_limit = Some(validator_info.staked);
 
         self.internal_update_validator(&validator, &validator_info);

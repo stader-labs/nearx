@@ -370,7 +370,7 @@ impl NearxPool {
     ) {
         self.validator_info_map.insert(
             validator,
-            &ValidatorInfoWrapper::ValidatorInfo(validator_info.clone()),
+            &validator_info.clone().into(),
         );
     }
 
