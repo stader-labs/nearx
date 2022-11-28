@@ -273,7 +273,7 @@ fn test_update_validator_max_unstakable_limit_public_val() {
     let mut val1 = get_validator(&contract, stake_public_key_1.clone());
     val1.weight = 10;
     val1.staked = ntoy(100);
-    val1.max_unstakable_limit = None;
+    val1.max_unstakable_limit = ntoy(100);
     val1.validator_type = ValidatorType::PUBLIC;
     update_validator(&mut contract, stake_public_key_1.clone(), &val1);
 
@@ -297,27 +297,27 @@ fn test_update_validator_max_unstakable_limit() {
     let mut val1 = get_validator(&contract, stake_public_key_1.clone());
     val1.weight = 10;
     val1.staked = ntoy(100);
-    val1.max_unstakable_limit = None;
+    val1.max_unstakable_limit = ntoy(0);
     val1.validator_type = ValidatorType::PRIVATE;
     update_validator(&mut contract, stake_public_key_1.clone(), &val1);
 
     contract.update_validator_max_unstakeable_limit(stake_public_key_1.clone(), U128(ntoy(1)));
 
     let val1 = get_validator(&contract, stake_public_key_1.clone());
-    assert_eq!(val1.max_unstakable_limit, Some(ntoy(1)));
+    assert_eq!(val1.max_unstakable_limit, ntoy(1));
 
     // Validator with some non zero max unstakable limit
     let mut val1 = get_validator(&contract, stake_public_key_1.clone());
     val1.weight = 10;
     val1.staked = ntoy(100);
-    val1.max_unstakable_limit = Some(ntoy(1));
+    val1.max_unstakable_limit = ntoy(1);
     val1.validator_type = ValidatorType::PRIVATE;
     update_validator(&mut contract, stake_public_key_1.clone(), &val1);
 
     contract.update_validator_max_unstakeable_limit(stake_public_key_1.clone(), U128(ntoy(1)));
 
     let val1 = get_validator(&contract, stake_public_key_1.clone());
-    assert_eq!(val1.max_unstakable_limit, Some(ntoy(2)));
+    assert_eq!(val1.max_unstakable_limit, ntoy(2));
 }
 
 #[test]
@@ -939,8 +939,11 @@ fn test_get_validator_to_unstake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = 100;
+    validator_1.max_unstakable_limit = 100;
     validator_2.staked = 200;
+    validator_2.max_unstakable_limit = 200;
     validator_3.staked = 300;
+    validator_3.max_unstakable_limit = 300;
 
     update_validator(&mut contract, stake_public_key_1.clone(), &validator_1);
     update_validator(&mut contract, stake_public_key_2.clone(), &validator_2);
@@ -1010,10 +1013,13 @@ fn test_get_validator_to_unstake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = ntoy(100);
+    validator_1.max_unstakable_limit = ntoy(100);
     validator_1.weight = 10;
     validator_2.staked = ntoy(400);
+    validator_2.max_unstakable_limit = ntoy(400);
     validator_2.weight = 20;
     validator_3.staked = ntoy(300);
+    validator_3.max_unstakable_limit = ntoy(300);
     validator_3.weight = 30;
     contract.total_validator_weight = 60;
 
@@ -1086,12 +1092,14 @@ fn test_get_validator_to_unstake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = ntoy(100);
+    validator_1.max_unstakable_limit = ntoy(100);
     validator_1.weight = 10;
     validator_2.staked = ntoy(400);
     validator_2.weight = 20;
-    validator_2.max_unstakable_limit = Some(ntoy(100));
+    validator_2.max_unstakable_limit = ntoy(100);
     validator_2.validator_type = ValidatorType::PRIVATE;
     validator_3.staked = ntoy(300);
+    validator_3.max_unstakable_limit = ntoy(300);
     validator_3.weight = 30;
     contract.total_validator_weight = 60;
 
@@ -1162,12 +1170,14 @@ fn test_get_validator_to_unstake() {
 
     validator_1.staked = ntoy(0);
     validator_1.weight = 10;
+    validator_1.max_unstakable_limit = ntoy(0);
     validator_2.staked = ntoy(400);
     validator_2.weight = 20;
-    validator_2.max_unstakable_limit = Some(ntoy(100));
+    validator_2.max_unstakable_limit = ntoy(100);
     validator_2.validator_type = ValidatorType::PRIVATE;
     validator_3.staked = ntoy(0);
     validator_3.weight = 30;
+    validator_3.max_unstakable_limit = ntoy(0);
     contract.total_validator_weight = 60;
 
     update_validator(&mut contract, stake_public_key_1.clone(), &validator_1);
@@ -1237,15 +1247,15 @@ fn test_get_validator_to_unstake() {
 
     validator_1.staked = ntoy(300);
     validator_1.weight = 10;
-    validator_1.max_unstakable_limit = Some(0);
+    validator_1.max_unstakable_limit = 0;
     validator_1.validator_type = ValidatorType::PRIVATE;
     validator_2.staked = ntoy(400);
     validator_2.weight = 20;
-    validator_2.max_unstakable_limit = Some(0);
+    validator_2.max_unstakable_limit = 0;
     validator_2.validator_type = ValidatorType::PRIVATE;
     validator_3.staked = ntoy(200);
     validator_3.weight = 30;
-    validator_3.max_unstakable_limit = Some(0);
+    validator_3.max_unstakable_limit = 0;
     validator_3.validator_type = ValidatorType::PRIVATE;
     contract.total_validator_weight = 60;
 
@@ -1340,8 +1350,11 @@ fn test_get_validator_to_stake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = 100;
+    validator_1.max_unstakable_limit = 100;
     validator_2.staked = 200;
+    validator_2.max_unstakable_limit = 200;
     validator_3.staked = 300;
+    validator_3.max_unstakable_limit = 300;
 
     update_validator(&mut contract, stake_public_key_1.clone(), &validator_1);
     update_validator(&mut contract, stake_public_key_2.clone(), &validator_2);
@@ -1410,10 +1423,13 @@ fn test_get_validator_to_stake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = ntoy(100);
+    validator_1.max_unstakable_limit = ntoy(100);
     validator_1.weight = 10;
     validator_2.staked = ntoy(100);
+    validator_2.max_unstakable_limit = ntoy(100);
     validator_2.weight = 20;
     validator_3.staked = ntoy(400);
+    validator_3.max_unstakable_limit = ntoy(400);
     validator_3.weight = 30;
     contract.total_validator_weight = 60;
 
@@ -1489,10 +1505,13 @@ fn test_get_validator_to_stake() {
     let mut validator_3 = get_validator(&contract, stake_public_key_3.clone());
 
     validator_1.staked = ntoy(100);
+    validator_1.max_unstakable_limit = ntoy(100);
     validator_1.weight = 10;
     validator_2.staked = ntoy(100);
+    validator_2.max_unstakable_limit = ntoy(100);
     validator_2.weight = 10;
     validator_3.staked = ntoy(100);
+    validator_3.max_unstakable_limit = ntoy(100);
     validator_3.weight = 10;
     contract.total_validator_weight = 30;
 
@@ -1815,7 +1834,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
 
     let mut validator1 = get_validator(&contract, stake_public_key_1.clone());
     validator1.staked = ntoy(100);
-    validator1.max_unstakable_limit = Some(ntoy(100));
+    validator1.max_unstakable_limit = ntoy(100);
     update_validator(&mut contract, stake_public_key_1.clone(), &validator1);
 
     contract.rewards_fee = Fraction::new(10, 100);
@@ -1826,7 +1845,7 @@ fn test_on_get_sp_staked_balance_for_rewards() {
 
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert_eq!(validator1.staked, ntoy(150));
-    assert_eq!(validator1.max_unstakable_limit, Some(ntoy(150)));
+    assert_eq!(validator1.max_unstakable_limit, ntoy(150));
     assert_eq!(validator1.last_redeemed_rewards_epoch, context.epoch_height);
     assert_eq!(contract.total_staked, ntoy(150));
     assert_eq!(contract.total_stake_shares, 103333333333333333333333333);
@@ -2854,18 +2873,21 @@ fn test_epoch_unstake_success() {
 
     let mut val1_info = get_validator(&contract, validator1.clone());
     val1_info.staked = ntoy(100);
+    val1_info.max_unstakable_limit = ntoy(100);
     val1_info.unstaked_amount = ntoy(0);
     val1_info.unstake_start_epoch = 3;
     update_validator(&mut contract, validator1.clone(), &val1_info);
 
     let mut val2_info = get_validator(&contract, validator2.clone());
     val2_info.staked = ntoy(200);
+    val2_info.max_unstakable_limit = ntoy(200);
     val2_info.unstaked_amount = ntoy(0);
     val2_info.unstake_start_epoch = 3;
     update_validator(&mut contract, validator2.clone(), &val2_info);
 
     let mut val3_info = get_validator(&contract, validator3.clone());
     val3_info.staked = ntoy(300);
+    val3_info.max_unstakable_limit = ntoy(300);
     val3_info.unstaked_amount = ntoy(0);
     val3_info.unstake_start_epoch = 3;
     update_validator(&mut contract, validator3.clone(), &val3_info);
@@ -4117,7 +4139,7 @@ fn test_on_stake_pool_direct_deposit_and_stake_success() {
     let mut val1 = get_validator(&contract, validator1.clone());
     val1.validator_type = ValidatorType::PRIVATE;
     val1.staked = ntoy(10);
-    val1.max_unstakable_limit = Some(ntoy(1));
+    val1.max_unstakable_limit = ntoy(1);
     update_validator(&mut contract, validator1.clone(), &val1);
 
     contract.total_staked = ntoy(10);
@@ -4134,7 +4156,7 @@ fn test_on_stake_pool_direct_deposit_and_stake_success() {
 
     let val1 = get_validator(&contract, validator1.clone());
     assert_eq!(val1.staked, ntoy(20));
-    assert_eq!(val1.max_unstakable_limit, Some(ntoy(1)));
+    assert_eq!(val1.max_unstakable_limit, ntoy(1));
 
     assert_eq!(contract.total_staked, ntoy(20));
     assert_eq!(contract.total_stake_shares, ntoy(20));

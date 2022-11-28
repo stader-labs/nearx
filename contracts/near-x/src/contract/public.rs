@@ -257,7 +257,7 @@ impl NearxPool {
         validator_info.validator_type = ValidatorType::PRIVATE;
 
         // all the public stake before is unstakable. All the private stake from now on will be not be directly unstakable
-        validator_info.max_unstakable_limit = Some(max_unstakable_limit.0);
+        validator_info.max_unstakable_limit = max_unstakable_limit.0;
 
         // self.validator_info_map.insert(&validator, &validator_info);
         self.internal_update_validator(&validator, &validator_info);
@@ -277,7 +277,7 @@ impl NearxPool {
 
         validator_info.validator_type = ValidatorType::PUBLIC;
         // all the existing stake is available to unstake from even the private stakes
-        validator_info.max_unstakable_limit = Some(validator_info.staked);
+        validator_info.max_unstakable_limit = validator_info.staked;
 
         self.internal_update_validator(&validator, &validator_info);
     }
@@ -298,15 +298,14 @@ impl NearxPool {
             ERROR_VALIDATOR_IS_PUBLIC
         );
 
-        let new_max_unstakable_limit =
-            validator_info.max_unstakable_limit.unwrap_or(0) + amount_unstaked.0;
+        let new_max_unstakable_limit = validator_info.max_unstakable_limit + amount_unstaked.0;
         require!(
             new_max_unstakable_limit <= validator_info.staked,
             ERROR_VALIDATOR_MAX_UNSTAKABLE_LIMIT_GREATER_THAN_STAKED_AMOUNT
         );
 
         // for private validators this will be 0 initially, since we cannot unstake from them without cause.
-        validator_info.max_unstakable_limit = Some(new_max_unstakable_limit);
+        validator_info.max_unstakable_limit = new_max_unstakable_limit;
 
         self.internal_update_validator(&validator, &validator_info);
     }
@@ -759,11 +758,7 @@ impl NearxPool {
             weight: validator_info.weight,
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
-            max_unstakable_limit: U128(
-                validator_info
-                    .max_unstakable_limit
-                    .unwrap_or(validator_info.staked),
-            ),
+            max_unstakable_limit: U128(validator_info.max_unstakable_limit),
             validator_type: validator_info.validator_type,
             redelegate_to: validator_info.redelegate_to,
             amount_to_redelegate: U128(validator_info.amount_to_redelegate),
@@ -782,7 +777,7 @@ impl NearxPool {
                     last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
                     unstaked: U128(validator_info.unstaked_amount),
                     weight: validator_info.weight,
-                    max_unstakable_limit: U128(validator_info.max_unstakable_limit.unwrap_or(validator_info.staked)),
+                    max_unstakable_limit: U128(validator_info.max_unstakable_limit),
                     validator_type: validator_info.validator_type,
                     redelegate_to: validator_info.redelegate_to,
                     amount_to_redelegate: U128(validator_info.amount_to_redelegate),

@@ -77,8 +77,7 @@ impl NearxPool {
             // run which would have changed the exchange rate by the time this callback has been called.
             let num_shares = self.num_shares_from_staked_amount_rounded_down(amount);
             validator_info.staked += amount;
-            validator_info.max_unstakable_limit =
-                Some(validator_info.max_unstakable_limit.unwrap_or(0) + amount);
+            validator_info.max_unstakable_limit = validator_info.max_unstakable_limit + amount;
             acc.stake_shares += num_shares;
             self.total_stake_shares += num_shares;
             self.total_staked += amount;
@@ -368,10 +367,8 @@ impl NearxPool {
         validator: &AccountId,
         validator_info: &ValidatorInfo,
     ) {
-        self.validator_info_map.insert(
-            validator,
-            &validator_info.clone().into(),
-        );
+        self.validator_info_map
+            .insert(validator, &validator_info.clone().into());
     }
 
     pub(crate) fn num_shares_from_staked_amount_rounded_down(&self, amount: Balance) -> u128 {
@@ -475,8 +472,7 @@ impl NearxPool {
         for wrapped_validator in self.validator_info_map.values() {
             let validator = wrapped_validator.into_current();
             if !validator.pending_unstake_release() && !validator.paused() {
-                total_unstakable_amount +=
-                    validator.max_unstakable_limit.unwrap_or(validator.staked);
+                total_unstakable_amount += validator.max_unstakable_limit;
             }
         }
 
@@ -498,8 +494,7 @@ impl NearxPool {
                 && matches!(validator.validator_type, ValidatorType::PUBLIC)
             {
                 if validator.staked.gt(&max_validator_stake_amount) {
-                    max_validator_stake_amount =
-                        validator.max_unstakable_limit.unwrap_or(validator.staked);
+                    max_validator_stake_amount = validator.max_unstakable_limit;
                     current_validator = Some(validator)
                 }
             }
@@ -513,8 +508,7 @@ impl NearxPool {
                     && !validator.paused()
                     && matches!(validator.validator_type, ValidatorType::PRIVATE)
                 {
-                    let mut validator_staked_amount =
-                        validator.max_unstakable_limit.unwrap_or(validator.staked);
+                    let mut validator_staked_amount = validator.max_unstakable_limit;
                     if unstake_full_amount_from_private_validators {
                         validator_staked_amount = validator.staked;
                     }

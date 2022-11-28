@@ -151,7 +151,7 @@ impl LegacyValidatorInfo {
             unstaked_amount: self.unstaked_amount,
             unstake_start_epoch: self.unstake_start_epoch,
             last_unstake_start_epoch: self.last_unstake_start_epoch,
-            max_unstakable_limit: None,
+            max_unstakable_limit: 0,
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: 0,
@@ -178,7 +178,7 @@ pub struct ValidatorInfo {
 
     // the max amount that can be unstaked from a validator at a given time
     // if None, then it means that we can unstake the entire amount from the validator
-    pub max_unstakable_limit: Option<u128>,
+    pub max_unstakable_limit: u128,
 
     pub validator_type: ValidatorType,
 
@@ -204,7 +204,7 @@ impl ValidatorInfo {
             unstaked_amount: 0,
             unstake_start_epoch: 0,
             last_unstake_start_epoch: 0,
-            max_unstakable_limit: None,
+            max_unstakable_limit: 0,
             validator_type: ValidatorType::PUBLIC,
             redelegate_to: None,
             amount_to_redelegate: 0,
