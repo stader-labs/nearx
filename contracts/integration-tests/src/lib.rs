@@ -5253,7 +5253,7 @@ async fn test_rebalance_validators() -> anyhow::Result<()> {
     assert_eq!(validator1_info.redelegate_to, None);
     assert_eq!(validator1_info.amount_to_redelegate, U128(0));
     assert_eq!(validator2_info.staked, U128(ntoy(20)));
-    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(15)));
+    assert_eq!(validator2_info.max_unstakable_limit, U128(ntoy(20)));
     assert_eq!(validator3_info.staked, U128(ntoy(15)));
     assert_eq!(validator3_info.max_unstakable_limit, U128(ntoy(15)));
 

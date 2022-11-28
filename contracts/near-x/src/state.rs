@@ -177,7 +177,8 @@ pub struct ValidatorInfo {
     pub last_unstake_start_epoch: EpochHeight,
 
     // the max amount that can be unstaked from a validator at a given time
-    // if None, then it means that we can unstake the entire amount from the validator
+    // for public validators max_unstakable_limit == total validator stake
+    // for private validators max_unstakable_limit <= total validator stake
     pub max_unstakable_limit: u128,
 
     pub validator_type: ValidatorType,

@@ -45,6 +45,10 @@ pub mod gas {
 
     pub const ON_STAKE_POOL_DEPOSIT_AND_STAKE_CB: Gas = base_gas(1);
 
+    pub const ON_REBALANCE_DEPOSIT_AND_STAKE: Gas = base_gas(1);
+
+    pub const ON_REBALANCE_DEPOSIT_AND_STAKE_CB: Gas = base_gas(1);
+
     /// The amount of gas required to get the current staked balance of this account from the
     /// staking pool.
     pub const ON_STAKE_POOL_GET_ACCOUNT_STAKED_BALANCE: Gas = base_gas(1);
@@ -62,9 +66,17 @@ pub mod gas {
 
     pub const ON_STAKE_POOL_WITHDRAW_ALL_CB: Gas = base_gas(3);
 
+    pub const ON_REBALANCE_WITHDRAW: Gas = base_gas(3);
+
+    pub const ON_REBALANCE_WITHDRAW_CB: Gas = base_gas(3);
+
     pub const ON_STAKE_POOL_UNSTAKE: Gas = base_gas(3);
 
     pub const ON_STAKE_POOL_UNSTAKE_CB: Gas = base_gas(3);
+
+    pub const ON_REBALANCE_UNSTAKE: Gas = base_gas(3);
+
+    pub const ON_REBALANCE_UNSTAKE_CB: Gas = base_gas(3);
 
     pub const WITHDRAW_EPOCH: Gas = base_gas(3);
 
@@ -72,13 +84,19 @@ pub mod gas {
 
     pub const STAKING_EPOCH: Gas = base_gas(3);
 
+    pub const REBALANCE_DEPOSIT_AND_STAKE: Gas = base_gas(3);
+
     pub const AUTOCOMPOUNDING_EPOCH: Gas = base_gas(3);
 
     pub const SYNC_VALIDATOR_EPOCH: Gas = base_gas(3);
 
     pub const DRAIN_UNSTAKE: Gas = base_gas(3);
 
+    pub const REBALANCE_UNSTAKE: Gas = base_gas(3);
+
     pub const DRAIN_WITHDRAW: Gas = base_gas(3);
+
+    pub const REBALANCE_WITHDRAW: Gas = base_gas(3);
 
     pub const FT_TRANSFER_RESOLVE: Gas = tera(12);
 

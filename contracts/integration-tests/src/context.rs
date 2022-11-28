@@ -253,7 +253,6 @@ impl IntegrationTestContext<Sandbox> {
             if res.is_err() {
                 continue;
             }
-            // println!("autocompounding logs are {:?}", res.unwrap().logs());
         }
 
         // Run the staking epoch

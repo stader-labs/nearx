@@ -663,15 +663,37 @@ impl NearxPool {
     pub fn rebalance_unstake(&mut self, from_val: AccountId, to_val: AccountId, amount: U128) {
         self.assert_operator_or_owner();
 
+        let min_gas =
+            gas::REBALANCE_UNSTAKE + gas::ON_REBALANCE_UNSTAKE + gas::ON_REBALANCE_UNSTAKE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
         let mut from_val_info = self.internal_get_validator(&from_val);
 
         // validator should not have an existing unstake
-        require!(from_val_info.unstaked_amount == 0);
-        require!(!from_val_info.pending_unstake_release());
-        require!(from_val_info.max_unstakable_limit >= amount.0);
+        require!(
+            from_val_info.unstaked_amount == 0,
+            ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
+        );
+        require!(
+            !from_val_info.pending_unstake_release(),
+            ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
+        );
+        require!(
+            from_val_info.max_unstakable_limit >= amount.0,
+            ERROR_AMOUNT_GREATER_THEN_MAX_UNSTAKABLE_LIMIT
+        );
         // complete any previous redelegation
-        require!(from_val_info.amount_to_redelegate == 0);
-        require!(from_val_info.redelegate_to.is_none());
+        require!(
+            from_val_info.amount_to_redelegate == 0,
+            ERROR_PENDING_REDELEGATION
+        );
+        require!(
+            from_val_info.redelegate_to.is_none(),
+            ERROR_PENDING_REDELEGATION
+        );
 
         from_val_info.redelegate_to = Some(to_val.clone());
         from_val_info.staked -= amount.0;
@@ -680,7 +702,6 @@ impl NearxPool {
 
         self.internal_update_validator(&from_val, &from_val_info);
 
-        // TODO - add event
         Event::RebalanceUnstake {
             from_validator: from_val.clone(),
             to_validator: to_val.clone(),
@@ -737,9 +758,8 @@ impl NearxPool {
         self.assert_operator_or_owner();
 
         // make sure enough gas was given
-        let min_gas = gas::DRAIN_WITHDRAW
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL
-            + gas::ON_STAKE_POOL_WITHDRAW_ALL_CB;
+        let min_gas =
+            gas::REBALANCE_WITHDRAW + gas::ON_REBALANCE_WITHDRAW + gas::ON_REBALANCE_WITHDRAW_CB;
         require!(
             env::prepaid_gas() >= min_gas,
             format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
@@ -747,15 +767,14 @@ impl NearxPool {
 
         let mut validator_info = self.internal_get_validator(&validator_id);
 
-        // make sure the validator:
-        // 1. has weight set to 0
-        // 2. has no staked balance
-        // 3. not pending release
         require!(
             !validator_info.pending_unstake_release(),
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
-        require!(validator_info.redelegate_to.is_some());
+        require!(
+            validator_info.redelegate_to.is_some(),
+            ERROR_NO_PENDING_REDELEGATION
+        );
 
         let amount = validator_info.amount_to_redelegate;
         validator_info.unstaked_amount -= amount;
@@ -809,6 +828,14 @@ impl NearxPool {
     pub fn rebalance_stake(&mut self, validator_id: AccountId) {
         self.assert_operator_or_owner();
 
+        let min_gas = gas::REBALANCE_DEPOSIT_AND_STAKE
+            + gas::ON_REBALANCE_DEPOSIT_AND_STAKE
+            + gas::ON_REBALANCE_DEPOSIT_AND_STAKE_CB;
+        require!(
+            env::prepaid_gas() >= min_gas,
+            format!("{}. require at least {:?}", ERROR_NOT_ENOUGH_GAS, min_gas)
+        );
+
         let validator_info = self.internal_get_validator(&validator_id);
 
         require!(
@@ -816,9 +843,18 @@ impl NearxPool {
             ERROR_VALIDATOR_UNSTAKE_STILL_UNBONDING
         );
         // ensure that there is no amount in unbonding period and the amount is withdrawn
-        require!(validator_info.unstaked_amount == 0);
-        require!(validator_info.redelegate_to.is_some());
-        require!(validator_info.amount_to_redelegate > 0);
+        require!(
+            validator_info.unstaked_amount == 0,
+            ERROR_NON_POSITIVE_UNSTAKE_AMOUNT
+        );
+        require!(
+            validator_info.redelegate_to.is_some(),
+            ERROR_NO_PENDING_REDELEGATION
+        );
+        require!(
+            validator_info.amount_to_redelegate > 0,
+            ERROR_NO_PENDING_REDELEGATION
+        );
 
         let amount_to_stake = validator_info.amount_to_redelegate;
         let validator_to_redelegate_to = validator_info.redelegate_to.unwrap();
@@ -861,6 +897,7 @@ impl NearxPool {
             from_validator_info.redelegate_to = None;
             from_validator_info.amount_to_redelegate = 0;
             to_validator_info.staked += amount_to_stake;
+            to_validator_info.max_unstakable_limit += amount_to_stake;
 
             Event::RebalanceStakeCallbackSuccess {
                 from_validator: from_validator_id.clone(),
