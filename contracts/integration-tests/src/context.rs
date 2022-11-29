@@ -5,10 +5,7 @@ use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::OperationControls;
-use near_x::state::{
-    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse,
-    OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse,
-};
+use near_x::state::{AccountResponse, Fraction, HumanReadableAccount, LegacyValidatorInfoResponse, NearxPoolStateResponse, OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse};
 use serde_json::json;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -823,6 +820,18 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<ValidatorInfoResponse>()
+    }
+
+    pub async fn get_legacy_validator_info(
+        &self,
+        validator: AccountId,
+    ) -> anyhow::Result<LegacyValidatorInfoResponse> {
+        self.nearx_contract
+            .call(&self.worker, "get_validator_info")
+            .args_json(json!({ "validator": validator }))?
+            .view()
+            .await?
+            .json::<LegacyValidatorInfoResponse>()
     }
 
     pub async fn get_user_token_balance(&self, user: AccountId) -> anyhow::Result<U128> {

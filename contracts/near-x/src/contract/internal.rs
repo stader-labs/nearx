@@ -37,9 +37,6 @@ impl NearxPool {
         // this is just to check that the user has registered the storage deposit
         self.internal_get_account_unwrap(&account_id);
 
-        // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
-        // this is just a check for whether num_shares is > 0 or not. The actual num_shares accounted to the user
-        // will be computed in the callback
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
@@ -76,9 +73,6 @@ impl NearxPool {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
 
         if is_promise_success() {
-            // recompute here because on_stake_pool_direct_deposit_and_stake callback will execute
-            // a few blocks after direct_deposit_and_stake. In the meantime, an autocompounding epoch could have
-            // run which would have changed the exchange rate by the time this callback has been called.
             validator_info.staked += amount;
             validator_info.max_unstakable_limit = validator_info.max_unstakable_limit + amount;
             acc.stake_shares += num_shares;
@@ -126,9 +120,6 @@ impl NearxPool {
         // this is just to check that the user has registered the storage deposit
         self.internal_get_account_unwrap(&account_id);
 
-        // Calculate the number of nearx (stake shares) that the account will receive for staking the given amount.
-        // this is just a check for whether num_shares is > 0 or not. The actual num_shares accounted to the user
-        // will be computed in the callback
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
         require!(num_shares > 0, ERROR_NON_POSITIVE_STAKE_SHARES);
 
@@ -169,9 +160,6 @@ impl NearxPool {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
 
         if is_promise_success() {
-            // recompute here because on_stake_pool_direct_deposit_and_stake callback will execute
-            // a few blocks after direct_deposit_and_stake. In the meantime, an autocompounding epoch could have
-            // run which would have changed the exchange rate by the time this callback has been called.
             validator_info.staked += amount;
             acc.stake_shares += num_shares;
             self.total_stake_shares += num_shares;

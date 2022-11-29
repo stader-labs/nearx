@@ -252,7 +252,10 @@ impl NearxPool {
 
         let max_unstakable_limit =
             initial_max_unstakable_limit.unwrap_or(U128(validator_info.staked));
-        require!(max_unstakable_limit.0 <= validator_info.staked);
+        require!(
+            max_unstakable_limit.0 <= validator_info.staked,
+            ERROR_VALIDATOR_MAX_UNSTAKABLE_LIMIT_GREATER_THAN_STAKED_AMOUNT
+        );
 
         validator_info.validator_type = ValidatorType::PRIVATE;
 
