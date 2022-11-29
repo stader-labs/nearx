@@ -45,6 +45,8 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
+        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
+
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -57,6 +59,7 @@ impl NearxPool {
                     .on_stake_pool_manager_deposit_and_stake(
                         validator_info,
                         user_amount,
+                        num_shares,
                         account_id,
                     ),
             );
@@ -67,6 +70,7 @@ impl NearxPool {
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
+        num_shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
@@ -75,7 +79,6 @@ impl NearxPool {
             // recompute here because on_stake_pool_direct_deposit_and_stake callback will execute
             // a few blocks after direct_deposit_and_stake. In the meantime, an autocompounding epoch could have
             // run which would have changed the exchange rate by the time this callback has been called.
-            let num_shares = self.num_shares_from_staked_amount_rounded_down(amount);
             validator_info.staked += amount;
             validator_info.max_unstakable_limit = validator_info.max_unstakable_limit + amount;
             acc.stake_shares += num_shares;
@@ -135,6 +138,8 @@ impl NearxPool {
             ERROR_VALIDATOR_IS_PUBLIC
         );
 
+        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
+
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -147,6 +152,7 @@ impl NearxPool {
                     .on_stake_pool_direct_deposit_and_stake(
                         validator_info,
                         user_amount,
+                        num_shares,
                         account_id,
                     ),
             );
@@ -157,6 +163,7 @@ impl NearxPool {
         &mut self,
         #[allow(unused_mut)] mut validator_info: ValidatorInfo,
         amount: u128,
+        num_shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
@@ -165,7 +172,6 @@ impl NearxPool {
             // recompute here because on_stake_pool_direct_deposit_and_stake callback will execute
             // a few blocks after direct_deposit_and_stake. In the meantime, an autocompounding epoch could have
             // run which would have changed the exchange rate by the time this callback has been called.
-            let num_shares = self.num_shares_from_staked_amount_rounded_down(amount);
             validator_info.staked += amount;
             acc.stake_shares += num_shares;
             self.total_stake_shares += num_shares;

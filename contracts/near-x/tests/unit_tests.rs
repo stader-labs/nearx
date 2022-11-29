@@ -4072,7 +4072,12 @@ fn test_on_stake_pool_direct_deposit_and_stake_success() {
     testing_env_with_promise_results(context.clone(), PromiseResult::Successful(Vec::default()));
 
     contract.storage_deposit(None, None);
-    contract.on_stake_pool_direct_deposit_and_stake(val1, ntoy(10), user1_account_id.clone());
+    contract.on_stake_pool_direct_deposit_and_stake(
+        val1,
+        ntoy(10),
+        ntoy(10),
+        user1_account_id.clone(),
+    );
 
     let val1 = get_validator(&contract, validator1.clone());
     assert_eq!(val1.staked, ntoy(20));
