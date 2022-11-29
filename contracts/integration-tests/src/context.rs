@@ -548,44 +548,6 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn rebalance_unstake(
-        &self,
-        from_val: &AccountId,
-        to_val: &AccountId,
-        amount: U128,
-    ) -> anyhow::Result<CallExecutionDetails> {
-        self.nearx_owner
-            .call(&self.worker, self.nearx_contract.id(), "rebalance_unstake")
-            .max_gas()
-            .args_json(json!({ "from_val": from_val, "to_val": to_val, "amount": amount }))?
-            .transact()
-            .await
-    }
-
-    pub async fn rebalance_withdraw(
-        &self,
-        validator: &AccountId,
-    ) -> anyhow::Result<CallExecutionDetails> {
-        self.nearx_owner
-            .call(&self.worker, self.nearx_contract.id(), "rebalance_withdraw")
-            .max_gas()
-            .args_json(json!({ "validator_id": validator }))?
-            .transact()
-            .await
-    }
-
-    pub async fn rebalance_stake(
-        &self,
-        validator: &AccountId,
-    ) -> anyhow::Result<CallExecutionDetails> {
-        self.nearx_owner
-            .call(&self.worker, self.nearx_contract.id(), "rebalance_stake")
-            .max_gas()
-            .args_json(json!({ "validator_id": validator }))?
-            .transact()
-            .await
-    }
-
     pub async fn withdraw_epoch(
         &self,
         validator: AccountId,

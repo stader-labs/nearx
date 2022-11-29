@@ -119,8 +119,6 @@ pub struct ValidatorInfoResponse {
     pub last_unstake_start_epoch: U64,
     pub max_unstakable_limit: U128,
     pub validator_type: ValidatorType,
-    pub redelegate_to: Option<AccountId>,
-    pub amount_to_redelegate: U128,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
@@ -153,8 +151,6 @@ impl LegacyValidatorInfo {
             last_unstake_start_epoch: self.last_unstake_start_epoch,
             max_unstakable_limit: 0,
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: 0,
         }
     }
 }
@@ -179,13 +175,10 @@ pub struct ValidatorInfo {
     // the max amount that can be unstaked from a validator at a given time
     // for public validators max_unstakable_limit == total validator stake
     // for private validators max_unstakable_limit <= total validator stake
+    // we need to update the max_unstakable limit of each validator once we migrate.
     pub max_unstakable_limit: u128,
 
     pub validator_type: ValidatorType,
-
-    pub redelegate_to: Option<AccountId>,
-
-    pub amount_to_redelegate: u128,
 }
 
 impl ValidatorInfo {
@@ -207,8 +200,6 @@ impl ValidatorInfo {
             last_unstake_start_epoch: 0,
             max_unstakable_limit: 0,
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: 0,
         }
     }
 

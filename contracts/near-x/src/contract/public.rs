@@ -760,8 +760,6 @@ impl NearxPool {
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
             max_unstakable_limit: U128(validator_info.max_unstakable_limit),
             validator_type: validator_info.validator_type,
-            redelegate_to: validator_info.redelegate_to,
-            amount_to_redelegate: U128(validator_info.amount_to_redelegate),
         }
     }
 
@@ -779,8 +777,6 @@ impl NearxPool {
                     weight: validator_info.weight,
                     max_unstakable_limit: U128(validator_info.max_unstakable_limit),
                     validator_type: validator_info.validator_type,
-                    redelegate_to: validator_info.redelegate_to,
-                    amount_to_redelegate: U128(validator_info.amount_to_redelegate),
                 }
             })
             .collect()

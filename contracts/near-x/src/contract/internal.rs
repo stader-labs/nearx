@@ -486,37 +486,17 @@ impl NearxPool {
             unstake_full_amount_from_private_validators = true;
         }
 
-        // go thru all the public validators first
         for wrapped_validator in self.validator_info_map.values() {
             let validator = wrapped_validator.into_current();
-            if !validator.pending_unstake_release()
-                && !validator.paused()
-                && matches!(validator.validator_type, ValidatorType::PUBLIC)
-            {
-                if validator.staked.gt(&max_validator_stake_amount) {
-                    max_validator_stake_amount = validator.max_unstakable_limit;
-                    current_validator = Some(validator)
+            if !validator.pending_unstake_release() && !validator.paused() {
+                let mut validator_staked_amount = validator.max_unstakable_limit;
+                if unstake_full_amount_from_private_validators {
+                    validator_staked_amount = validator.staked;
                 }
-            }
-        }
 
-        if current_validator.is_none() {
-            // go thru the private validators if we didn't find any public validators
-            for wrapped_validator in self.validator_info_map.values() {
-                let validator = wrapped_validator.into_current();
-                if !validator.pending_unstake_release()
-                    && !validator.paused()
-                    && matches!(validator.validator_type, ValidatorType::PRIVATE)
-                {
-                    let mut validator_staked_amount = validator.max_unstakable_limit;
-                    if unstake_full_amount_from_private_validators {
-                        validator_staked_amount = validator.staked;
-                    }
-
-                    if validator_staked_amount.gt(&max_validator_stake_amount) {
-                        max_validator_stake_amount = validator_staked_amount;
-                        current_validator = Some(validator)
-                    }
+                if validator_staked_amount.gt(&max_validator_stake_amount) {
+                    max_validator_stake_amount = validator_staked_amount;
+                    current_validator = Some(validator)
                 }
             }
         }

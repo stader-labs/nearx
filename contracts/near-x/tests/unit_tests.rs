@@ -535,8 +535,6 @@ fn test_remove_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -547,8 +545,6 @@ fn test_remove_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -559,8 +555,6 @@ fn test_remove_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -591,8 +585,6 @@ fn test_remove_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -603,8 +595,6 @@ fn test_remove_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -634,8 +624,6 @@ fn test_remove_validator_success() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
     assert_eq!(contract.total_validator_weight, 10);
@@ -695,8 +683,6 @@ fn test_add_validator_success() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 
@@ -721,8 +707,6 @@ fn test_add_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2,
@@ -733,8 +717,6 @@ fn test_add_validator_success() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -782,8 +764,6 @@ fn test_make_validator_public() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 
@@ -807,8 +787,6 @@ fn test_make_validator_public() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PRIVATE,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 
@@ -827,8 +805,6 @@ fn test_make_validator_public() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 }
@@ -875,8 +851,6 @@ fn test_make_validator_private() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 
@@ -900,8 +874,6 @@ fn test_make_validator_private() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PRIVATE,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 }
@@ -964,8 +936,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(100),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -976,8 +946,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(200),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -988,8 +956,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(300),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1042,8 +1008,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1054,8 +1018,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(400)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1066,8 +1028,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(300)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1122,8 +1082,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1134,8 +1092,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PRIVATE,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1146,8 +1102,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(300)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1199,8 +1153,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1211,8 +1163,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PRIVATE,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1223,8 +1173,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1278,8 +1226,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1290,8 +1236,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1302,8 +1246,6 @@ fn test_get_validator_to_unstake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(0),
                 validator_type: ValidatorType::PRIVATE,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1375,8 +1317,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(100),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1387,8 +1327,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(200),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1399,8 +1337,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(300),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1452,8 +1388,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1464,8 +1398,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1476,8 +1408,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(400)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1534,8 +1464,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_2.clone(),
@@ -1546,8 +1474,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             },
             ValidatorInfoResponse {
                 account_id: stake_public_key_3.clone(),
@@ -1558,8 +1484,6 @@ fn test_get_validator_to_stake() {
                 last_unstake_start_epoch: U64(0),
                 max_unstakable_limit: U128(ntoy(100)),
                 validator_type: ValidatorType::PUBLIC,
-                redelegate_to: None,
-                amount_to_redelegate: U128(0)
             }
         ]
     ));
@@ -1763,8 +1687,6 @@ fn test_autocompound_rewards_stake_pool_with_no_stake() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 
@@ -1823,8 +1745,6 @@ fn test_on_get_sp_staked_balance_for_rewards() {
             last_unstake_start_epoch: U64(0),
             max_unstakable_limit: U128(0),
             validator_type: ValidatorType::PUBLIC,
-            redelegate_to: None,
-            amount_to_redelegate: U128(0)
         }]
     ));
 

@@ -76,8 +76,6 @@ pub const ERROR_VALIDATOR_IS_PUBLIC: &str =
     "Validator is public, cannot perform a private validator operation";
 pub const ERROR_VALIDATOR_IS_PRIVATE: &str =
     "Validator is private, cannot perform a public validator operation";
-pub const ERROR_PENDING_REDELEGATION: &str = "Validator has a pending redelegation";
-pub const ERROR_NO_PENDING_REDELEGATION: &str = "Validator has no pending redelegation";
 pub const ERROR_AMOUNT_GREATER_THEN_MAX_UNSTAKABLE_LIMIT: &str =
     "Amount greater then max unstakable limit";
 
