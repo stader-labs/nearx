@@ -110,6 +110,17 @@ impl From<ValidatorInfoWrapper> for ValidatorInfo {
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
+pub struct LegacyValidatorInfoResponse {
+    pub account_id: AccountId,
+    pub staked: U128,
+    pub unstaked: U128,
+    pub weight: u16,
+    pub last_asked_rewards_epoch_height: U64,
+    pub last_unstake_start_epoch: U64,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
 pub struct ValidatorInfoResponse {
     pub account_id: AccountId,
     pub staked: U128,
