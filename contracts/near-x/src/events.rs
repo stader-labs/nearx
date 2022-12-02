@@ -148,52 +148,6 @@ pub enum Event {
         validator_id: AccountId,
         amount: U128,
     },
-    // Validator rebalancing
-    RebalanceUnstake {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceUnstakeCallbackSuccess {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceUnstakeCallbackFail {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceWithdraw {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceWithdrawCallbackSuccess {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceWithdrawCallbackFail {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceStake {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceStakeCallbackSuccess {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
-    RebalanceStakeCallbackFail {
-        from_validator: AccountId,
-        to_validator: AccountId,
-        amount: U128,
-    },
     // Ft related events
     FtTransfer {
         receiver_id: AccountId,
