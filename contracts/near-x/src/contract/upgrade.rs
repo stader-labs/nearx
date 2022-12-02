@@ -1,5 +1,6 @@
 use crate::contract::*;
 use near_sdk::*;
+use std::str::FromStr;
 
 #[near_bindgen]
 impl NearxPool {
@@ -11,8 +12,66 @@ impl NearxPool {
     #[init(ignore_state)]
     #[private]
     pub fn migrate() -> Self {
-        let contract = env::state_read().expect("ERR_NOT_INITIALIZED");
-        contract
+        require!(env::state_exists());
+        let old_contract = env::state_read::<LegacyNearxPoolV3>().expect("ERR_NOT_INITIALIZED");
+
+        let mut new_validator_info_map = UnorderedMap::new("abc".as_bytes());
+
+        for old_validator in old_contract.validator_info_map.values() {
+            let account_id = old_validator.account_id.clone();
+            let new_validator_info =
+                ValidatorInfoWrapper::LegacyValidatorInfo(old_validator).into_current();
+            new_validator_info_map.insert(
+                &account_id,
+                &ValidatorInfoWrapper::ValidatorInfo(new_validator_info),
+            );
+        }
+
+        let new_contract = NearxPool {
+            owner_account_id: old_contract.owner_account_id,
+            total_staked: old_contract.total_staked,
+            total_stake_shares: old_contract.total_stake_shares,
+            accumulated_staked_rewards: old_contract.accumulated_staked_rewards,
+            user_amount_to_stake_in_epoch: old_contract.user_amount_to_stake_in_epoch,
+            user_amount_to_unstake_in_epoch: old_contract.user_amount_to_unstake_in_epoch,
+            reconciled_epoch_stake_amount: old_contract.reconciled_epoch_stake_amount,
+            reconciled_epoch_unstake_amount: old_contract.reconciled_epoch_unstake_amount,
+            last_reconcilation_epoch: old_contract.last_reconcilation_epoch,
+            accounts: old_contract.accounts,
+            validator_info_map: new_validator_info_map,
+            total_validator_weight: old_contract.total_validator_weight,
+            min_deposit_amount: old_contract.min_deposit_amount,
+            operator_account_id: old_contract.operator_account_id,
+            treasury_account_id: old_contract.treasury_account_id,
+            rewards_fee: old_contract.rewards_fee,
+            rewards_buffer: old_contract.rewards_buffer,
+            accumulated_rewards_buffer: old_contract.accumulated_rewards_buffer,
+            temp_owner: old_contract.temp_owner,
+            temp_operator: old_contract.temp_operator,
+            temp_treasury: old_contract.temp_treasury,
+            temp_reward_fee: old_contract.temp_reward_fee,
+            last_reward_fee_set_epoch: old_contract.last_reward_fee_set_epoch,
+            operations_control: OperationControls {
+                stake_paused: old_contract.operations_control.stake_paused,
+                direct_stake_paused: false,
+                unstaked_paused: old_contract.operations_control.unstaked_paused,
+                withdraw_paused: old_contract.operations_control.withdraw_paused,
+                staking_epoch_paused: old_contract.operations_control.staking_epoch_paused,
+                unstaking_epoch_paused: old_contract.operations_control.unstaking_epoch_paused,
+                withdraw_epoch_paused: old_contract.operations_control.withdraw_epoch_paused,
+                autocompounding_epoch_paused: old_contract
+                    .operations_control
+                    .autocompounding_epoch_paused,
+                sync_validator_balance_paused: old_contract
+                    .operations_control
+                    .sync_validator_balance_paused,
+                ft_transfer_paused: old_contract.operations_control.ft_transfer_paused,
+                ft_transfer_call_paused: old_contract.operations_control.ft_transfer_call_paused,
+            },
+            min_storage_reserve: old_contract.min_storage_reserve,
+        };
+
+        new_contract
     }
 }
 

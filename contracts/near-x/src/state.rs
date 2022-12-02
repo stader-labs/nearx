@@ -83,7 +83,7 @@ pub struct NearxPoolStateResponse {
 #[serde(crate = "near_sdk::serde")]
 #[serde(rename_all = "camelCase")]
 pub enum ValidatorInfoWrapper {
-    LegacyValidatorInfo(LegacyValidatorInfo),
+    LegacyValidatorInfo(LegacyValidatorInfoV1),
     ValidatorInfo(ValidatorInfo),
 }
 
@@ -134,7 +134,7 @@ pub struct ValidatorInfoResponse {
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Debug, Clone)]
 #[serde(crate = "near_sdk::serde")]
-pub struct LegacyValidatorInfo {
+pub struct LegacyValidatorInfoV1 {
     pub account_id: AccountId,
 
     pub staked: u128,
@@ -150,7 +150,7 @@ pub struct LegacyValidatorInfo {
     pub last_unstake_start_epoch: EpochHeight,
 }
 
-impl LegacyValidatorInfo {
+impl LegacyValidatorInfoV1 {
     pub fn into_current(self) -> ValidatorInfo {
         ValidatorInfo {
             account_id: self.account_id,
@@ -160,7 +160,7 @@ impl LegacyValidatorInfo {
             unstaked_amount: self.unstaked_amount,
             unstake_start_epoch: self.unstake_start_epoch,
             last_unstake_start_epoch: self.last_unstake_start_epoch,
-            max_unstakable_limit: 0,
+            max_unstakable_limit: self.staked,
             validator_type: ValidatorType::PUBLIC,
         }
     }

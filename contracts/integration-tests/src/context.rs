@@ -5,7 +5,10 @@ use near_sdk::json_types::{U128, U64};
 use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::OperationControls;
-use near_x::state::{AccountResponse, Fraction, HumanReadableAccount, LegacyValidatorInfoResponse, NearxPoolStateResponse, OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse};
+use near_x::state::{
+    AccountResponse, Fraction, HumanReadableAccount, LegacyValidatorInfoResponse,
+    NearxPoolStateResponse, OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse,
+};
 use serde_json::json;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -188,6 +191,22 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn make_validator_public(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "make_validator_public",
+            )
+            .deposit(1)
+            .args_json(json!({ "validator": account_id }))?
+            .transact()
+            .await
+    }
+
     pub async fn update_validator_max_unstakable_limit(
         &self,
         account_id: &AccountId,
@@ -290,20 +309,11 @@ impl IntegrationTestContext<Sandbox> {
 
         // Run the withdraw epoch
         for i in 0..self.validator_count {
-            let validator_info = self
-                .get_validator_info(self.get_stake_pool_contract(i).id().clone())
-                .await?;
-
-            if validator_info.unstaked.0 != 0
-                && validator_info.last_unstake_start_epoch.0 + NUM_EPOCHS_TO_UNLOCK
-                    < current_epoch.0
-            {
-                let res = self
-                    .withdraw_epoch(self.get_stake_pool_contract(i).id().clone())
-                    .await;
-                if res.is_err() {
-                    continue;
-                }
+            let res = self
+                .withdraw_epoch(self.get_stake_pool_contract(i).id().clone())
+                .await;
+            if res.is_err() {
+                continue;
             }
         }
 
@@ -582,6 +592,7 @@ impl IntegrationTestContext<Sandbox> {
     }
 
     pub async fn upgrade(&self, code: Vec<u8>) -> anyhow::Result<CallExecutionDetails> {
+        println!("Upgrading!!");
         self.nearx_owner
             .call(&self.worker, &self.nearx_contract.id(), "upgrade")
             .max_gas()
