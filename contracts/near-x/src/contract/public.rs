@@ -262,8 +262,12 @@ impl NearxPool {
         // all the public stake before is unstakable. All the private stake from now on will be not be directly unstakable
         validator_info.max_unstakable_limit = max_unstakable_limit.0;
 
-        // self.validator_info_map.insert(&validator, &validator_info);
         self.internal_update_validator(&validator, &validator_info);
+
+        Event::MakeValidatorPrivate {
+            validator_id: validator,
+        }
+        .emit();
     }
 
     #[payable]
@@ -283,6 +287,11 @@ impl NearxPool {
         validator_info.max_unstakable_limit = validator_info.staked;
 
         self.internal_update_validator(&validator, &validator_info);
+
+        Event::MakeValidatorPublic {
+            validator_id: validator,
+        }
+        .emit();
     }
 
     #[payable]
@@ -311,6 +320,13 @@ impl NearxPool {
         validator_info.max_unstakable_limit = new_max_unstakable_limit;
 
         self.internal_update_validator(&validator, &validator_info);
+
+        Event::UpdateValidatorMaxUnstakableLimit {
+            validator_id: validator,
+            amount_unstaked,
+            new_max_unstakable_limit: U128(validator_info.max_unstakable_limit),
+        }
+        .emit();
     }
 
     // Owner update methods

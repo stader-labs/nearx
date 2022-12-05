@@ -123,6 +123,17 @@ pub enum Event {
         account_id: AccountId,
         old_weight: u16,
     },
+    MakeValidatorPrivate {
+        validator_id: AccountId,
+    },
+    MakeValidatorPublic {
+        validator_id: AccountId,
+    },
+    UpdateValidatorMaxUnstakableLimit {
+        validator_id: AccountId,
+        amount_unstaked: U128,
+        new_max_unstakable_limit: U128,
+    },
     // Validator draining
     DrainUnstake {
         account_id: AccountId,

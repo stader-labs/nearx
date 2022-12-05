@@ -128,6 +128,7 @@ impl NearxPool {
             validator_info.validator_type == ValidatorType::PRIVATE,
             ERROR_VALIDATOR_IS_PUBLIC
         );
+        require!(validator_info.weight != 0, ERROR_VALIDATOR_IS_PAUSED);
 
         let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
 
