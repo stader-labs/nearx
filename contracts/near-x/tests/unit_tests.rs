@@ -859,7 +859,14 @@ fn test_make_validator_private() {
     context.attached_deposit = 1;
     testing_env!(context.clone()); // this updates the context
 
-    contract.make_validator_private(stake_public_key_1.clone(), None);
+    let mut validator_1 = get_validator(&contract, stake_public_key_1.clone());
+
+    validator_1.staked = ntoy(100);
+    validator_1.max_unstakable_limit = ntoy(100);
+
+    update_validator(&mut contract, stake_public_key_1.clone(), &validator_1);
+
+    contract.make_validator_private(stake_public_key_1.clone(), Some(U128(ntoy(50))));
 
     let validators = contract.get_validators();
 
@@ -867,12 +874,12 @@ fn test_make_validator_private() {
         validators,
         vec![ValidatorInfoResponse {
             account_id: stake_public_key_1.clone(),
-            staked: U128(0),
+            staked: U128(ntoy(100)),
             unstaked: U128(0),
             weight: 10,
             last_asked_rewards_epoch_height: U64(0),
             last_unstake_start_epoch: U64(0),
-            max_unstakable_limit: U128(0),
+            max_unstakable_limit: U128(ntoy(50)),
             validator_type: ValidatorType::PRIVATE,
         }]
     ));
@@ -3972,6 +3979,36 @@ fn test_direct_stake_with_public_validator() {
     let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
 
     contract.add_validator(validator1.clone(), 10);
+
+    context.predecessor_account_id = user1_account_id;
+    context.attached_deposit = ntoy(1);
+    testing_env!(context.clone());
+
+    contract.storage_deposit(None, None);
+
+    contract.direct_deposit_and_stake(validator1);
+}
+
+#[test]
+#[should_panic]
+fn test_direct_stake_with_paused_validator() {
+    let (mut context, mut contract) =
+        contract_setup(owner_account(), operator_account(), treasury_account());
+
+    let user1_account_id = AccountId::from_str("user1").unwrap();
+
+    context.predecessor_account_id = operator_account();
+    context.attached_deposit = 1;
+    testing_env!(context.clone());
+
+    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
+
+    contract.add_validator(validator1.clone(), 10);
+
+    let mut val1 = get_validator(&contract, validator1.clone());
+    val1.validator_type = ValidatorType::PRIVATE;
+    val1.weight = 0;
+    update_validator(&mut contract, validator1.clone(), &val1);
 
     context.predecessor_account_id = user1_account_id;
     context.attached_deposit = ntoy(1);
