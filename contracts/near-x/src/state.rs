@@ -26,7 +26,6 @@ pub struct SnapshotUser {
 
 #[derive(BorshDeserialize, BorshSerialize, Debug, Serialize, Deserialize, PartialEq, Clone)]
 #[serde(crate = "near_sdk::serde")]
-#[serde(rename_all = "camelCase")]
 pub enum ValidatorType {
     PUBLIC,
     PRIVATE,
