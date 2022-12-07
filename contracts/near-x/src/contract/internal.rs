@@ -42,8 +42,6 @@ impl NearxPool {
 
         let validator_info = self.internal_get_validator(&validator);
 
-        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
-
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(validator_info.account_id.clone())
             .with_static_gas(gas::DEPOSIT_AND_STAKE)
@@ -129,8 +127,6 @@ impl NearxPool {
             ERROR_VALIDATOR_IS_PUBLIC
         );
         require!(validator_info.weight != 0, ERROR_VALIDATOR_IS_PAUSED);
-
-        let num_shares = self.num_shares_from_staked_amount_rounded_down(user_amount);
 
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(validator_info.account_id.clone())

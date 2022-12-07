@@ -16,6 +16,7 @@ pub const REWARD_FEE_SET_WAIT_TIME: EpochHeight = 4;
 /// Storage keys
 pub const ACCOUNTS_MAP: &str = "A";
 pub const VALIDATOR_MAP: &str = "B";
+pub const NEW_VALIDATOR_MAP: &str = "C";
 
 uint::construct_uint! {
         /// 256-bit unsigned integer.

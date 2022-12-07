@@ -1,3 +1,4 @@
+use crate::constants::NEW_VALIDATOR_MAP;
 use crate::contract::*;
 use near_sdk::*;
 use std::str::FromStr;
@@ -15,7 +16,7 @@ impl NearxPool {
         require!(env::state_exists());
         let old_contract = env::state_read::<LegacyNearxPoolV3>().expect("ERR_NOT_INITIALIZED");
 
-        let mut new_validator_info_map = UnorderedMap::new("abc".as_bytes());
+        let mut new_validator_info_map = UnorderedMap::new(NEW_VALIDATOR_MAP.as_bytes());
 
         for old_validator in old_contract.validator_info_map.values() {
             let account_id = old_validator.account_id.clone();
