@@ -29,6 +29,203 @@ use workspaces::network::DevAccountDeployer;
 ///
 
 #[tokio::test]
+async fn test_make_validator_private() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    // try direct depositing to a public validator
+    assert!(context
+        .direct_deposit_and_stake(
+            &context.user1,
+            ntoy(10),
+            &context.get_stake_pool_contract(0).id()
+        )
+        .await
+        .is_err());
+
+    // set initial max unstakable greater then total staked amount
+    assert!(context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), Some(U128(ntoy(6))))
+        .await
+        .is_err());
+
+    // make validator private by setting an initial max unstakable limit
+    context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), Some(U128(ntoy(3))))
+        .await?;
+
+    let validator1 = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(
+        validator1,
+        ValidatorInfoResponse {
+            account_id: validator1.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(3)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+
+    // make validator private without setting an initial max unstakable limit
+    context
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
+        .await?;
+
+    let validator2 = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    assert_eq!(
+        validator2,
+        ValidatorInfoResponse {
+            account_id: validator2.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+
+    // try making private validator private again
+    assert!(context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), Some(U128(ntoy(3))))
+        .await
+        .is_err());
+    assert!(context
+        .make_validator_private(context.get_stake_pool_contract(1).id(), Some(U128(ntoy(3))))
+        .await
+        .is_err());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_make_validator_public() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    // make public validator public
+    assert!(context
+        .make_validator_public(context.get_stake_pool_contract(0).id())
+        .await
+        .is_err());
+
+    // make validator private without setting an initial max unstakable limit
+    context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), Some(U128(ntoy(2))))
+        .await?;
+
+    let validator1 = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(
+        validator1,
+        ValidatorInfoResponse {
+            account_id: validator1.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(2)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+
+    // make private validator public
+    context
+        .make_validator_public(context.get_stake_pool_contract(0).id())
+        .await?;
+
+    let validator1 = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(
+        validator1,
+        ValidatorInfoResponse {
+            account_id: validator1.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PUBLIC
+        }
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_update_validator_max_unstakable_limit() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    // increase max unstakable limit of validator with max unstakable limit == total staked
+    assert!(context
+        .update_validator_max_unstakable_limit(context.get_stake_pool_contract(0).id(), ntoy(1))
+        .await
+        .is_err());
+
+    // make validator private
+    context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), Some(U128(ntoy(2))))
+        .await?;
+
+    let validator1 = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(
+        validator1,
+        ValidatorInfoResponse {
+            account_id: validator1.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(2)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+
+    // increase unstakable limit beyond total staked
+    assert!(context
+        .update_validator_max_unstakable_limit(context.get_stake_pool_contract(0).id(), ntoy(10))
+        .await
+        .is_err());
+
+    // increase unstakable limit below total staked
+    context
+        .update_validator_max_unstakable_limit(context.get_stake_pool_contract(0).id(), ntoy(2))
+        .await?;
+
+    let validator1 = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    assert_eq!(
+        validator1,
+        ValidatorInfoResponse {
+            account_id: validator1.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(4)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_set_owner() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3, None).await?;
 
