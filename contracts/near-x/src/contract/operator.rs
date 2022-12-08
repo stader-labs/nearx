@@ -452,9 +452,9 @@ impl NearxPool {
 
     #[private]
     pub fn epoch_reconcilation(&mut self) {
-        // if self.last_reconcilation_epoch == env::epoch_height() {
-        //     return;
-        // }
+        if self.last_reconcilation_epoch == env::epoch_height() {
+            return;
+        }
         self.last_reconcilation_epoch = env::epoch_height();
 
         // here we use += because cleanup amount might not be 0
