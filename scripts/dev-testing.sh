@@ -17,7 +17,7 @@ done;
 
 near call $CONTRACT_NAME storage_unregister --accountId=$ID --gas=300000000000000 --depositYocto=1;
 
-near call $CONTRACT_NAME unstake '{"amount": "1000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
+near call $CONTRACT_NAME unstake '{"amount": "15000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 near call $CONTRACT_NAME unstake_all --accountId=$ID --gas=300000000000000;
 

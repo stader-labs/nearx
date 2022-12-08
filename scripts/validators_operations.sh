@@ -19,3 +19,6 @@ near call $CONTRACT_NAME update_validator '{"validator": "'"$STAKE_POOL_2"'", "w
 
 # pause validator
 near call $CONTRACT_NAME pause_validator '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID  --gas=300000000000000 --depositYocto=1;
+
+# update max unstakable limit
+near call $CONTRACT_NAME update_validator_max_unstakeable_limit '{"validator": "pathrocknetwork.pool.f863973.m0", "amount_unstaked": "1000000000000000000000000"}' --accountId=$ID  --gas=300000000000000 --depositYocto=1;
