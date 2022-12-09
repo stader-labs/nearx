@@ -955,6 +955,243 @@ async fn test_system_with_no_validators() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
+async fn test_stake_distribution_with_private_validators() -> anyhow::Result<()> {
+    let mut context = IntegrationTestContext::new(3, None).await?;
+
+    context
+        .make_validator_private(context.get_stake_pool_contract(0).id(), None)
+        .await?;
+    context
+        .make_validator_private(context.get_stake_pool_contract(1).id(), None)
+        .await?;
+
+    context
+        .direct_deposit_and_stake(
+            &context.user1,
+            ntoy(10),
+            context.get_stake_pool_contract(0).id(),
+        )
+        .await?;
+    context
+        .direct_deposit_and_stake(
+            &context.user2,
+            ntoy(10),
+            context.get_stake_pool_contract(1).id(),
+        )
+        .await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(35)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(35)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(0)));
+
+    let current_epoch_1 = context.get_current_epoch().await?;
+    context.run_epoch_methods().await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    assert_eq!(
+        validator1_info,
+        ValidatorInfoResponse {
+            account_id: validator1_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_1.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator2_info,
+        ValidatorInfoResponse {
+            account_id: validator2_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_1.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator3_info,
+        ValidatorInfoResponse {
+            account_id: validator3_info.account_id.clone(),
+            staked: U128(ntoy(5)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_1.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PUBLIC
+        }
+    );
+
+    let stake_pool_1_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(0))
+        .await?;
+    let stake_pool_2_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(1))
+        .await?;
+    let stake_pool_3_amount = context
+        .get_stake_pool_total_staked_amount(context.get_stake_pool_contract(2))
+        .await?;
+    println!("got stake pool staked amount");
+
+    assert_eq!(stake_pool_1_amount, U128(ntoy(15)));
+    assert_eq!(stake_pool_2_amount, U128(ntoy(15)));
+    assert_eq!(stake_pool_3_amount, U128(ntoy(5)));
+
+    context.worker.fast_forward(ONE_EPOCH * 5).await?;
+
+    let current_epoch_2 = context.get_current_epoch().await?;
+
+    context.deposit(&context.user1, ntoy(4)).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(39)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(39)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(4)));
+
+    context.run_epoch_methods().await?;
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    println!("validator1 info is ${:?}", validator1_info);
+    println!("validator2 info is ${:?}", validator2_info);
+    println!("validator3 info is ${:?}", validator3_info);
+    assert_eq!(
+        validator1_info,
+        ValidatorInfoResponse {
+            account_id: validator1_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_2.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator2_info,
+        ValidatorInfoResponse {
+            account_id: validator2_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_2.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator3_info,
+        ValidatorInfoResponse {
+            account_id: validator3_info.account_id.clone(),
+            staked: U128(ntoy(9)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_2.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(9)),
+            validator_type: ValidatorType::PUBLIC
+        }
+    );
+
+    context.worker.fast_forward(ONE_EPOCH * 5).await?;
+
+    let current_epoch_3 = context.get_current_epoch().await?;
+
+    context.deposit(&context.user1, ntoy(6)).await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(ntoy(6)));
+
+    context.run_epoch_methods().await?;
+
+    let nearx_state = context.get_nearx_state().await?;
+    assert_eq!(nearx_state.total_staked, U128(ntoy(45)));
+    assert_eq!(nearx_state.total_stake_shares, U128(ntoy(45)));
+    assert_eq!(nearx_state.user_amount_to_stake_in_epoch, U128(0));
+
+    let validator1_info = context
+        .get_validator_info(context.get_stake_pool_contract(0).id().clone())
+        .await?;
+    let validator2_info = context
+        .get_validator_info(context.get_stake_pool_contract(1).id().clone())
+        .await?;
+    let validator3_info = context
+        .get_validator_info(context.get_stake_pool_contract(2).id().clone())
+        .await?;
+    println!("validator1 info is ${:?}", validator1_info);
+    println!("validator2 info is ${:?}", validator2_info);
+    println!("validator3 info is ${:?}", validator3_info);
+
+    assert_eq!(
+        validator1_info,
+        ValidatorInfoResponse {
+            account_id: validator1_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_3.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator2_info,
+        ValidatorInfoResponse {
+            account_id: validator2_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_3.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(5)),
+            validator_type: ValidatorType::PRIVATE
+        }
+    );
+    assert_eq!(
+        validator3_info,
+        ValidatorInfoResponse {
+            account_id: validator3_info.account_id.clone(),
+            staked: U128(ntoy(15)),
+            unstaked: U128(0),
+            weight: 10,
+            last_asked_rewards_epoch_height: U64(current_epoch_3.0),
+            last_unstake_start_epoch: U64(0),
+            max_unstakable_limit: U128(ntoy(15)),
+            validator_type: ValidatorType::PUBLIC
+        }
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
 async fn test_direct_deposit_and_stake() -> anyhow::Result<()> {
     let mut context = IntegrationTestContext::new(3, None).await?;
 
