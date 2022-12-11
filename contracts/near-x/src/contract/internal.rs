@@ -126,7 +126,6 @@ impl NearxPool {
             validator_info.validator_type == ValidatorType::PRIVATE,
             ERROR_VALIDATOR_IS_PUBLIC
         );
-        require!(validator_info.weight != 0, ERROR_VALIDATOR_IS_PAUSED);
 
         //schedule async deposit_and_stake on that pool
         ext_staking_pool::ext(validator_info.account_id.clone())

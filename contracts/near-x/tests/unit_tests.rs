@@ -3991,36 +3991,6 @@ fn test_direct_stake_with_public_validator() {
 
 #[test]
 #[should_panic]
-fn test_direct_stake_with_paused_validator() {
-    let (mut context, mut contract) =
-        contract_setup(owner_account(), operator_account(), treasury_account());
-
-    let user1_account_id = AccountId::from_str("user1").unwrap();
-
-    context.predecessor_account_id = operator_account();
-    context.attached_deposit = 1;
-    testing_env!(context.clone());
-
-    let validator1 = AccountId::from_str("stake_public_key_1").unwrap();
-
-    contract.add_validator(validator1.clone(), 10);
-
-    let mut val1 = get_validator(&contract, validator1.clone());
-    val1.validator_type = ValidatorType::PRIVATE;
-    val1.weight = 0;
-    update_validator(&mut contract, validator1.clone(), &val1);
-
-    context.predecessor_account_id = user1_account_id;
-    context.attached_deposit = ntoy(1);
-    testing_env!(context.clone());
-
-    contract.storage_deposit(None, None);
-
-    contract.direct_deposit_and_stake(validator1);
-}
-
-#[test]
-#[should_panic]
 fn test_direct_stake_paused() {
     let (mut context, mut contract) =
         contract_setup(owner_account(), operator_account(), treasury_account());
