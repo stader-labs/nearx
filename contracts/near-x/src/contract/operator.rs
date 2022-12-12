@@ -40,7 +40,6 @@ impl NearxPool {
 
         let amount_to_stake = validator_to_stake_info.1;
 
-        log!("amount to stake is {:?}", amount_to_stake);
 
         require!(
             env::account_balance() >= amount_to_stake + self.min_storage_reserve,
@@ -83,7 +82,7 @@ impl NearxPool {
             // all funds staked to public validators thru epoch staking are unstakable
             // at any time. Only funds staked directly with the validator is not unstakable
             // initially all validators should have a non zero max unstakable limit
-            validator_info.max_unstakable_limit = validator_info.max_unstakable_limit + amount;
+            validator_info.max_unstakable_limit += amount;
 
             Event::StakingEpochCallbackSuccess {
                 validator_id: validator.clone(),

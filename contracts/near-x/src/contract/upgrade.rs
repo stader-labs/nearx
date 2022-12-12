@@ -1,7 +1,6 @@
 use crate::constants::NEW_VALIDATOR_MAP;
 use crate::contract::*;
 use near_sdk::*;
-use std::str::FromStr;
 
 #[near_bindgen]
 impl NearxPool {
@@ -28,7 +27,7 @@ impl NearxPool {
             );
         }
 
-        let new_contract = NearxPool {
+        NearxPool {
             owner_account_id: old_contract.owner_account_id,
             total_staked: old_contract.total_staked,
             total_stake_shares: old_contract.total_stake_shares,
@@ -70,9 +69,7 @@ impl NearxPool {
                 ft_transfer_call_paused: old_contract.operations_control.ft_transfer_call_paused,
             },
             min_storage_reserve: old_contract.min_storage_reserve,
-        };
-
-        new_contract
+        }
     }
 }
 

@@ -13,7 +13,7 @@ impl NearxPool {
         require!(sender_id != receiver_id, ERROR_SENDER_RECEIVER_SAME);
         require!(amount > 0, ERROR_REQUIRE_AMOUNT_GT_0);
 
-        let mut sender_acc = self.internal_get_account(sender_id);
+        let mut sender_acc = self.internal_get_account_unwrap(sender_id);
         assert!(
             amount <= sender_acc.stake_shares,
             "{} does not have enough NearX balance {}",
@@ -24,7 +24,7 @@ impl NearxPool {
         sender_acc.stake_shares -= amount;
         self.internal_update_account(sender_id, &sender_acc);
 
-        let mut receiver_acc = self.internal_get_account(receiver_id);
+        let mut receiver_acc = self.internal_get_account_unwrap(receiver_id);
         receiver_acc.stake_shares += amount;
         self.internal_update_account(receiver_id, &receiver_acc);
     }
@@ -52,14 +52,14 @@ impl NearxPool {
         };
 
         if unused_amount > 0 {
-            let mut receiver_acc = self.internal_get_account(&receiver_id);
+            let mut receiver_acc = self.internal_get_account_unwrap(&receiver_id);
             let receiver_balance = receiver_acc.stake_shares;
             if receiver_balance > 0 {
                 let refund_amount = std::cmp::min(receiver_balance, unused_amount);
                 receiver_acc.stake_shares -= refund_amount;
                 self.internal_update_account(&receiver_id, &receiver_acc);
 
-                let mut sender_acc = self.internal_get_account(sender_id);
+                let mut sender_acc = self.internal_get_account_unwrap(sender_id);
                 sender_acc.stake_shares += refund_amount;
                 self.internal_update_account(sender_id, &sender_acc);
 

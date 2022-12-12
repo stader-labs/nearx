@@ -72,7 +72,7 @@ impl NearxPool {
 
         if is_promise_success() {
             validator_info.staked += amount;
-            validator_info.max_unstakable_limit = validator_info.max_unstakable_limit + amount;
+            validator_info.max_unstakable_limit += amount;
             acc.stake_shares += num_shares;
             self.total_stake_shares += num_shares;
             self.total_staked += amount;
