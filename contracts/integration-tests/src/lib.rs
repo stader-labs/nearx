@@ -1882,6 +1882,25 @@ async fn test_validator_selection() -> anyhow::Result<()> {
     Ok(())
 }
 
+#[tokio::test]
+async fn test_ft_transfer_without_registering_receiver() -> anyhow::Result<()> {
+    let context = IntegrationTestContext::new(3, None).await?;
+
+    context.deposit(&context.user1, ntoy(10)).await?;
+
+    assert!(context
+        .user1
+        .call(&context.worker, context.nearx_contract.id(), "ft_transfer")
+        .args_json(json!({ "receiver_id": context.user2.id().clone(), "amount": ntoy(5) }))?
+        .deposit(1)
+        .max_gas()
+        .transact()
+        .await
+        .is_err());
+
+    Ok(())
+}
+
 /// Test ft_on_transfer
 #[tokio::test]
 async fn test_ft_on_transfer_receiver_failure() -> anyhow::Result<()> {

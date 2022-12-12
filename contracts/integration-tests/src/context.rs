@@ -418,6 +418,21 @@ impl IntegrationTestContext<Sandbox> {
         receiving_contract: &Contract,
         amount: U128,
     ) -> anyhow::Result<CallExecutionDetails> {
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(
+                json!({"account_id": receiving_contract.id().clone(), "registration_only": true}),
+            )?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+
         user.call(&self.worker, self.nearx_contract.id(), "ft_transfer_call")
             .args_json(json!({ "receiver_id": receiving_contract.id().clone(), "amount": amount, "msg": amount.0.to_string() }))?
             .deposit(1)
@@ -615,6 +630,20 @@ impl IntegrationTestContext<Sandbox> {
         receiver: &Account,
         amount: String,
     ) -> anyhow::Result<CallExecutionDetails> {
+        sender
+            .call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+        sender
+            .call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({"account_id": receiver.id().clone(), "registration_only": true}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
         sender
             .call(&self.worker, self.nearx_contract.id(), "ft_transfer")
             .deposit(parse_near!("0.000000000000000000000001 N"))
