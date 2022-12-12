@@ -158,18 +158,9 @@ impl NearxPool {
 
         //new_total_balance has the new staked amount for this pool
         let new_total_balance = total_staked_balance.0;
-        log!("total staked balance is {}", total_staked_balance.0);
 
         //compute rewards, as new balance minus old balance
         let rewards = new_total_balance.saturating_sub(validator_info.staked);
-
-        log!(
-            "validator account:{} old_balance:{} new_balance:{} rewards:{}",
-            validator_info.account_id,
-            validator_info.staked,
-            new_total_balance,
-            rewards
-        );
 
         self.internal_update_validator(&validator_info.account_id, &validator_info);
 
