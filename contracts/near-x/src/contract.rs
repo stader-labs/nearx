@@ -299,7 +299,7 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_stake_pool_direct_deposit_and_stake(
         &mut self,
-        validator_info: ValidatorInfo,
+        validator_id: AccountId,
         amount: u128,
         num_shares: u128,
         user: AccountId,
@@ -307,15 +307,15 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_stake_pool_manager_deposit_and_stake(
         &mut self,
-        validator_info: ValidatorInfo,
+        validator_id: AccountId,
         amount: u128,
         num_shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool>;
 
-    fn on_stake_pool_deposit_and_stake(&mut self, validator: AccountId, amount: u128);
+    fn on_stake_pool_deposit_and_stake(&mut self, validator_id: AccountId, amount: u128);
 
-    fn on_stake_pool_withdraw_all(&mut self, validator_info: ValidatorInfo, amount: u128);
+    fn on_stake_pool_withdraw_all(&mut self, validator_id: AccountId, amount: u128);
 
     fn on_stake_pool_unstake(&mut self, validator_id: AccountId, amount_to_unstake: u128);
 
@@ -325,7 +325,7 @@ pub trait ExtNearxStakingPoolCallbacks {
 
     fn on_get_sp_staked_balance_for_rewards(
         &mut self,
-        validator_info: ValidatorInfo,
+        validator_id: AccountId,
         #[callback] total_staked_balance: U128,
     ) -> PromiseOrValue<bool>;
 

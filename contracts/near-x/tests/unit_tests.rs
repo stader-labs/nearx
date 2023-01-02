@@ -1768,7 +1768,8 @@ fn test_on_get_sp_staked_balance_for_rewards() {
     contract.total_staked = ntoy(100);
     contract.total_stake_shares = ntoy(100);
 
-    let _res = contract.on_get_sp_staked_balance_for_rewards(validator1, U128::from(ntoy(150)));
+    let _res =
+        contract.on_get_sp_staked_balance_for_rewards(validator1.account_id, U128::from(ntoy(150)));
 
     let validator1 = get_validator(&contract, stake_public_key_1.clone());
     assert_eq!(validator1.staked, ntoy(150));
@@ -2544,7 +2545,7 @@ fn test_on_stake_pool_withdraw_all_fail() {
 
     testing_env_with_promise_results(context.clone(), PromiseResult::Failed);
 
-    contract.on_stake_pool_withdraw_all(val1_info, ntoy(100));
+    contract.on_stake_pool_withdraw_all(val1_info.account_id, ntoy(100));
 
     let val1_info = get_validator(&contract, validator1.clone());
     assert_eq!(val1_info.unstaked_amount, ntoy(100));
@@ -4133,7 +4134,7 @@ fn test_on_stake_pool_direct_deposit_and_stake_success() {
 
     contract.storage_deposit(None, None);
     contract.on_stake_pool_direct_deposit_and_stake(
-        val1,
+        validator1.clone(),
         ntoy(10),
         ntoy(10),
         user1_account_id.clone(),

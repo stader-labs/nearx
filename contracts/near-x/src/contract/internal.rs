@@ -52,7 +52,7 @@ impl NearxPool {
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
                     .on_stake_pool_manager_deposit_and_stake(
-                        validator_info,
+                        validator_info.account_id,
                         user_amount,
                         num_shares,
                         account_id,
@@ -63,12 +63,13 @@ impl NearxPool {
     #[private]
     pub fn on_stake_pool_manager_deposit_and_stake(
         &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
+        validator_id: AccountId,
         amount: u128,
         num_shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
+        let mut validator_info = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
             validator_info.staked += amount;
@@ -137,7 +138,7 @@ impl NearxPool {
                     .with_attached_deposit(NO_DEPOSIT)
                     .with_static_gas(gas::ON_STAKE_POOL_DEPOSIT_AND_STAKE)
                     .on_stake_pool_direct_deposit_and_stake(
-                        validator_info,
+                        validator_info.account_id,
                         user_amount,
                         num_shares,
                         account_id,
@@ -148,12 +149,13 @@ impl NearxPool {
     #[private]
     pub fn on_stake_pool_direct_deposit_and_stake(
         &mut self,
-        #[allow(unused_mut)] mut validator_info: ValidatorInfo,
+        validator_id: AccountId,
         amount: u128,
         num_shares: u128,
         user: AccountId,
     ) -> PromiseOrValue<bool> {
         let mut acc = &mut self.internal_get_account_unwrap(&user);
+        let mut validator_info = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
             validator_info.staked += amount;
