@@ -17,7 +17,7 @@ near view $CONTRACT_NAME get_number_of_accounts
 
 near view $CONTRACT_NAME storage_balance_of '{"account_id": "'"$ID"'"}'
 
-near view $CONTRACT_NAME get_accounts '{"from_index": 20, "limit": 40}'
+near view $CONTRACT_NAME get_accounts '{"from_index": 0, "limit": 40}'
 
 near view $CONTRACT_NAME get_current_epoch
 

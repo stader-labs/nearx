@@ -70,6 +70,14 @@ pub const ERROR_VALIDATOR_IS_BUSY: &str = "Validator is busy";
 pub const ERROR_ALL_VALIDATORS_ARE_BUSY: &str = "All validators are busy";
 pub const ERROR_INVALID_VALIDATOR_WEIGHT: &str = "Invalid validator weight";
 pub const ERROR_VALIDATOR_IS_PAUSED: &str = "Validator is paused";
+pub const ERROR_VALIDATOR_MAX_UNSTAKABLE_LIMIT_GREATER_THAN_STAKED_AMOUNT: &str =
+    "Validator max unstakable limit cannot be greater than validator staked amount";
+pub const ERROR_VALIDATOR_IS_PUBLIC: &str =
+    "Validator is public, cannot perform a private validator operation";
+pub const ERROR_VALIDATOR_IS_PRIVATE: &str =
+    "Validator is private, cannot perform a public validator operation";
+pub const ERROR_AMOUNT_GREATER_THEN_MAX_UNSTAKABLE_LIMIT: &str =
+    "Amount greater then max unstakable limit";
 
 /// Validator sync errors
 pub const ERROR_VALIDATOR_TOTAL_BALANCE_OUT_OF_SYNC: &str = "Total balance is out of sync";
@@ -80,6 +88,7 @@ pub const ERROR_VALIDATOR_UNSTAKED_BALANCE_OUT_OF_SYNC: &str =
 
 /// Operations controls
 pub const ERROR_STAKING_PAUSED: &str = "Staking paused";
+pub const ERROR_DIRECT_STAKING_PAUSED: &str = "Direct staking paused";
 pub const ERROR_UNSTAKING_PAUSED: &str = "Unstaking paused";
 pub const ERROR_WITHDRAW_PAUSED: &str = "Withdraw paused";
 pub const ERROR_STAKING_EPOCH_PAUSED: &str = "Staking epoch paused";

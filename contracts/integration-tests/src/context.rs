@@ -6,8 +6,8 @@ use near_units::parse_near;
 use near_x::constants::NUM_EPOCHS_TO_UNLOCK;
 use near_x::contract::OperationControls;
 use near_x::state::{
-    AccountResponse, Fraction, HumanReadableAccount, NearxPoolStateResponse,
-    OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse,
+    AccountResponse, Fraction, HumanReadableAccount, LegacyValidatorInfoResponse,
+    NearxPoolStateResponse, OperationsControlUpdateRequest, RolesResponse, ValidatorInfoResponse,
 };
 use serde_json::json;
 use std::collections::HashMap;
@@ -113,6 +113,13 @@ impl IntegrationTestContext<Sandbox> {
 
         for i in 0..validator_count {
             println!("Seeding with manager deposit of 5N");
+            nearx_owner
+                .call(&worker, nearx_contract.id(), "storage_deposit")
+                .max_gas()
+                .args_json(json!({}))?
+                .deposit(3000000000000000000000)
+                .transact()
+                .await?;
             let res = nearx_owner
                 .call(&worker, nearx_contract.id(), "manager_deposit_and_stake")
                 .args_json(json!({ "validator": validator_to_stake_pool_contract.get(&get_validator_account_id(i)).unwrap().id().clone() }))?
@@ -171,6 +178,54 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
+    pub async fn make_validator_private(
+        &self,
+        account_id: &AccountId,
+        initial_max_unstakable_limit: Option<U128>,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(&self.worker, self.nearx_contract.id(), "make_validator_private")
+            .deposit(1)
+            .args_json(json!({ "validator": account_id, "initial_max_unstakable_limit": initial_max_unstakable_limit }))?
+            .transact()
+            .await
+    }
+
+    pub async fn make_validator_public(
+        &self,
+        account_id: &AccountId,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "make_validator_public",
+            )
+            .deposit(1)
+            .args_json(json!({ "validator": account_id }))?
+            .transact()
+            .await
+    }
+
+    pub async fn update_validator_max_unstakable_limit(
+        &self,
+        account_id: &AccountId,
+        amount_unstaked: u128,
+    ) -> anyhow::Result<CallExecutionDetails> {
+        self.nearx_operator
+            .call(
+                &self.worker,
+                self.nearx_contract.id(),
+                "update_validator_max_unstakeable_limit",
+            )
+            .deposit(1)
+            .args_json(
+                json!({ "validator": account_id, "amount_unstaked": U128(amount_unstaked) }),
+            )?
+            .transact()
+            .await
+    }
+
     pub async fn add_validator(&mut self, weight: u16) -> anyhow::Result<()> {
         let new_validator_id = self.validator_count;
         self.validator_count += 1;
@@ -214,7 +269,6 @@ impl IntegrationTestContext<Sandbox> {
             if res.is_err() {
                 continue;
             }
-            println!("autocompounding logs are {:?}", res.unwrap().logs());
         }
 
         // Run the staking epoch
@@ -240,11 +294,13 @@ impl IntegrationTestContext<Sandbox> {
         while res {
             let output = self.unstaking_epoch().await;
             if output.is_err() {
+                println!("error_output is {:?}", output.unwrap_err());
                 println!("epoch unstake errored out!");
                 break;
             }
-            println!("output of epoch unstake is {:?}", output);
-            res = output.unwrap().json::<bool>().unwrap();
+            let output_unwrapped = output.unwrap();
+            println!("epoch_unstake output is {:?}", output_unwrapped);
+            println!("unstaking epoch logs are {:?}", output_unwrapped.logs());
             i += 1;
             if i >= MAX_LOOP_COUNT {
                 break;
@@ -253,20 +309,11 @@ impl IntegrationTestContext<Sandbox> {
 
         // Run the withdraw epoch
         for i in 0..self.validator_count {
-            let validator_info = self
-                .get_validator_info(self.get_stake_pool_contract(i).id().clone())
-                .await?;
-
-            if validator_info.unstaked.0 != 0
-                && validator_info.last_unstake_start_epoch.0 + NUM_EPOCHS_TO_UNLOCK
-                    < current_epoch.0
-            {
-                let res = self
-                    .withdraw_epoch(self.get_stake_pool_contract(i).id().clone())
-                    .await;
-                if res.is_err() {
-                    continue;
-                }
+            let res = self
+                .withdraw_epoch(self.get_stake_pool_contract(i).id().clone())
+                .await;
+            if res.is_err() {
+                continue;
             }
         }
 
@@ -371,6 +418,21 @@ impl IntegrationTestContext<Sandbox> {
         receiving_contract: &Contract,
         amount: U128,
     ) -> anyhow::Result<CallExecutionDetails> {
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(
+                json!({"account_id": receiving_contract.id().clone(), "registration_only": true}),
+            )?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+
         user.call(&self.worker, self.nearx_contract.id(), "ft_transfer_call")
             .args_json(json!({ "receiver_id": receiving_contract.id().clone(), "amount": amount, "msg": amount.0.to_string() }))?
             .deposit(1)
@@ -398,22 +460,29 @@ impl IntegrationTestContext<Sandbox> {
             .await
     }
 
-    pub async fn manager_deposit_and_stake(
+    pub async fn direct_deposit_and_stake(
         &self,
+        user: &Account,
         amount: u128,
-        stake_pool_contract: AccountId,
+        stake_pool_contract: &AccountId,
     ) -> anyhow::Result<CallExecutionDetails> {
-        self.nearx_owner
-            .call(
-                &self.worker,
-                self.nearx_contract.id(),
-                "manager_deposit_and_stake",
-            )
-            .args_json(json!({ "validator": stake_pool_contract }))?
+        user.call(&self.worker, self.nearx_contract.id(), "storage_deposit")
             .max_gas()
-            .deposit(amount)
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
             .transact()
-            .await
+            .await?;
+
+        user.call(
+            &self.worker,
+            self.nearx_contract.id(),
+            "direct_deposit_and_stake",
+        )
+        .args_json(json!({ "validator": stake_pool_contract }))?
+        .max_gas()
+        .deposit(amount)
+        .transact()
+        .await
     }
 
     pub async fn unstake(
@@ -538,6 +607,7 @@ impl IntegrationTestContext<Sandbox> {
     }
 
     pub async fn upgrade(&self, code: Vec<u8>) -> anyhow::Result<CallExecutionDetails> {
+        println!("Upgrading!!");
         self.nearx_owner
             .call(&self.worker, &self.nearx_contract.id(), "upgrade")
             .max_gas()
@@ -560,6 +630,20 @@ impl IntegrationTestContext<Sandbox> {
         receiver: &Account,
         amount: String,
     ) -> anyhow::Result<CallExecutionDetails> {
+        sender
+            .call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
+        sender
+            .call(&self.worker, self.nearx_contract.id(), "storage_deposit")
+            .max_gas()
+            .args_json(json!({"account_id": receiver.id().clone(), "registration_only": true}))?
+            .deposit(3000000000000000000000)
+            .transact()
+            .await?;
         sender
             .call(&self.worker, self.nearx_contract.id(), "ft_transfer")
             .deposit(parse_near!("0.000000000000000000000001 N"))
@@ -776,6 +860,18 @@ impl IntegrationTestContext<Sandbox> {
             .view()
             .await?
             .json::<ValidatorInfoResponse>()
+    }
+
+    pub async fn get_legacy_validator_info(
+        &self,
+        validator: AccountId,
+    ) -> anyhow::Result<LegacyValidatorInfoResponse> {
+        self.nearx_contract
+            .call(&self.worker, "get_validator_info")
+            .args_json(json!({ "validator": validator }))?
+            .view()
+            .await?
+            .json::<LegacyValidatorInfoResponse>()
     }
 
     pub async fn get_user_token_balance(&self, user: AccountId) -> anyhow::Result<U128> {

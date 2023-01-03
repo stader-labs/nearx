@@ -80,6 +80,20 @@ pub enum Event {
         minted_stake_shares: U128,
         new_stake_shares: U128,
     },
+    DirectDepositAndStake {
+        account_id: AccountId,
+        amount: U128,
+        minted_stake_shares: U128,
+        new_stake_shares: U128,
+        validator: AccountId,
+    },
+    ManagerDepositAndStake {
+        account_id: AccountId,
+        amount: U128,
+        minted_stake_shares: U128,
+        new_stake_shares: U128,
+        validator: AccountId,
+    },
     Withdraw {
         account_id: AccountId,
         amount: U128,
@@ -108,6 +122,17 @@ pub enum Event {
     ValidatorPaused {
         account_id: AccountId,
         old_weight: u16,
+    },
+    MakeValidatorPrivate {
+        validator_id: AccountId,
+    },
+    MakeValidatorPublic {
+        validator_id: AccountId,
+    },
+    UpdateValidatorMaxUnstakableLimit {
+        validator_id: AccountId,
+        amount_unstaked: U128,
+        new_max_unstakable_limit: U128,
     },
     // Validator draining
     DrainUnstake {

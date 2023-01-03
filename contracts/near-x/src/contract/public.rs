@@ -61,6 +61,7 @@ impl NearxPool {
             last_reward_fee_set_epoch: 0,
             operations_control: OperationControls {
                 stake_paused: false,
+                direct_stake_paused: false,
                 unstaked_paused: false,
                 withdraw_paused: false,
                 staking_epoch_paused: false,
@@ -88,10 +89,19 @@ impl NearxPool {
         self.internal_update_rewards_buffer(env::attached_deposit())
     }
 
+    // the difference b/w manager_deposit_and_stake and direct_deposit_and_stake is that direct
+    // deposit_and_stake only allows the user to directly stake into a private validator. manager_deposit
+    // _and_stake allows manager to deposit to any validator directly. For private validators, we keep
+    // track of user activity offchain and update the max unstakable limit if the tracked user has does certain blacklisted actions
     #[payable]
     pub fn manager_deposit_and_stake(&mut self, validator: AccountId) {
-        self.assert_owner_calling();
+        self.assert_operator_or_owner();
         self.internal_manager_deposit_and_stake(env::attached_deposit(), validator);
+    }
+
+    #[payable]
+    pub fn direct_deposit_and_stake(&mut self, validator: AccountId) {
+        self.internal_direct_deposit_and_stake(env::attached_deposit(), validator);
     }
 
     #[payable]
@@ -185,8 +195,10 @@ impl NearxPool {
         if self.validator_info_map.get(&validator).is_some() {
             panic!("{}", ERROR_VALIDATOR_IS_ALREADY_PRESENT);
         }
-        self.validator_info_map
-            .insert(&validator, &ValidatorInfo::new(validator.clone(), weight));
+        self.validator_info_map.insert(
+            &validator,
+            &ValidatorInfo::new(validator.clone(), weight).into(),
+        );
         self.total_validator_weight += weight;
 
         Event::ValidatorAdded {
@@ -200,10 +212,8 @@ impl NearxPool {
     pub fn update_validator(&mut self, validator: AccountId, weight: u16) {
         self.assert_operator_or_owner();
         assert_one_yocto();
-        let mut validator_info = self
-            .validator_info_map
-            .get(&validator)
-            .expect(ERROR_VALIDATOR_DOES_NOT_EXIST);
+
+        let mut validator_info = self.internal_get_validator(&validator);
 
         if weight == 0 {
             require!(false, ERROR_INVALID_VALIDATOR_WEIGHT);
@@ -212,11 +222,109 @@ impl NearxPool {
         // update total weight
         self.total_validator_weight = self.total_validator_weight + weight - validator_info.weight;
         validator_info.weight = weight;
-        self.validator_info_map.insert(&validator, &validator_info);
+
+        self.internal_update_validator(&validator, &validator_info);
+        // self.validator_info_map.insert(&validator, &validator_info);
 
         Event::ValidatorUpdated {
             account_id: validator,
             weight,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn make_validator_private(
+        &mut self,
+        validator: AccountId,
+        initial_max_unstakable_limit: Option<U128>,
+    ) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+
+        let mut validator_info = self.internal_get_validator(&validator);
+
+        // don't accidently make a private validator renounce his stake!!
+        require!(
+            validator_info.validator_type == ValidatorType::PUBLIC,
+            ERROR_VALIDATOR_IS_PRIVATE
+        );
+
+        let max_unstakable_limit =
+            initial_max_unstakable_limit.unwrap_or(U128(validator_info.staked));
+        require!(
+            max_unstakable_limit.0 <= validator_info.staked,
+            ERROR_VALIDATOR_MAX_UNSTAKABLE_LIMIT_GREATER_THAN_STAKED_AMOUNT
+        );
+
+        validator_info.validator_type = ValidatorType::PRIVATE;
+
+        // all the public stake before is unstakable. All the private stake from now on will be not be directly unstakable
+        validator_info.max_unstakable_limit = max_unstakable_limit.0;
+
+        self.internal_update_validator(&validator, &validator_info);
+
+        Event::MakeValidatorPrivate {
+            validator_id: validator,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn make_validator_public(&mut self, validator: AccountId) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+
+        let mut validator_info = self.internal_get_validator(&validator);
+
+        require!(
+            validator_info.validator_type == ValidatorType::PRIVATE,
+            ERROR_VALIDATOR_IS_PUBLIC
+        );
+
+        validator_info.validator_type = ValidatorType::PUBLIC;
+        // all the existing stake is available to unstake from even the private stakes
+        validator_info.max_unstakable_limit = validator_info.staked;
+
+        self.internal_update_validator(&validator, &validator_info);
+
+        Event::MakeValidatorPublic {
+            validator_id: validator,
+        }
+        .emit();
+    }
+
+    #[payable]
+    pub fn update_validator_max_unstakeable_limit(
+        &mut self,
+        validator: AccountId,
+        amount_unstaked: U128,
+    ) {
+        self.assert_operator_or_owner();
+        assert_one_yocto();
+
+        let mut validator_info = self.internal_get_validator(&validator);
+
+        require!(
+            validator_info.validator_type == ValidatorType::PRIVATE,
+            ERROR_VALIDATOR_IS_PUBLIC
+        );
+
+        let new_max_unstakable_limit = validator_info.max_unstakable_limit + amount_unstaked.0;
+        require!(
+            new_max_unstakable_limit <= validator_info.staked,
+            ERROR_VALIDATOR_MAX_UNSTAKABLE_LIMIT_GREATER_THAN_STAKED_AMOUNT
+        );
+
+        // for private validators this will be 0 initially, since we cannot unstake from them without cause.
+        validator_info.max_unstakable_limit = new_max_unstakable_limit;
+
+        self.internal_update_validator(&validator, &validator_info);
+
+        Event::UpdateValidatorMaxUnstakableLimit {
+            validator_id: validator,
+            amount_unstaked,
+            new_max_unstakable_limit: U128(validator_info.max_unstakable_limit),
         }
         .emit();
     }
@@ -388,6 +496,9 @@ impl NearxPool {
         self.operations_control.stake_paused = update_operations_control_request
             .stake_paused
             .unwrap_or(self.operations_control.stake_paused);
+        self.operations_control.direct_stake_paused = update_operations_control_request
+            .direct_stake_paused
+            .unwrap_or(self.operations_control.direct_stake_paused);
         self.operations_control.unstaked_paused = update_operations_control_request
             .unstake_paused
             .unwrap_or(self.operations_control.unstaked_paused);
@@ -419,6 +530,7 @@ impl NearxPool {
         Event::UpdateOperationsControl {
             operations_control: OperationControls {
                 stake_paused: self.operations_control.stake_paused,
+                direct_stake_paused: self.operations_control.direct_stake_paused,
                 unstaked_paused: self.operations_control.unstaked_paused,
                 withdraw_paused: self.operations_control.withdraw_paused,
                 staking_epoch_paused: self.operations_control.staking_epoch_paused,
@@ -649,11 +761,14 @@ impl NearxPool {
     }
 
     pub fn get_validator_info(&self, validator: AccountId) -> ValidatorInfoResponse {
-        let validator_info = if let Some(val_info) = self.validator_info_map.get(&validator) {
+        let wrapped_validator_info = if let Some(val_info) = self.validator_info_map.get(&validator)
+        {
             val_info
         } else {
-            ValidatorInfo::new(validator, 0)
+            panic!("Validator {:?} not found", validator);
         };
+
+        let validator_info = wrapped_validator_info.into_current();
 
         ValidatorInfoResponse {
             account_id: validator_info.account_id.clone(),
@@ -662,19 +777,26 @@ impl NearxPool {
             weight: validator_info.weight,
             last_asked_rewards_epoch_height: validator_info.last_redeemed_rewards_epoch.into(),
             last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
+            max_unstakable_limit: U128(validator_info.max_unstakable_limit),
+            validator_type: validator_info.validator_type,
         }
     }
 
     pub fn get_validators(&self) -> Vec<ValidatorInfoResponse> {
         self.validator_info_map
             .iter()
-            .map(|pool| ValidatorInfoResponse {
-                account_id: pool.1.account_id.clone(),
-                staked: U128::from(pool.1.staked),
-                last_asked_rewards_epoch_height: U64(pool.1.last_redeemed_rewards_epoch),
-                last_unstake_start_epoch: U64(pool.1.unstake_start_epoch),
-                unstaked: U128(pool.1.unstaked_amount),
-                weight: pool.1.weight,
+            .map(|pool| -> ValidatorInfoResponse {
+                let validator_info = pool.1.into_current();
+                ValidatorInfoResponse {
+                    account_id: validator_info.account_id.clone(),
+                    staked: U128::from(validator_info.staked),
+                    last_asked_rewards_epoch_height: U64(validator_info.last_redeemed_rewards_epoch),
+                    last_unstake_start_epoch: U64(validator_info.unstake_start_epoch),
+                    unstaked: U128(validator_info.unstaked_amount),
+                    weight: validator_info.weight,
+                    max_unstakable_limit: U128(validator_info.max_unstakable_limit),
+                    validator_type: validator_info.validator_type,
+                }
             })
             .collect()
     }

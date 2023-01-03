@@ -27,6 +27,13 @@ impl NearxPool {
         require!(!self.operations_control.stake_paused, ERROR_STAKING_PAUSED);
     }
 
+    pub fn assert_direct_staking_not_paused(&self) {
+        require!(
+            !self.operations_control.direct_stake_paused,
+            ERROR_DIRECT_STAKING_PAUSED
+        );
+    }
+
     pub fn assert_unstaking_not_paused(&self) {
         require!(
             !self.operations_control.unstaked_paused,
