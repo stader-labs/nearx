@@ -31,7 +31,7 @@ near view $CONTRACT_NAME get_operations_control
 near view $CONTRACT_NAME storage_balance_of '{"account_id": "'"$ID"'"}'
 
 # FT queries
-near view $CONTRACT_NAME ft_balance_of '{"account_id": "'"$ID"'"}'
+near view $CONTRACT_NAME ft_balance_of '{"account_id": "8017eacefd3af37185aae9a64dc533707d5b22bb.lockup.near"}'
 
 near view $CONTRACT_NAME ft_total_supply
 

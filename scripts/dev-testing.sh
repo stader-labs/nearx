@@ -5,8 +5,11 @@ near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'", "weig
 
 # manager deposit
 near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_0"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_12"'"}'  --accountId=$ID --amount=0.1 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=10 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_4"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
+
+# direct deposit and stake
+near call $CONTRACT_NAME direct_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --amount=1 --gas=300000000000000;
 
 # 10 deposits
 for i in {1..3};

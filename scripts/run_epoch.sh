@@ -20,7 +20,7 @@ near call $CONTRACT_NAME update_rewards_buffer --accountId=$ID --gas=30000000000
 # run till false is returned
 near call $CONTRACT_NAME unstaking_epoch --accountId=$ID --gas=300000000000000;
 
-near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME withdraw_epoch '{"validator": "pathrocknetwork.pool.f863973.m0"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME withdraw_epoch '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
 
