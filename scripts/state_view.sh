@@ -10,7 +10,7 @@ near view $CONTRACT_NAME get_total_validator_weight
 
 near view $CONTRACT_NAME get_validator_info '{"validator": "'"$STAKE_POOL_0"'"}'
 
-near view $CONTRACT_NAME get_account '{"account_id": "'"$ID"'"}'
+near view $CONTRACT_NAME get_account '{"account_id": "stader-treasury.near"}'
 near view $CONTRACT_NAME get_user_account '{"account_id": "'"$ID"'"}'
 
 near view $CONTRACT_NAME get_number_of_accounts
@@ -36,15 +36,15 @@ near view $CONTRACT_NAME ft_balance_of '{"account_id": "8017eacefd3af37185aae9a6
 near view $CONTRACT_NAME ft_total_supply
 
 # Direct stake pool querying
-near view $STAKE_POOL_0 get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
+near view inc4.poolv1.near get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_total_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 
-near view $STAKE_POOL_0 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
+near view inc4.poolv1.near get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_13 get_account_staked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 
-near view $STAKE_POOL_0 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
+near view inc4.poolv1.near get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_1 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 near view $STAKE_POOL_2 get_account_unstaked_balance '{"account_id": "'"$CONTRACT_NAME"'"}'
 

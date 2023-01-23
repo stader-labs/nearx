@@ -1,5 +1,5 @@
-near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_0"'"}' --accountId=$ID --gas=300000000000000
-near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "aurora.pool.f863973.m0"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "01node.pool.f863973.m0"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_2"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_3"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_4"'"}' --accountId=$ID --gas=300000000000000
@@ -12,6 +12,10 @@ near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_10"
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_11"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_12"'"}' --accountId=$ID --gas=300000000000000
 near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_13"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_14"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_15"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_16"'"}' --accountId=$ID --gas=300000000000000
+near call $CONTRACT_NAME autocompounding_epoch '{"validator": "'"$STAKE_POOL_17"'"}' --accountId=$ID --gas=300000000000000
 
 near call $CONTRACT_NAME staking_epoch --accountId=$ID --gas=300000000000000;
 

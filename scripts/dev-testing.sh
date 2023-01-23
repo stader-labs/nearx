@@ -4,23 +4,23 @@ near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_1"'", "weig
 near call $CONTRACT_NAME add_validator '{"validator": "'"$STAKE_POOL_2"'", "weight": 10}' --accountId=$ID --depositYocto=1 --gas=300000000000000;
 
 # manager deposit
-near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_0"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
+near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "cryptoblossom.poolv1.near"}'  --accountId=$ID --amount=1 --gas=300000000000000;
 near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}'  --accountId=$ID --amount=10 --gas=300000000000000;
 near call $CONTRACT_NAME manager_deposit_and_stake '{"validator": "'"$STAKE_POOL_4"'"}'  --accountId=$ID --amount=1 --gas=300000000000000;
 
 # direct deposit and stake
-near call $CONTRACT_NAME direct_deposit_and_stake '{"validator": "'"$STAKE_POOL_1"'"}' --accountId=$ID --amount=1 --gas=300000000000000;
+near call $CONTRACT_NAME direct_deposit_and_stake '{"validator": "zavodil.poolv1.near"}' --accountId=$ID --amount=5 --gas=300000000000000;
 
 # 10 deposits
 for i in {1..3};
 do
   near call $CONTRACT_NAME storage_deposit --accountId=$ID --amount=0.1 --gas=300000000000000;
-  near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=5 --gas=300000000000000;
+  near call $CONTRACT_NAME deposit_and_stake --accountId=$ID --amount=1 --gas=300000000000000;
 done;
 
 near call $CONTRACT_NAME storage_unregister --accountId=$ID --gas=300000000000000 --depositYocto=1;
 
-near call $CONTRACT_NAME unstake '{"amount": "15000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
+near call $CONTRACT_NAME unstake '{"amount": "2000000000000000000000000"}' --accountId=$ID --gas=300000000000000;
 
 near call $CONTRACT_NAME unstake_all --accountId=$ID --gas=300000000000000;
 

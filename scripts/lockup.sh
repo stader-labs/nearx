@@ -1,5 +1,5 @@
 # create lockup
-near call lockup.near create '{"owner_account_id": "0e645c11a3d51b55ff4670f0baad82be417232ca1c16ce781f417d8bd8e35e3e", "lockup_duration": "86400"}' --accountId=$ID --gas=300000000000000 --amount=10;
+near call lockup.near create '{"owner_account_id": "lockuptestgolive.near", "lockup_duration": "86400"}' --accountId=$ID --gas=300000000000000 --amount=10;
 
 # refresh stake pool balance
 near call $CONTRACT_NAME refresh_staking_pool_balance --accountId=$ID --gas=300000000000000
