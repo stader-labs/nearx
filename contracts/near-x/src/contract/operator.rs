@@ -243,7 +243,6 @@ impl NearxPool {
         );
 
         self.reconciled_epoch_unstake_amount -= amount_to_unstake;
-        validator_info.staked -= amount_to_unstake;
         validator_info.last_unstake_start_epoch = validator_info.unstake_start_epoch;
         validator_info.unstake_start_epoch = env::epoch_height();
 
@@ -274,6 +273,7 @@ impl NearxPool {
         let mut validator = self.internal_get_validator(&validator_id);
 
         if is_promise_success() {
+            validator.staked -= amount_to_unstake;
             validator.unstaked_amount += amount_to_unstake;
 
             // we might unstake more then the max_unstakable limit at times. This will happen when the max unstakable limit for the
@@ -290,7 +290,6 @@ impl NearxPool {
             .emit();
         } else {
             self.reconciled_epoch_unstake_amount += amount_to_unstake;
-            validator.staked += amount_to_unstake;
             validator.unstake_start_epoch = validator.last_unstake_start_epoch;
 
             Event::UnstakingEpochCallbackFailed {
